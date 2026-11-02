@@ -39,12 +39,19 @@ android {
 }
 
 dependencies {
+    // AndroidX platform integration
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // Compose UI: the BOM manages versions for all Compose libraries below
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
-    implementation(libs.androidx.core.ktx)
+
+    // Local JVM tests
     testImplementation(libs.junit)
+
+    // Android instrumentation tests
     androidTestImplementation(libs.androidx.junit)
 }
