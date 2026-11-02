@@ -1,49 +1,47 @@
 package dev.twotechy.inknest
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import dev.twotechy.inknest.ui.InkNestApp
+import dev.twotechy.inknest.ui.theme.InkNestTheme
 
 class MainActivity : ComponentActivity() {
+    private var clockTick by mutableLongStateOf(0L)
+    private val clockReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            clockTick = System.currentTimeMillis()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            MaterialTheme(colorScheme = lightColorScheme(background = Color.White, onBackground = Color.Black)) {
-                BootstrapScreen()
-            }
-        }
+        setContent { InkNestTheme { InkNestApp(clockTick) } }
     }
-}
 
-@Composable
-private fun BootstrapScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .safeDrawingPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineLarge)
-        Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyLarge)
+    override fun onStart() {
+        super.onStart()
+        clockTick = System.currentTimeMillis()
+        ContextCompat.registerReceiver(this, clockReceiver, IntentFilter().apply {
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            addAction(Intent.ACTION_DATE_CHANGED)
+        }, ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onStop() {
+        unregisterReceiver(clockReceiver)
+        super.onStop()
     }
 }

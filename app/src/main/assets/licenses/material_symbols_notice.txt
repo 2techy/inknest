@@ -1,0 +1,7 @@
+Google Material Symbols Outlined, Apache License 2.0.
+Source: https://github.com/google/material-design-icons
+Revision: 10ecc14790612ca8fd164e3f4ffe9c16fc50d5b7
+Icons: auto_stories, insert_chart, home, widgets, settings.
+Weight 300, optical size 24, FILL 0 and 1.
+SVG paths converted to Android VectorDrawable; path geometry preserved.
+See material_symbols_license.txt for the license.
