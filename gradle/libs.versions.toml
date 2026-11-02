@@ -3,6 +3,10 @@
 agp = "9.5.0"
 kotlin = "2.4.21"
 
+# Source formatting (build-time tools only)
+spotless = "8.10.4"
+ktlint = "1.8.0"
+
 # AndroidX platform integration
 activityCompose = "1.13.0"
 coreKtx = "1.19.1"
@@ -45,6 +49,9 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 
 [plugins]
+# Deterministic formatting for Kotlin sources and Gradle scripts
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+
 # Android application build
 android-application = { id = "com.android.application", version.ref = "agp" }
 
