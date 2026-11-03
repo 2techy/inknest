@@ -1,18 +1,11 @@
 package dev.twotechy.inknest.ui.home
 
 import android.text.format.DateFormat
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,17 +16,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import dev.twotechy.inknest.BuildConfig
+import dev.twotechy.inknest.R
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkSpacing
+import dev.twotechy.inknest.ui.theme.InkTextStyles
 import java.text.SimpleDateFormat
 import java.util.Date
 
 @Composable
-internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?) {
+internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?, showStats: Boolean = true) {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     val time = remember(tick, locale) {
@@ -42,114 +35,90 @@ internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?) {
             locale,
         ).format(Date(tick))
     }
-    val date =
-        remember(tick, locale) { SimpleDateFormat("EEEE, MMMM d", locale).format(Date(tick)) }
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("InkNest", style = MaterialTheme.typography.labelLarge, letterSpacing = 2.sp)
-            if (BuildConfig.DEBUG) {
-                Text(
-                    "Sample data",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+    val date = remember(tick, locale) {
+        SimpleDateFormat("EEEE, MMMM d", locale).format(Date(tick))
+    }
+    val captions =
+        listOf(stringResource(R.string.home_today), stringResource(R.string.home_this_week))
+    val values =
+        listOf(formatReadingTime(stats?.todayMinutes), formatReadingTime(stats?.weekMinutes))
+    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val density = LocalDensity.current
             val measurer = rememberTextMeasurer()
-            val clockStyle =
-                TextStyle(fontFamily = FontFamily.Serif, fontSize = 48.sp, lineHeight = 56.sp)
-            val clockWidth = measurer.measure(time, clockStyle, softWrap = false).size.width
-            val statValues =
-                listOf(
-                    formatReadingTime(stats?.todayMinutes),
-                    formatReadingTime(stats?.weekMinutes),
+            val clockWidth = measurer.measure(time, InkTextStyles.displayClock, softWrap = false)
+                .size.width
+            val statsWidth = captions.indices.sumOf { index ->
+                maxOf(
+                    measurer.measure(captions[index], InkTextStyles.bodySmall, softWrap = false)
+                        .size.width,
+                    measurer.measure(values[index], InkTextStyles.cardTitle, softWrap = false)
+                        .size.width,
                 )
-            val valueStyle = MaterialTheme.typography.titleMedium
-            val captionStyle = MaterialTheme.typography.labelSmall
-            val statsWidth = maxOf(
-                statValues.maxOf { measurer.measure(it, valueStyle, softWrap = false).size.width },
-                listOf("Today", "This week").maxOf {
-                    measurer.measure(it, captionStyle, softWrap = false).size.width
-                },
-            )
-            val usableWidth = maxWidth - 20.dp
-            val fitsBesideClock = with(density) {
-                clockWidth.toDp() <= usableWidth * 0.58f &&
-                    statsWidth.toDp() + 24.dp <= usableWidth * 0.42f
             }
-            if (fitsBesideClock) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    Column(
-                        Modifier.weight(0.58f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+            val fitsBesideClock = with(density) {
+                (clockWidth + statsWidth).toDp() + InkSpacing.xxl + InkSpacing.lg <= maxWidth
+            }
+            if (showStats && fitsBesideClock) {
+                Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(InkSpacing.xxl),
                     ) {
-                        Text(time, style = clockStyle)
                         Text(
-                            date,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            time,
+                            style = InkTextStyles.displayClock,
+                            modifier = Modifier.weight(1f),
                         )
+                        ReadingStats(captions, values)
                     }
-                    Column(
-                        Modifier.weight(0.42f)
-                            .border(
-                                1.25.dp,
-                                MaterialTheme.colorScheme.outlineVariant,
-                                RoundedCornerShape(6.dp),
-                            )
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        MiniStat("Today", statValues[0])
-                        MiniStat("This week", statValues[1])
-                    }
+                    DateLabel(date)
                 }
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(time, style = clockStyle)
-                    Text(
-                        date,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    FlowRow(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        MiniStat("Today", statValues[0], Modifier.weight(1f).widthIn(min = 100.dp))
-                        MiniStat(
-                            "This week",
-                            statValues[1],
-                            Modifier.weight(1f).widthIn(min = 100.dp),
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
+                        Text(time, style = InkTextStyles.displayClock)
+                        DateLabel(date)
                     }
+                    if (showStats) ReadingStats(captions, values, Modifier.fillMaxWidth(), true)
                 }
             }
         }
-        HorizontalDivider(Modifier.padding(top = 4.dp), thickness = 1.25.dp)
+        HorizontalDivider(thickness = InkBorder.default, color = MaterialTheme.colorScheme.outline)
     }
 }
 
 @Composable
-private fun MiniStat(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(value, style = MaterialTheme.typography.titleMedium)
+private fun DateLabel(date: String) {
+    Text(
+        date,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun ReadingStats(
+    captions: List<String>,
+    values: List<String>,
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false,
+) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
+        captions.indices.forEach { index ->
+            Column(
+                if (expanded) Modifier.weight(1f) else Modifier,
+                verticalArrangement = Arrangement.spacedBy(InkSpacing.xs),
+            ) {
+                Text(values[index], style = InkTextStyles.cardTitle)
+                Text(
+                    captions[index],
+                    style = InkTextStyles.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

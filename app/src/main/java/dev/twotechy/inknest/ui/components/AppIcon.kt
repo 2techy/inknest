@@ -13,9 +13,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.sp
+import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.ui.theme.LocalDisplayMode
 
 @Composable
 internal fun AppIcon(
@@ -34,8 +34,19 @@ internal fun AppIcon(
     }
     val current = icon
     if (current == null) {
-        Text(label.take(1), fontFamily = FontFamily.Serif, fontSize = 24.sp)
+        Text(label.take(1), style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
     } else {
-        Image(current, contentDescription = null, modifier = modifier, colorFilter = grayscale)
+        Image(
+            current,
+            contentDescription = null,
+            modifier = modifier,
+            colorFilter = if (LocalDisplayMode.current ==
+                DisplayMode.EInk
+            ) {
+                grayscale
+            } else {
+                null
+            },
+        )
     }
 }

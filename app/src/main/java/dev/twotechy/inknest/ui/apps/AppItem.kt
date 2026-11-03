@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.ui.components.AppIcon
+import dev.twotechy.inknest.ui.components.ContextMenu
+import dev.twotechy.inknest.ui.components.ContextMenuItem
+import dev.twotechy.inknest.ui.theme.InkAppGridTokens
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkRadius
+import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun AppItem(
@@ -47,13 +50,13 @@ internal fun AppItem(
         indication = null,
         onClick = onClick,
         onLongClick = { menuExpanded = true },
-    ).padding(6.dp)
+    ).padding(InkAppGridTokens.cellPadding)
     Box {
         if (mode == AppsViewMode.Grid) {
             Column(
                 modifier,
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(InkAppGridTokens.iconLabelGap),
             ) {
                 IconFrame(app, icons, mode)
                 Text(
@@ -67,7 +70,7 @@ internal fun AppItem(
         } else {
             Row(modifier, verticalAlignment = Alignment.CenterVertically) {
                 IconFrame(app, icons, mode)
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(InkSpacing.md))
                 Column(Modifier.weight(1f)) {
                     Text(
                         app.label,
@@ -91,33 +94,24 @@ internal fun AppItem(
                 }
             }
         }
-        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-            DropdownMenuItem(
-                text = {
-                    Text(stringResource(if (app.isPinned) R.string.unpin_app else R.string.pin_app))
-                },
-                onClick = {
+        if (menuExpanded) {
+            ContextMenu(onDismiss = { menuExpanded = false }) {
+                ContextMenuItem(
+                    stringResource(if (app.isPinned) R.string.unpin_app else R.string.pin_app),
+                ) {
                     menuExpanded = false
                     onTogglePin()
-                },
-            )
-            if (app.isPinned) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.move_earlier)) },
-                    enabled = app.canMoveEarlier,
-                    onClick = {
+                }
+                if (app.isPinned) {
+                    ContextMenuItem(stringResource(R.string.move_earlier), app.canMoveEarlier) {
                         menuExpanded = false
                         onMovePin(-1)
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.move_later)) },
-                    enabled = app.canMoveLater,
-                    onClick = {
+                    }
+                    ContextMenuItem(stringResource(R.string.move_later), app.canMoveLater) {
                         menuExpanded = false
                         onMovePin(1)
-                    },
-                )
+                    }
+                }
             }
         }
     }
@@ -127,14 +121,16 @@ internal fun AppItem(
 private fun IconFrame(app: AppItemUiModel, icons: AppIconLoader?, mode: AppsViewMode) {
     val grid = mode == AppsViewMode.Grid
     Box(
-        Modifier.size(if (grid) 48.dp else 38.dp).border(
-            1.25.dp,
+        Modifier.size(
+            if (grid) InkAppGridTokens.iconFrame else InkAppGridTokens.listIconFrame,
+        ).border(
+            InkBorder.default,
             if (app.isPinned) {
                 MaterialTheme.colorScheme.onSurface
             } else {
                 MaterialTheme.colorScheme.outlineVariant
             },
-            RoundedCornerShape(if (grid) 10.dp else 8.dp),
+            RoundedCornerShape(InkRadius.medium),
         ),
         contentAlignment = Alignment.Center,
     ) {
@@ -143,7 +139,7 @@ private fun IconFrame(app: AppItemUiModel, icons: AppIconLoader?, mode: AppsView
             app.label,
             app.iconVersion,
             icons,
-            Modifier.size(if (grid) 36.dp else 28.dp),
+            Modifier.size(if (grid) InkAppGridTokens.iconSize else InkAppGridTokens.listIconSize),
         )
     }
 }

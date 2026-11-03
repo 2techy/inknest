@@ -1,0 +1,11 @@
+<resources>
+    <string name="developer_tools">Developer tools</string>
+    <string name="home_preview">Home preview</string>
+    <string name="source_preview">Source preview</string>
+    <string name="fail_next_source_action">Fail next source action</string>
+    <string name="choose_sample_folder">Choose a sample folder</string>
+    <string name="sample_folder_explanation">This is a demonstration. No storage permission is requested and no real folder is accessed.</string>
+    <string name="use_sample_folder">Use sample folder</string>
+    <string name="show_tools">Show</string>
+    <string name="hide_tools">Hide</string>
+</resources>

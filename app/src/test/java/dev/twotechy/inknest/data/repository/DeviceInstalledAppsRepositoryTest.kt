@@ -29,6 +29,13 @@ class DeviceInstalledAppsRepositoryTest {
 
     private class FakePreferencesRepository : UserPreferencesRepository {
         val pins = MutableStateFlow<List<String>>(emptyList())
+        override val appPreferences = kotlinx.coroutines.flow.flowOf(
+            dev.twotechy.inknest.model.AppPreferences(),
+        )
+        override suspend fun setDisplayMode(mode: dev.twotechy.inknest.model.DisplayMode) = Unit
+        override suspend fun setShowHomeStats(show: Boolean) = Unit
+        override suspend fun setShowHomePinnedApps(show: Boolean) = Unit
+        override suspend fun completeOnboarding() = Unit
         override val pinnedComponentIds = pins
         var prunedValidIds: Set<String>? = null
 

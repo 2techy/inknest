@@ -3,14 +3,24 @@ package dev.twotechy.inknest.ui.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
-import dev.twotechy.inknest.ui.components.SectionHeading
-import dev.twotechy.inknest.ui.components.StatePanel
+import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.ScreenHeader
+import dev.twotechy.inknest.ui.components.ScreenScaffold
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
+import dev.twotechy.inknest.ui.theme.InkTextStyles
+import dev.twotechy.inknest.ui.theme.LocalAppPreferences
 
 @Composable
 internal fun HomeScreen(
@@ -19,76 +29,125 @@ internal fun HomeScreen(
     modifier: Modifier,
     contentPadding: PaddingValues,
     iconLoader: AppIconLoader? = null,
+    sampleData: Boolean = false,
     onReadingAction: () -> Unit,
     onAppClick: (String) -> Unit,
     onNavigateToApps: () -> Unit,
     onSettings: () -> Unit,
 ) {
-    LazyColumn(
-        modifier.fillMaxSize(),
+    val preferences = LocalAppPreferences.current
+    ScreenScaffold(
+        modifier = modifier,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        when (state) {
-            HomeUiState.Loading -> {
-                item { DateTimeHeader(clockTick, null) }
-                item {
-                    StatePanel("Gathering your books", "Loading your reading space…")
+        header = {
+            ScreenHeader(stringResource(R.string.brand_name)) {
+                if (sampleData) {
+                    Text(
+                        stringResource(R.string.sample_data),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
                 }
             }
-
-            is HomeUiState.Loaded -> {
-                item { DateTimeHeader(clockTick, state.stats) }
-
-                // Reading section
-                when (val reading = state.reading) {
-                    ReadingSectionState.Loading -> item {
-                        StatePanel("Gathering your books", "Loading your reading space…")
-                    }
-
-                    ReadingSectionState.Empty -> item {
-                        StatePanel(
-                            "A little space for reading",
-                            "Connect KOReader to bring your books here.",
-                            "Open settings",
-                            onSettings,
+        },
+    ) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap),
+        ) {
+            when (state) {
+                HomeUiState.Loading -> {
+                    item { DateTimeHeader(clockTick, null, preferences.showHomeStats) }
+                    item {
+                        HomeReadingNotice(
+                            stringResource(R.string.home_reading_loading),
+                            stringResource(R.string.home_reading_loading_detail),
                         )
-                    }
-
-                    is ReadingSectionState.Error -> item {
-                        StatePanel(
-                            "Unable to load books",
-                            reading.message,
-                            "Open settings",
-                            onSettings,
-                        )
-                    }
-
-                    is ReadingSectionState.Content -> item {
-                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            SectionHeading("Continue reading")
-                            ContinueReadingCard(reading.current, onReadingAction)
-                        }
                     }
                 }
 
-                // Pinned apps section
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        SectionHeading("Pinned apps")
-                        if (state.pinnedApps.isEmpty()) {
-                            StatePanel(
-                                "No pinned apps yet",
-                                "Pin your favorite reading or companion apps for quick access.",
-                                "Browse apps",
-                                onNavigateToApps,
+                is HomeUiState.Loaded -> {
+                    item {
+                        DateTimeHeader(clockTick, state.stats, preferences.showHomeStats)
+                    }
+
+                    // Reading section
+                    when (val reading = state.reading) {
+                        ReadingSectionState.Loading -> item {
+                            HomeReadingNotice(
+                                stringResource(R.string.home_reading_loading),
+                                stringResource(R.string.home_reading_loading_detail),
                             )
-                        } else {
-                            HomePinnedApps(
-                                pins = state.pinnedApps,
-                                iconLoader = iconLoader,
-                                onAppClick = onAppClick,
+                        }
+
+                        ReadingSectionState.Empty -> item {
+                            HomeReadingNotice(
+                                stringResource(R.string.home_connect_reader),
+                                stringResource(R.string.home_connect_reader_detail),
+                                onClick = onSettings,
                             )
+                        }
+
+                        is ReadingSectionState.Error -> item {
+                            HomeReadingNotice(
+                                stringResource(R.string.home_reading_error),
+                                reading.message,
+                                onClick = onSettings,
+                            )
+                        }
+
+                        is ReadingSectionState.Content -> item {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(
+                                    InkLayoutTokens.sectionContentGap,
+                                ),
+                            ) {
+                                Text(
+                                    stringResource(R.string.home_now_reading),
+                                    style = InkTextStyles.sectionTitle,
+                                )
+                                ContinueReadingCard(reading.current, onReadingAction)
+                            }
+                        }
+                    }
+
+                    // Hiding this section does not remove persisted pins.
+                    if (preferences.showHomePinnedApps) {
+                        item {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(
+                                    InkLayoutTokens.sectionContentGap,
+                                ),
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        stringResource(R.string.home_pinned_apps),
+                                        style = InkTextStyles.sectionTitle,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    HeaderIconButton(
+                                        R.drawable.ic_chevron_right,
+                                        stringResource(R.string.home_all_apps),
+                                        onNavigateToApps,
+                                    )
+                                }
+                                if (state.pinnedApps.isEmpty()) {
+                                    HomeReadingNotice(
+                                        stringResource(R.string.home_choose_apps),
+                                        stringResource(R.string.home_choose_apps_detail),
+                                        icon = R.drawable.ic_nav_apps_outline,
+                                        onClick = onNavigateToApps,
+                                    )
+                                } else {
+                                    HomePinnedApps(
+                                        pins = state.pinnedApps,
+                                        iconLoader = iconLoader,
+                                        onAppClick = onAppClick,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

@@ -20,10 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.ui.components.AppIcon
 import dev.twotechy.inknest.ui.components.quietClick
+import dev.twotechy.inknest.ui.theme.InkAppGridTokens
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkRadius
+import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun HomePinnedApps(
@@ -33,8 +36,8 @@ internal fun HomePinnedApps(
 ) {
     val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val gap = 12.dp
-        val minimumCellWidth = 80.dp * fontScale
+        val gap = InkAppGridTokens.horizontalGap
+        val minimumCellWidth = InkAppGridTokens.minCellWidth * fontScale
         val columns = ((maxWidth + gap) / (minimumCellWidth + gap)).toInt().coerceAtLeast(1)
         Column(verticalArrangement = Arrangement.spacedBy(gap)) {
             pins.chunked(columns).forEach { row ->
@@ -65,25 +68,35 @@ private fun HomePinItem(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.quietClick(onClick).padding(horizontal = 4.dp, vertical = 8.dp),
+        modifier.quietClick(onClick).padding(
+            horizontal = InkAppGridTokens.cellPadding,
+            vertical = InkSpacing.sm,
+        ),
+
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(InkAppGridTokens.iconLabelGap),
     ) {
         Box(
-            Modifier.size(48.dp).border(
-                1.25.dp,
-                MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(10.dp),
+            Modifier.size(InkAppGridTokens.iconFrame).border(
+                InkBorder.default,
+                MaterialTheme.colorScheme.outline,
+                RoundedCornerShape(InkRadius.medium),
             ),
             contentAlignment = Alignment.Center,
         ) {
-            AppIcon(pin.componentId, pin.label, pin.iconVersion, iconLoader, Modifier.size(36.dp))
+            AppIcon(
+                pin.componentId,
+                pin.label,
+                pin.iconVersion,
+                iconLoader,
+                Modifier.size(InkAppGridTokens.iconSize),
+            )
         }
         Text(
             pin.label,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             minLines = 2,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

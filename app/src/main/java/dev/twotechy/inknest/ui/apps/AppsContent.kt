@@ -13,10 +13,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.ui.components.SectionHeading
+import dev.twotechy.inknest.ui.theme.InkAppGridTokens
+import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun AppsContent(
@@ -44,8 +45,8 @@ internal fun AppsContent(
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(InkAppGridTokens.horizontalGap),
+            verticalArrangement = Arrangement.spacedBy(InkAppGridTokens.verticalGap),
         ) {
             if (showPins) {
                 item(span = { GridItemSpan(columns) }) { SectionHeading(pinnedTitle) }
@@ -55,12 +56,15 @@ internal fun AppsContent(
             items(state.allApps, key = { "all_${it.componentId}" }) { content(it) }
         }
     } else {
-        LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(InkSpacing.xs),
+        ) {
             if (showPins) {
                 item { SectionHeading(pinnedTitle) }
                 items(state.pinnedApps, key = { "pinned_${it.componentId}" }) { content(it) }
                 item {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(InkSpacing.sm))
                     SectionHeading(allTitle)
                 }
             }

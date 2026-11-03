@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
-import dev.twotechy.inknest.platform.LaunchResult
 import dev.twotechy.inknest.platform.clock.rememberMinuteClock
 import dev.twotechy.inknest.ui.components.rememberAppLaunchAction
 
@@ -23,6 +22,7 @@ internal fun HomeRoute(
     onNavigateToApps: () -> Unit,
     onSettings: () -> Unit,
 ) {
+    val previewMode by viewModel.previewMode.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val tick = rememberMinuteClock()
     val context = LocalContext.current
@@ -30,6 +30,9 @@ internal fun HomeRoute(
     HomeScreen(
         clockTick = tick,
         state = state,
+        sampleData =
+            previewMode != null &&
+                previewMode != dev.twotechy.inknest.data.preview.HomePreviewMode.Off,
         modifier = modifier,
         contentPadding = contentPadding,
         iconLoader = appIconLoader,

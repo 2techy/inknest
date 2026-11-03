@@ -3,10 +3,14 @@ package dev.twotechy.inknest.di
 import android.content.Context
 import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.preview.HomePreviewController
+import dev.twotechy.inknest.data.preview.SourcePreviewController
+import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
+import dev.twotechy.inknest.data.repository.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
@@ -22,6 +26,8 @@ internal fun createRuntimeContainer(
     reading: ReadingRepository,
     stats: ReadingStatsRepository,
     preview: HomePreviewController? = null,
+    sources: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
+    sourcePreview: SourcePreviewController? = null,
 ): AppContainer {
     val appContext = context.applicationContext
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -43,5 +49,8 @@ internal fun createRuntimeContainer(
         appIconLoader = icons,
         launcherModeController = LauncherModeController(appContext),
         homePreviewController = preview,
+        sourceSettingsRepository = sources,
+        sourcePreviewController = sourcePreview,
+        acknowledgementsRepository = AssetAcknowledgementsRepository(appContext.assets),
     )
 }

@@ -12,21 +12,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
+import dev.twotechy.inknest.ui.theme.InkRadius
+import dev.twotechy.inknest.ui.theme.InkSpacing
+import dev.twotechy.inknest.ui.theme.InkTextStyles
 
 @Composable
 internal fun SectionHeading(title: String, subtitle: String? = null) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
         subtitle?.let {
             Text(
                 it,
                 style = MaterialTheme.typography.labelSmall,
-                letterSpacing = 1.sp,
+                letterSpacing = 0.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Text(title, style = MaterialTheme.typography.titleLarge)
+        Text(title, style = InkTextStyles.sectionTitle)
     }
 }
 
@@ -39,12 +43,12 @@ internal fun StatePanel(
 ) {
     Column(
         Modifier.fillMaxWidth().border(
-            1.25.dp,
+            InkBorder.default,
             MaterialTheme.colorScheme.outlineVariant,
-            RoundedCornerShape(8.dp),
+            RoundedCornerShape(InkRadius.large),
         )
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(InkLayoutTokens.cardPadding),
+        verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge)
         Text(
@@ -53,11 +57,7 @@ internal fun StatePanel(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (action != null) {
-            Text(
-                action,
-                Modifier.quietClick(onAction).padding(vertical = 12.dp),
-                style = MaterialTheme.typography.labelLarge,
-            )
+            ActionButton(action, onClick = onAction)
         }
     }
 }

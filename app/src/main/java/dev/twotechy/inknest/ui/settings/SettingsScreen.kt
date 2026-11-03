@@ -1,103 +1,124 @@
 package dev.twotechy.inknest.ui.settings
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
-import dev.twotechy.inknest.BuildConfig
-import dev.twotechy.inknest.data.preview.HomePreviewMode
-import dev.twotechy.inknest.ui.components.SectionHeading
-import dev.twotechy.inknest.ui.components.StatePanel
+import dev.twotechy.inknest.R
+import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.repository.SourceStatus
+import dev.twotechy.inknest.model.DisplayMode
+import dev.twotechy.inknest.ui.components.ScreenHeader
+import dev.twotechy.inknest.ui.components.ScreenScaffold
+import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun SettingsScreen(
-    mode: HomePreviewMode?,
+    state: SettingsUiState,
+    page: SettingsPage,
     isDefaultLauncher: Boolean,
+    actions: SettingsActions,
+    developerTools: @Composable () -> Unit,
     modifier: Modifier,
     contentPadding: PaddingValues,
-    onMode: (HomePreviewMode) -> Unit,
-    onRequestLauncherRole: () -> Unit,
-    onOpenAndroidSettings: () -> Unit,
 ) {
-    LazyColumn(
-        modifier.fillMaxSize(),
+    ScreenScaffold(
+        modifier = modifier,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        item { Text("Settings", style = MaterialTheme.typography.headlineLarge) }
-        item {
-            StatePanel(
-                "Made for quiet screens",
-                "E-Ink appearance · high contrast, static transitions and a minute clock.",
+        header = {
+            ScreenHeader(
+                stringResource(page.title),
+                onBack = if (page == SettingsPage.Overview) null else actions.back,
+                isDetail = page != SettingsPage.Overview,
             )
-        }
-
-        // Launcher Section
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionHeading("Default launcher")
-                if (isDefaultLauncher) {
-                    StatePanel(
-                        "InkNest is your default launcher",
-                        "Pressing Home brings you directly to your books and pinned apps.",
-                        action = "System home settings",
-                        onAction = onOpenAndroidSettings,
-                    )
-                } else {
-                    StatePanel(
-                        "Set InkNest as default home",
-                        "Keep your reading front and center every time you unlock your device.",
-                        action = "Set as default launcher",
-                        onAction = onRequestLauncherRole,
+        },
+    ) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+        ) {
+            state.error?.let { error ->
+                item {
+                    SettingsErrorPanel(
+                        error,
+                        actions.retry,
+                        actions.dismiss,
                     )
                 }
             }
-        }
+            if (state.preferences == null) {
+                item { Text(stringResource(R.string.loading_settings)) }
+            } else {
+                when (page) {
+                    SettingsPage.Overview -> item { SettingsOverview(actions.openPage) }
 
-        if (mode != null) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SectionHeading("Home preview", "DEBUG BUILD ONLY")
-                    Text(
-                        stringResource(dev.twotechy.inknest.R.string.preview_explanation),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    HomePreviewMode.entries.forEach { choice ->
-                        Text(
-                            (if (choice == mode) "●  " else "○  ") + choice.name,
-                            Modifier.fillMaxWidth().selectable(
-                                selected = mode == choice,
-                                role = Role.RadioButton,
-                                interactionSource = remember {
-                                    MutableInteractionSource()
-                                },
-                                indication = null,
-                                onClick = { onMode(choice) },
-                            ).padding(16.dp),
-                            style = MaterialTheme.typography.bodyLarge,
+                    SettingsPage.Appearance -> {
+                        item {
+                            SettingsSection(stringResource(R.string.display_mode_heading)) {
+                                DisplayModeChoices(
+                                    state.preferences.displayMode,
+                                    !state.saving,
+                                    actions.displayMode,
+                                )
+                            }
+                        }
+                        item {
+                            SettingsSection(stringResource(R.string.home_options_heading)) {
+                                SettingsToggle(
+                                    stringResource(R.string.mini_stats),
+                                    stringResource(R.string.mini_stats_description),
+                                    state.preferences.showHomeStats,
+                                    !state.saving,
+                                    actions.showStats,
+                                )
+                                SettingsToggle(
+                                    stringResource(R.string.home_pins),
+                                    stringResource(R.string.home_pins_description),
+                                    state.preferences.showHomePinnedApps,
+                                    !state.saving,
+                                    actions.showPins,
+                                )
+                            }
+                        }
+                    }
+
+                    SettingsPage.ReadingData -> {
+                        item {
+                            SettingsSection(stringResource(R.string.reading_source_heading)) {
+                                SourceSettingsContent(state, actions)
+                            }
+                        }
+                        item {
+                            SettingsSection(stringResource(R.string.reading_cache_heading)) {
+                                DataSettingsContent(state, actions)
+                            }
+                        }
+                    }
+
+                    SettingsPage.Launcher -> item {
+                        LauncherSettingsContent(
+                            isDefaultLauncher,
+                            actions.requestLauncher,
+                            actions.systemSettings,
+                        )
+                    }
+
+                    SettingsPage.About -> item { AboutSettingsContent(actions, developerTools) }
+
+                    SettingsPage.Notices -> item {
+                        AcknowledgementsContent(
+                            state.acknowledgements,
+                            actions.retryAcknowledgements,
                         )
                     }
                 }
             }
-        }
-        item {
-            Text(
-                "InkNest  ${BuildConfig.VERSION_NAME}\n2techy",
-                style = MaterialTheme.typography.bodyMedium,
-            )
         }
     }
 }

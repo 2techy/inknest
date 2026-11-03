@@ -3,9 +3,11 @@ package dev.twotechy.inknest.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.flow.Flow
+import dev.twotechy.inknest.model.AppPreferences
+import dev.twotechy.inknest.model.DisplayMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -22,22 +24,44 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
     private val readRetry = MutableStateFlow(0L)
     override val readError = preferencesError.asStateFlow()
 
-    override val pinnedComponentIds: Flow<List<String>> = dataStore.data
-        .map { preferences ->
-            decodeList(preferences[KEY_PINNED_COMPONENT_IDS]).also {
-                preferencesError.value = null
-            }
-        }
+    private val preferences = dataStore.data
+        .map { it.also { preferencesError.value = null } }
         .retryWhen { cause, attempt ->
             if (cause !is IOException) return@retryWhen false
-            preferencesError.value = "Unable to read pinned apps. Retrying…"
+            preferencesError.value = "Unable to read preferences. Retrying…"
             val generation = readRetry.value
             withTimeoutOrNull(1_000L * (attempt + 1).coerceAtMost(30)) {
                 readRetry.first { it != generation }
             }
             true
         }
-        .distinctUntilChanged()
+
+    override val pinnedComponentIds = preferences.map {
+        decodeList(it[KEY_PINNED_COMPONENT_IDS])
+    }.distinctUntilChanged()
+
+    override val appPreferences = preferences.map {
+        AppPreferences(
+            displayMode = DisplayMode.entries.find { mode -> mode.name == it[KEY_DISPLAY_MODE] }
+                ?: DisplayMode.EInk,
+            showHomeStats = it[KEY_SHOW_STATS] ?: true,
+            showHomePinnedApps = it[KEY_SHOW_PINS] ?: true,
+            onboardingCompleted = it[KEY_ONBOARDING_COMPLETED] ?: false,
+        )
+    }.distinctUntilChanged()
+
+    override suspend fun setDisplayMode(mode: DisplayMode) {
+        dataStore.edit { it[KEY_DISPLAY_MODE] = mode.name }
+    }
+    override suspend fun setShowHomeStats(show: Boolean) {
+        dataStore.edit { it[KEY_SHOW_STATS] = show }
+    }
+    override suspend fun setShowHomePinnedApps(show: Boolean) {
+        dataStore.edit { it[KEY_SHOW_PINS] = show }
+    }
+    override suspend fun completeOnboarding() {
+        dataStore.edit { it[KEY_ONBOARDING_COMPLETED] = true }
+    }
 
     override fun retryRead() {
         readRetry.update { it + 1 }
@@ -89,6 +113,10 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
 
     internal companion object {
         val KEY_PINNED_COMPONENT_IDS = stringPreferencesKey("pinned_component_ids")
+        private val KEY_DISPLAY_MODE = stringPreferencesKey("display_mode")
+        private val KEY_SHOW_STATS = booleanPreferencesKey("show_home_stats")
+        private val KEY_SHOW_PINS = booleanPreferencesKey("show_home_pinned_apps")
+        private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         private const val DELIMITER = "\n"
 
         fun encodeList(items: List<String>): String = items.joinToString(DELIMITER)

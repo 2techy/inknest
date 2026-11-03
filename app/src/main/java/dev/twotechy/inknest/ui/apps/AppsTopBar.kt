@@ -1,60 +1,25 @@
 package dev.twotechy.inknest.ui.apps
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppIconLoader
-import dev.twotechy.inknest.ui.components.SectionHeading
-import dev.twotechy.inknest.ui.components.StatePanel
+import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.ScreenHeader
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkHeaderTokens
+import dev.twotechy.inknest.ui.theme.InkRadius
 
 @Composable
 internal fun AppsTopBar(
@@ -64,82 +29,43 @@ internal fun AppsTopBar(
     onSearchActiveChanged: (Boolean) -> Unit,
     onToggleViewMode: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (state.isSearchActive) {
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = onSearchQueryChanged,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(searchFocusRequester),
-                placeholder = { Text(stringResource(R.string.search_apps_hint)) },
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp),
-                trailingIcon = {
-                    IconButton(
-                        onClick = { onSearchActiveChanged(false) },
-                        modifier = Modifier.size(48.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_close),
-                            contentDescription = stringResource(R.string.close_search),
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                ),
+    if (state.isSearchActive) {
+        OutlinedTextField(
+            value = state.searchQuery,
+            onValueChange = onSearchQueryChanged,
+            modifier = Modifier.fillMaxWidth().heightIn(
+                min = InkHeaderTokens.minHeight,
+            ).border(
+                InkBorder.default,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(InkRadius.medium),
             )
-        } else {
-            Text(
-                stringResource(R.string.apps_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Normal,
-            )
+                .focusRequester(searchFocusRequester),
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(
-                    onClick = { onSearchActiveChanged(true) },
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = stringResource(R.string.search_apps),
-                        modifier = Modifier.size(22.dp),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                    )
+            placeholder = { Text(stringResource(R.string.search_apps_hint)) },
+            singleLine = true,
+            shape = RoundedCornerShape(InkRadius.medium),
+            trailingIcon = {
+                HeaderIconButton(R.drawable.ic_close, stringResource(R.string.close_search)) {
+                    onSearchActiveChanged(false)
                 }
-                IconButton(
-                    onClick = onToggleViewMode,
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    val modeIcon = if (state.viewMode == AppsViewMode.Grid) {
-                        R.drawable.ic_view_list
-                    } else {
-                        R.drawable.ic_view_grid
-                    }
-                    val modeDesc = if (state.viewMode == AppsViewMode.Grid) {
-                        stringResource(R.string.switch_to_list)
-                    } else {
-                        stringResource(R.string.switch_to_grid)
-                    }
-                    Icon(
-                        painter = painterResource(modeIcon),
-                        contentDescription = modeDesc,
-                        modifier = Modifier.size(22.dp),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+            ),
+        )
+    } else {
+        ScreenHeader(stringResource(R.string.apps_title)) {
+            HeaderIconButton(R.drawable.ic_search, stringResource(R.string.search_apps)) {
+                onSearchActiveChanged(true)
             }
+            val grid = state.viewMode == AppsViewMode.Grid
+            HeaderIconButton(
+                if (grid) R.drawable.ic_view_list else R.drawable.ic_view_grid,
+                stringResource(if (grid) R.string.switch_to_list else R.string.switch_to_grid),
+                onToggleViewMode,
+            )
         }
     }
 }

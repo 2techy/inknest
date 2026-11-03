@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,31 +28,49 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
+import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.quietClick
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkHeaderTokens
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
+import dev.twotechy.inknest.ui.theme.InkRadius
+import dev.twotechy.inknest.ui.theme.InkReadingTokens
+import dev.twotechy.inknest.ui.theme.InkSpacing
+import dev.twotechy.inknest.ui.theme.InkTextStyles
 
 @Composable
 internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.25.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.quietClick(onClick),
+        shape = RoundedCornerShape(InkRadius.large),
+        border = BorderStroke(InkBorder.default, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Column(
+            Modifier.padding(InkLayoutTokens.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+        ) {
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val fontScale = LocalDensity.current.fontScale
-                val coverWidth = (maxWidth * 0.23f).coerceIn(64.dp, 112.dp)
+                val coverWidth = (maxWidth * 0.23f).coerceIn(
+                    InkReadingTokens.coverMinWidth,
+                    InkReadingTokens.coverMaxWidth,
+                )
                 // Reserve readable text width, including the user's accessibility scale.
-                val stacked = maxWidth < coverWidth + 16.dp + 150.dp * fontScale
+                val stacked =
+                    maxWidth <
+                        coverWidth + InkSpacing.lg + InkReadingTokens.minDetailsWidth * fontScale
                 if (stacked) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
                         BookCover(book, Modifier.width(coverWidth).aspectRatio(0.7f))
                         CurrentBookDetails(book)
                     }
                 } else {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(InkSpacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         BookCover(book, Modifier.width(coverWidth).aspectRatio(0.7f))
@@ -60,34 +79,32 @@ internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
                 }
             }
             book.progress?.let { ProgressTrack(it) }
-            Box(
-                Modifier.fillMaxWidth().background(
-                    MaterialTheme.colorScheme.primary,
-                    RoundedCornerShape(4.dp),
-                )
-                    .quietClick(onClick).padding(14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    "Continue reading  →",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
         }
     }
 }
 
 @Composable
 private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(book.title, style = MaterialTheme.typography.titleLarge)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
+        Text(book.title, style = InkTextStyles.cardTitle)
         Text(
             book.author ?: "Unknown author",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ProgressLabel(book.progress)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.continue_reading_action),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                painterResource(R.drawable.ic_chevron_right),
+                null,
+                Modifier.size(InkHeaderTokens.iconSize),
+            )
+        }
     }
 }
 
@@ -95,9 +112,16 @@ private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier)
 private fun BookCover(book: BookUiModel, modifier: Modifier) {
     val ink = MaterialTheme.colorScheme.onSurfaceVariant
     Box(
-        modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(3.dp))
-            .border(1.25.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(3.dp))
-            .padding(8.dp).semantics {
+        modifier.background(
+            MaterialTheme.colorScheme.surfaceVariant,
+            RoundedCornerShape(InkRadius.small),
+        )
+            .border(
+                InkBorder.default,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(InkRadius.small),
+            )
+            .padding(InkSpacing.sm).semantics {
                 contentDescription =
                     if (book.coverLabel == null) "No cover" else "Sample book cover"
             },
@@ -110,26 +134,26 @@ private fun BookCover(book: BookUiModel, modifier: Modifier) {
                     ink,
                     Offset(size.width * 0.15f, 0f),
                     Offset(size.width * 0.15f, size.height),
-                    1.dp.toPx(),
+                    InkReadingTokens.artworkStroke.toPx(),
                 )
                 drawCircle(
                     ink,
                     size.width * 0.22f,
                     Offset(size.width * 0.6f, size.height * 0.4f),
-                    style = Stroke(1.dp.toPx()),
+                    style = Stroke(InkReadingTokens.artworkStroke.toPx()),
                 )
                 drawLine(
                     ink,
                     Offset(size.width * 0.35f, size.height * 0.75f),
                     Offset(size.width * 0.85f, size.height * 0.75f),
-                    1.dp.toPx(),
+                    InkReadingTokens.artworkStroke.toPx(),
                 )
             } else {
                 drawLine(
                     ink,
                     Offset(size.width * 0.3f, size.height * 0.5f),
                     Offset(size.width * 0.7f, size.height * 0.5f),
-                    1.dp.toPx(),
+                    InkReadingTokens.artworkStroke.toPx(),
                 )
             }
         }
@@ -152,7 +176,7 @@ private fun ProgressTrack(progress: Int) {
     val ink = MaterialTheme.colorScheme.onSurface
     val track = MaterialTheme.colorScheme.outlineVariant
     Canvas(
-        Modifier.fillMaxWidth().height(4.dp).semantics {
+        Modifier.fillMaxWidth().height(InkReadingTokens.progressHeight).semantics {
             contentDescription =
                 "$progress percent read"
         },

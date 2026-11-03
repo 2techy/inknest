@@ -37,26 +37,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkNavigationTokens
+import dev.twotechy.inknest.ui.theme.InkSpacing
+import dev.twotechy.inknest.ui.theme.InkTextStyles
 
 internal enum class TopLevelDestination { Library, Stats, Home, Apps, Settings }
 
 // Icon standard: Google Material Symbols Outlined, weight 300, optical size 24.
 // Keep weight constant; selection changes only FILL (0 -> 1), plus the bar marker.
 // Use local vectors with theme tint, without an icon background or extra icon library.
-private val NavigationIconSize = 28.dp
+private val NavigationIconSize = InkNavigationTokens.iconSize
 
-private val NavigationLabelStyle = TextStyle(
-    fontSize = 13.sp,
-    lineHeight = 18.sp,
-    fontWeight = FontWeight.Medium,
-)
+private val NavigationLabelStyle = InkTextStyles.labelMedium
 
 @Composable
 internal fun InkNestBottomBar(
@@ -73,19 +70,19 @@ internal fun InkNestBottomBar(
             Modifier.fillMaxWidth().drawWithContent {
                 drawContent()
                 // Draw on the separator itself, centered over the selected destination.
-                drawRect(lineColor, size = Size(size.width, 1.25.dp.toPx()))
+                drawRect(lineColor, size = Size(size.width, InkBorder.thin.toPx()))
                 val tabWidth = size.width / TopLevelDestination.entries.size
-                val markerWidth = minOf(32.dp.toPx(), tabWidth * 0.7f)
+                val markerWidth = minOf(InkNavigationTokens.markerWidth.toPx(), tabWidth * 0.7f)
                 drawRect(
                     selectedColor,
                     topLeft = Offset(tabWidth * (selected.ordinal + 0.5f) - markerWidth / 2, 0f),
-                    size = Size(markerWidth, 3.dp.toPx()),
+                    size = Size(markerWidth, InkNavigationTokens.markerHeight.toPx()),
                 )
             },
         ) {
             val density = LocalDensity.current
             val measurer = rememberTextMeasurer()
-            val labelWidth = with(density) { (maxWidth / 5 - 8.dp).toPx() }
+            val labelWidth = with(density) { (maxWidth / 5 - InkSpacing.sm).toPx() }
             val labelsFit = TopLevelDestination.entries.all {
                 measurer.measure(
                     it.name,
@@ -111,7 +108,7 @@ internal fun InkNestBottomBar(
                 if (!labelsFit) {
                     Text(
                         selected.name,
-                        Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                        Modifier.fillMaxWidth().padding(bottom = InkSpacing.sm),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelLarge,
                     )
@@ -126,18 +123,22 @@ internal fun InkNestNavigationRail(
     selected: TopLevelDestination,
     onSelect: (TopLevelDestination) -> Unit,
 ) {
-    val railWidth = (80.dp * LocalDensity.current.fontScale).coerceIn(104.dp, 160.dp)
+    val scaledWidth = InkNavigationTokens.railWidth * LocalDensity.current.fontScale
+    val railWidth = scaledWidth.coerceIn(
+        InkNavigationTokens.railMinWidth,
+        InkNavigationTokens.railMaxWidth,
+    )
     Row(Modifier.fillMaxHeight()) {
         // Scroll rather than lose destinations in short landscape windows or at large font sizes.
         LazyColumn(
             Modifier.width(railWidth).fillMaxHeight(),
-            contentPadding = PaddingValues(vertical = 12.dp),
+            contentPadding = PaddingValues(vertical = InkSpacing.md),
         ) {
             items(TopLevelDestination.entries) { tab ->
                 NavigationEntry(tab, selected, Modifier.fillMaxWidth(), onSelect)
             }
         }
-        VerticalDivider(thickness = 1.25.dp)
+        VerticalDivider(thickness = InkBorder.thin)
     }
 }
 
@@ -149,9 +150,13 @@ private fun NavigationEntry(
     onSelect: (TopLevelDestination) -> Unit,
     showLabel: Boolean = true,
 ) {
+    val minHeight = if (showLabel) {
+        InkNavigationTokens.minHeight
+    } else {
+        InkNavigationTokens.compactMinHeight
+    }
     Column(
-        modifier.padding(vertical = 2.dp)
-            .heightIn(min = if (showLabel) 64.dp else 48.dp)
+        modifier.heightIn(min = minHeight)
             .semantics { if (!showLabel) contentDescription = tab.name }
             .selectable(
                 selected = tab == selected,
@@ -160,9 +165,9 @@ private fun NavigationEntry(
                 indication = null,
                 onClick = { onSelect(tab) },
             )
-            .padding(horizontal = 4.dp, vertical = 6.dp),
+            .padding(horizontal = InkSpacing.xs, vertical = InkSpacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(InkNavigationTokens.iconLabelGap),
     ) {
         DestinationIcon(tab, tab == selected)
         if (showLabel) {

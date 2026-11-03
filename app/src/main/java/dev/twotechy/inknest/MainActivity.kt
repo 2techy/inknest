@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
 import dev.twotechy.inknest.ui.InkNestApp
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
-import dev.twotechy.inknest.ui.theme.InkNestTheme
 
 class MainActivity : ComponentActivity() {
     private val navigation by lazy {
@@ -23,7 +22,7 @@ class MainActivity : ComponentActivity() {
         )
         enableEdgeToEdge()
         val container = (application as InkNestApplication).container
-        setContent { InkNestTheme { InkNestApp(container, navigation) } }
+        setContent { InkNestApp(container, navigation) }
     }
 
     override fun onNewIntent(intent: Intent) {

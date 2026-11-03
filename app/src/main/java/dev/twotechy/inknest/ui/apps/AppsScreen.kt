@@ -1,29 +1,32 @@
 package dev.twotechy.inknest.ui.apps
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.ui.components.ActionButton
+import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
+import dev.twotechy.inknest.ui.theme.InkAppGridTokens
+import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun AppsScreen(
     state: AppsUiState,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     iconLoader: AppIconLoader? = null,
     onSearchQueryChanged: (String) -> Unit,
     onSearchActiveChanged: (Boolean) -> Unit,
@@ -38,10 +41,11 @@ internal fun AppsScreen(
     LaunchedEffect(state.isSearchActive) {
         if (state.isSearchActive) searchFocus.requestFocus()
     }
-    BoxWithConstraints(modifier.fillMaxSize()) {
-        // Include inter-cell gaps and allow narrow windows instead of forcing three columns.
-        val columns = ((maxWidth + 12.dp) / (84.dp + 12.dp)).toInt().coerceAtLeast(1)
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    ScreenScaffold(
+        modifier = modifier,
+        contentPadding = contentPadding,
+        header = {
             AppsTopBar(
                 state,
                 searchFocus,
@@ -49,53 +53,62 @@ internal fun AppsScreen(
                 onSearchActiveChanged,
                 onToggleViewMode,
             )
-            state.error?.let { message ->
-                Column(Modifier.fillMaxWidth()) {
-                    Text(message)
-                    Row {
-                        if (!state.canDismissError) {
-                            TextButton(
-                                onClick = onRetry,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                            ) {
-                                Text(stringResource(R.string.retry))
-                            }
-                        } else {
-                            TextButton(
-                                onClick = onDismissError,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                            ) {
-                                Text(stringResource(R.string.dismiss))
-                            }
-                        }
+        },
+    ) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val cellWidth = InkAppGridTokens.minCellWidth * fontScale
+            val gap = InkAppGridTokens.horizontalGap
+            val columns = ((maxWidth + gap) / (cellWidth + gap)).toInt().coerceAtLeast(1)
+            Column(
+                Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+            ) {
+                AppsError(state, onRetry, onDismissError)
+                Box(Modifier.weight(1f)) {
+                    when {
+                        state.isLoading -> StatePanel(
+                            stringResource(R.string.loading_apps),
+                            stringResource(R.string.loading_apps_detail),
+                        )
+
+                        state.allApps.isEmpty() && state.error == null -> AppsEmptyState(state)
+
+                        else -> AppsContent(
+                            state,
+                            columns,
+                            iconLoader,
+                            onAppClick,
+                            onTogglePin,
+                            onMovePin,
+                        )
                     }
                 }
             }
-            when {
-                state.isLoading -> StatePanel(
-                    stringResource(R.string.loading_apps),
-                    stringResource(R.string.loading_apps_detail),
-                )
-
-                state.allApps.isEmpty() && state.error == null -> {
-                    val searching = state.isSearchActive && state.searchQuery.isNotBlank()
-                    StatePanel(
-                        stringResource(
-                            if (searching) R.string.no_apps_found else R.string.no_launcher_apps,
-                        ),
-                        if (searching) {
-                            stringResource(
-                                R.string.no_apps_match,
-                                state.searchQuery,
-                            )
-                        } else {
-                            stringResource(R.string.no_launcher_apps_detail)
-                        },
-                    )
-                }
-
-                else -> AppsContent(state, columns, iconLoader, onAppClick, onTogglePin, onMovePin)
-            }
         }
     }
+}
+
+@Composable
+private fun AppsError(state: AppsUiState, onRetry: () -> Unit, onDismiss: () -> Unit) {
+    val message = state.error ?: return
+    val label = if (state.canDismissError) R.string.dismiss else R.string.retry
+    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
+        Text(message)
+        ActionButton(
+            stringResource(label),
+            onClick = if (state.canDismissError) onDismiss else onRetry,
+        )
+    }
+}
+
+@Composable
+private fun AppsEmptyState(state: AppsUiState) {
+    val searching = state.isSearchActive && state.searchQuery.isNotBlank()
+    val title = if (searching) R.string.no_apps_found else R.string.no_launcher_apps
+    val detail = if (searching) {
+        stringResource(R.string.no_apps_match, state.searchQuery)
+    } else {
+        stringResource(R.string.no_launcher_apps_detail)
+    }
+    StatePanel(stringResource(title), detail)
 }

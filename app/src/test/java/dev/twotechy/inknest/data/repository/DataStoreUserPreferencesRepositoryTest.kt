@@ -87,4 +87,25 @@ class DataStoreUserPreferencesRepositoryTest {
 
         assertEquals(listOf("pkg.a/ActivityA", "pkg.c/ActivityC"), repo.pinnedComponentIds.first())
     }
+
+    @Test
+    fun `new settings default safely and edits preserve existing pins`() = testScope.runTest {
+        val repo = createRepository()
+        repo.pin("reader/Activity")
+        assertEquals(dev.twotechy.inknest.model.AppPreferences(), repo.appPreferences.first())
+        repo.setDisplayMode(dev.twotechy.inknest.model.DisplayMode.Standard)
+        repo.setShowHomeStats(false)
+        repo.setShowHomePinnedApps(false)
+        repo.completeOnboarding()
+        assertEquals(
+            dev.twotechy.inknest.model.AppPreferences(
+                dev.twotechy.inknest.model.DisplayMode.Standard,
+                false,
+                false,
+                true,
+            ),
+            repo.appPreferences.first(),
+        )
+        assertEquals(listOf("reader/Activity"), repo.pinnedComponentIds.first())
+    }
 }
