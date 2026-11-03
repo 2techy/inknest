@@ -1,39 +1,16 @@
 package dev.twotechy.inknest.ui.home
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.twotechy.inknest.platform.AppIconLoader
-import dev.twotechy.inknest.ui.components.AppIcon
 import dev.twotechy.inknest.ui.components.SectionHeading
 import dev.twotechy.inknest.ui.components.StatePanel
-import dev.twotechy.inknest.ui.components.quietClick
 
 @Composable
 internal fun HomeScreen(
@@ -107,53 +84,15 @@ internal fun HomeScreen(
                                 onNavigateToApps,
                             )
                         } else {
-                            FlowRow(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                state.pinnedApps.forEach { pin ->
-                                    HomePinItem(
-                                        pin = pin,
-                                        iconLoader = iconLoader,
-                                        onClick = { onAppClick(pin.componentId) },
-                                    )
-                                }
-                            }
+                            HomePinnedApps(
+                                pins = state.pinnedApps,
+                                iconLoader = iconLoader,
+                                onAppClick = onAppClick,
+                            )
                         }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun HomePinItem(pin: HomePinUiModel, iconLoader: AppIconLoader?, onClick: () -> Unit) {
-    Column(
-        Modifier
-            .widthIn(min = 76.dp)
-            .quietClick(onClick)
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            Modifier
-                .size(48.dp)
-                .border(
-                    1.25.dp,
-                    MaterialTheme.colorScheme.outlineVariant,
-                    RoundedCornerShape(10.dp),
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            AppIcon(pin.componentId, pin.label, pin.iconVersion, iconLoader, Modifier.size(36.dp))
-        }
-        Text(
-            pin.label,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelLarge,
-        )
     }
 }
