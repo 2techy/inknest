@@ -7,11 +7,15 @@ import dev.twotechy.inknest.data.preview.SourcePreviewController
 import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
+import dev.twotechy.inknest.data.repository.ReaderProbeRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
+import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
+import dev.twotechy.inknest.data.source.SafSourceAccess
+import dev.twotechy.inknest.data.source.SafTreeReader
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.LauncherModeController
@@ -51,6 +55,11 @@ internal fun createRuntimeContainer(
         homePreviewController = preview,
         sourceSettingsRepository = sources,
         sourcePreviewController = sourcePreview,
+        readingSourceConfigRepository = ReadingSourceConfigRepository(
+            appContext.userPreferencesDataStore,
+        ),
+        readerProbeRepository = ReaderProbeRepository(SafTreeReader(appContext.contentResolver)),
+        safSourceAccess = SafSourceAccess(appContext.contentResolver),
         acknowledgementsRepository = AssetAcknowledgementsRepository(appContext.assets),
     )
 }

@@ -10,7 +10,11 @@ internal class AssetAcknowledgementsRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AcknowledgementsRepository {
     override suspend fun read(): String = withContext(ioDispatcher) {
-        listOf("licenses/material_symbols_notice.txt", "licenses/material_symbols_license.txt")
+        listOf(
+            "licenses/material_symbols_notice.txt",
+            "licenses/material_symbols_license.txt",
+            "licenses/luaj_notice.txt",
+        )
             .joinToString("\n\n") { path ->
                 assets.open(path).bufferedReader().use { it.readText() }
             }

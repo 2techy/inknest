@@ -22,6 +22,7 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.preview.HomePreviewMode
 import dev.twotechy.inknest.data.preview.SourcePreviewController
 import dev.twotechy.inknest.data.repository.SourceStatus
+import dev.twotechy.inknest.di.AppContainer
 import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.home.HomeViewModel
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
@@ -32,6 +33,7 @@ internal fun DeveloperSettings(
     mode: HomePreviewMode?,
     onMode: (HomePreviewMode) -> Unit,
     sources: SourcePreviewController?,
+    probe: @Composable () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val expansion = stringResource(if (expanded) R.string.hide_tools else R.string.show_tools)
@@ -53,6 +55,7 @@ internal fun DeveloperSettings(
             stringResource(R.string.preview_explanation),
             style = MaterialTheme.typography.bodySmall,
         )
+        probe()
         mode?.let {
             Text(stringResource(R.string.home_preview))
             HomePreviewMode.entries.forEach { choice ->
@@ -75,7 +78,10 @@ internal fun DeveloperSettings(
 internal fun DeveloperSettingsRoute(
     homeViewModel: HomeViewModel,
     sources: SourcePreviewController?,
+    container: AppContainer,
 ) {
     val mode by homeViewModel.previewMode.collectAsStateWithLifecycle()
-    DeveloperSettings(mode, homeViewModel::onPreviewModeChanged, sources)
+    DeveloperSettings(mode, homeViewModel::onPreviewModeChanged, sources) {
+        ReadingSourceProbeEntry(container)
+    }
 }

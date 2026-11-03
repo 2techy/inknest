@@ -131,7 +131,11 @@ private fun InkNestContent(
                         launcher = launcher,
                         isDefaultLauncher = isDefaultLauncher,
                         developerTools = {
-                            DeveloperSettingsRoute(homeViewModel, container.sourcePreviewController)
+                            DeveloperSettingsRoute(
+                                homeViewModel,
+                                container.sourcePreviewController,
+                                container,
+                            )
                         },
                         onReviewSetup = {
                             onboarding.restart()

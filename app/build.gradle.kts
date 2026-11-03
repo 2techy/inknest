@@ -48,6 +48,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.kotlinx.coroutines.android)
 
+    // KOReader data parser
+    implementation(libs.luaj.jse)
+
     // Persistence
     implementation(libs.androidx.datastore.preferences)
 

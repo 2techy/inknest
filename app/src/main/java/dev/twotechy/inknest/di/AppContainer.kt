@@ -7,11 +7,14 @@ import dev.twotechy.inknest.data.preview.HomePreviewController
 import dev.twotechy.inknest.data.preview.SourcePreviewController
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.ReaderProbeRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
+import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
+import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.LauncherModeController
@@ -33,6 +36,9 @@ internal class AppContainer(
     val homePreviewController: HomePreviewController? = null,
     val sourceSettingsRepository: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
     val sourcePreviewController: SourcePreviewController? = null,
+    val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
+    val safSourceAccess: SafSourceAccess? = null,
+    val readerProbeRepository: ReaderProbeRepository? = null,
 ) {
     val settingsViewModelFactory = viewModelFactory {
         initializer {

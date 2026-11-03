@@ -8,4 +8,23 @@
     <string name="use_sample_folder">Use sample folder</string>
     <string name="show_tools">Show</string>
     <string name="hide_tools">Hide</string>
+    <string name="reading_source_probe">Reading source probe</string>
+    <string name="probe_grants_description">Real folders, separate from sample settings. Select the KOReader directory and optionally your books directory. Read access only. Lua diagnostics stay separate from Home.</string>
+    <string name="probe_source_failed">Unable to read or save source access. The previous configuration is kept.</string>
+    <string name="probe_granted">Read access granted</string>
+    <string name="probe_invalid_folder">Invalid directory</string>
+    <string name="probe_unsupported">Only primary internal storage is supported</string>
+    <string name="probe_provider_error">Storage provider unavailable</string>
+    <string name="probe_recheck">Recheck access</string>
+    <string name="probe_read_lua">Read KOReader data</string>
+    <string name="probe_current">Reader settings</string>
+    <string name="probe_history">Reading history</string>
+    <string name="probe_current_found">Current file identity found</string>
+    <string name="probe_empty_current">No current file recorded</string>
+    <string name="probe_history_count">%1$d history entries parsed</string>
+    <string name="probe_not_tested">Not tested</string>
+    <string name="probe_missing_file">Expected file not found in this tree</string>
+    <string name="probe_invalid_lua">Invalid Lua data</string>
+    <string name="probe_too_large">File exceeds 8 MiB limit</string>
+    <string name="probe_budget_exceeded">Lua instruction limit exceeded</string>
 </resources>
