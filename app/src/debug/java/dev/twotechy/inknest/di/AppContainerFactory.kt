@@ -1,15 +1,9 @@
 package dev.twotechy.inknest.di
 
-import dev.twotechy.inknest.data.repository.FakeInstalledAppsRepository
-import dev.twotechy.inknest.data.repository.FakeReadingRepository
-import dev.twotechy.inknest.data.repository.FakeReadingStatsRepository
+import android.content.Context
+import dev.twotechy.inknest.data.repository.FakeHomePreviewRepository
 
-internal fun createAppContainer(): AppContainer {
-    val reading = FakeReadingRepository()
-    return AppContainer(
-        reading,
-        FakeInstalledAppsRepository(),
-        FakeReadingStatsRepository(),
-        reading,
-    )
+internal fun createAppContainer(context: Context): AppContainer {
+    val preview = FakeHomePreviewRepository()
+    return createRuntimeContainer(context, preview, preview, preview)
 }

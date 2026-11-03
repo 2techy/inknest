@@ -12,4 +12,4 @@ data class ReadingItem(
 
 data class ReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)
 
-data class PinnedApp(val componentId: String, val label: String)
+data class PinnedApp(val componentId: String, val label: String, val iconVersion: Long = 0)

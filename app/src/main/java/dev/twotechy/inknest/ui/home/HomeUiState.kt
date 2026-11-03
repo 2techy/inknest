@@ -10,17 +10,27 @@ data class BookUiModel(
     val coverLabel: String? = null,
 )
 
-sealed interface HomeUiState {
-    data object Loading : HomeUiState
-    data object Empty : HomeUiState
-    data class Error(val message: String) : HomeUiState
+data class HomePinUiModel(val componentId: String, val label: String, val iconVersion: Long = 0)
+
+sealed interface ReadingSectionState {
+    data object Loading : ReadingSectionState
+    data object Empty : ReadingSectionState
+    data class Error(val message: String) : ReadingSectionState
     data class Content(
         val current: BookUiModel,
-        val pinnedApps: List<String>,
-        val stats: HomeReadingStats? = null,
         val isRefreshing: Boolean = false,
         val refreshError: String? = null,
-    ) : HomeUiState
+    ) : ReadingSectionState
 }
 
 data class HomeReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)
+
+sealed interface HomeUiState {
+    data object Loading : HomeUiState
+
+    data class Loaded(
+        val reading: ReadingSectionState,
+        val pinnedApps: List<HomePinUiModel>,
+        val stats: HomeReadingStats? = null,
+    ) : HomeUiState
+}

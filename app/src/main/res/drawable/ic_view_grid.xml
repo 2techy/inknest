@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Material Symbols Outlined; Apache-2.0. See assets/licenses/material_symbols_notice.txt. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:fillColor="#FF181818"
+        android:pathData="M160,440 L160,200 L400,200 L400,440 L160,440 Z M160,760 L160,520 L400,520 L400,760 L160,760 Z M560,440 L560,200 L800,200 L800,440 L560,440 Z M560,760 L560,520 L800,520 L800,760 L560,760 Z M220,380 L340,380 L340,260 L220,260 L220,380 Z M620,380 L740,380 L740,260 L620,260 L620,380 Z M220,700 L340,700 L340,580 L220,580 L220,700 Z M620,700 L740,700 L740,580 L620,580 L620,700 Z" />
+</vector>

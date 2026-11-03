@@ -49,6 +49,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.kotlinx.coroutines.android)
 
+    // Persistence
+    implementation(libs.androidx.datastore.preferences)
+
     // Compose UI: the BOM manages versions for all Compose libraries below
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

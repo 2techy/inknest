@@ -24,19 +24,19 @@ import kotlinx.coroutines.launch
 
 internal class HomeViewModel(
     private val readingRepository: ReadingRepository,
-    installedAppsRepository: InstalledAppsRepository,
+    private val installedAppsRepository: InstalledAppsRepository,
     readingStatsRepository: ReadingStatsRepository,
     private val savedStateHandle: SavedStateHandle,
     private val previewController: HomePreviewController? = null,
 ) : ViewModel() {
-    private data class RefreshState(val running: Boolean = false, val error: String? = null)
+    internal data class RefreshState(val running: Boolean = false, val error: String? = null)
 
     private val refreshState = MutableStateFlow(RefreshState())
     private var refreshJob: Job? = null
 
     private val restoredPreviewMode = savedStateHandle.get<String>(PREVIEW_MODE_KEY)
         ?.let { name -> HomePreviewMode.entries.find { it.name == name } }
-        ?: HomePreviewMode.Content
+        ?: HomePreviewMode.Off
 
     init {
         previewController?.select(restoredPreviewMode)
@@ -63,23 +63,34 @@ internal class HomeViewModel(
         readingStatsRepository.stats,
         refreshState,
     ) { reading, apps, stats, refresh ->
-        reading.toHomeUiState(apps, stats).let { state ->
-            if (state is HomeUiState.Content) {
-                state.copy(isRefreshing = refresh.running, refreshError = refresh.error)
-            } else if (refresh.error != null) {
-                HomeUiState.Error(refresh.error)
-            } else {
-                state
-            }
-        }
+        val readingSection = reading.toReadingSectionState(refresh)
+        val homePins = apps.map { HomePinUiModel(it.componentId, it.label, it.iconVersion) }
+        val homeStats = stats?.let { HomeReadingStats(it.todayMinutes, it.weekMinutes) }
+        HomeUiState.Loaded(
+            reading = readingSection,
+            pinnedApps = homePins,
+            stats = homeStats,
+        )
     }.catch {
-        emit(HomeUiState.Error("Reading data is unavailable. Please try again."))
+        emit(
+            HomeUiState.Loaded(
+                reading = ReadingSectionState.Error(
+                    "Reading data is unavailable. Please try again.",
+                ),
+                pinnedApps = emptyList(),
+                stats = null,
+            ),
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 
     fun onPreviewModeChanged(mode: HomePreviewMode) {
         val controller = previewController ?: return
         savedStateHandle[PREVIEW_MODE_KEY] = mode.name
         controller.select(mode)
+    }
+
+    fun refreshApps() {
+        viewModelScope.launch { installedAppsRepository.reload() }
     }
 
     fun refresh() {
@@ -104,24 +115,48 @@ internal class HomeViewModel(
     }
 }
 
+private fun ReadingState.toReadingSectionState(
+    refresh: HomeViewModel.RefreshState,
+): ReadingSectionState = when (this) {
+    ReadingState.Loading -> ReadingSectionState.Loading
+
+    ReadingState.Empty -> ReadingSectionState.Empty
+
+    is ReadingState.Error -> ReadingSectionState.Error(message)
+
+    is ReadingState.Content -> ReadingSectionState.Content(
+        current = BookUiModel(
+            current.id,
+            current.title,
+            current.author,
+            current.progress,
+            current.coverUri,
+        ),
+        isRefreshing = refresh.running,
+        refreshError = refresh.error,
+    )
+}
+
 // The same mapping can render previews without constructing a ViewModel.
 internal fun ReadingState.toHomeUiState(apps: List<PinnedApp>, stats: ReadingStats?): HomeUiState =
-    when (this) {
-        ReadingState.Loading -> HomeUiState.Loading
+    HomeUiState.Loaded(
+        reading = when (this) {
+            ReadingState.Loading -> ReadingSectionState.Loading
 
-        ReadingState.Empty -> HomeUiState.Empty
+            ReadingState.Empty -> ReadingSectionState.Empty
 
-        is ReadingState.Error -> HomeUiState.Error(message)
+            is ReadingState.Error -> ReadingSectionState.Error(message)
 
-        is ReadingState.Content -> HomeUiState.Content(
-            current = BookUiModel(
-                current.id,
-                current.title,
-                current.author,
-                current.progress,
-                current.coverUri,
-            ),
-            pinnedApps = apps.map(PinnedApp::label),
-            stats = stats?.let { HomeReadingStats(it.todayMinutes, it.weekMinutes) },
-        )
-    }
+            is ReadingState.Content -> ReadingSectionState.Content(
+                current = BookUiModel(
+                    current.id,
+                    current.title,
+                    current.author,
+                    current.progress,
+                    current.coverUri,
+                ),
+            )
+        },
+        pinnedApps = apps.map { HomePinUiModel(it.componentId, it.label, it.iconVersion) },
+        stats = stats?.let { HomeReadingStats(it.todayMinutes, it.weekMinutes) },
+    )

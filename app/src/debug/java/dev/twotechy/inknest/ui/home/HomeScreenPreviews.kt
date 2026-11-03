@@ -18,7 +18,8 @@ private fun HomeContentPreview() =
 
 @Preview(showBackground = true)
 @Composable
-private fun HomeEmptyPreview() = PreviewHome(HomeUiState.Empty)
+private fun HomeEmptyPreview() =
+    PreviewHome(ReadingState.Empty.toHomeUiState(samplePins, sampleStats))
 
 @Preview(showBackground = true)
 @Composable
@@ -26,12 +27,24 @@ private fun HomeLoadingPreview() = PreviewHome(HomeUiState.Loading)
 
 @Preview(showBackground = true)
 @Composable
-private fun HomeErrorPreview() =
-    PreviewHome(HomeUiState.Error("Your reading source is unavailable. Please try again."))
+private fun HomeErrorPreview() = PreviewHome(
+    ReadingState.Error(
+        "Your reading source is unavailable. Please try again.",
+    ).toHomeUiState(samplePins, sampleStats),
+)
 
 @Composable
 private fun PreviewHome(state: HomeUiState) {
     InkNestTheme {
-        HomeScreen(0L, state, Modifier, PaddingValues(16.dp), onDemoAction = {}, onSettings = {})
+        HomeScreen(
+            clockTick = 0L,
+            state = state,
+            modifier = Modifier,
+            contentPadding = PaddingValues(16.dp),
+            onReadingAction = {},
+            onAppClick = {},
+            onNavigateToApps = {},
+            onSettings = {},
+        )
     }
 }

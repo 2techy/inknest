@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.BuildConfig
@@ -24,9 +25,12 @@ import dev.twotechy.inknest.ui.components.StatePanel
 @Composable
 internal fun SettingsScreen(
     mode: HomePreviewMode?,
+    isDefaultLauncher: Boolean,
     modifier: Modifier,
     contentPadding: PaddingValues,
     onMode: (HomePreviewMode) -> Unit,
+    onRequestLauncherRole: () -> Unit,
+    onOpenAndroidSettings: () -> Unit,
 ) {
     LazyColumn(
         modifier.fillMaxSize(),
@@ -40,12 +44,35 @@ internal fun SettingsScreen(
                 "E-Ink appearance · high contrast, static transitions and a minute clock.",
             )
         }
+
+        // Launcher Section
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionHeading("Default launcher")
+                if (isDefaultLauncher) {
+                    StatePanel(
+                        "InkNest is your default launcher",
+                        "Pressing Home brings you directly to your books and pinned apps.",
+                        action = "System home settings",
+                        onAction = onOpenAndroidSettings,
+                    )
+                } else {
+                    StatePanel(
+                        "Set InkNest as default home",
+                        "Keep your reading front and center every time you unlock your device.",
+                        action = "Set as default launcher",
+                        onAction = onRequestLauncherRole,
+                    )
+                }
+            }
+        }
+
         if (mode != null) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SectionHeading("Home preview", "DEBUG BUILD ONLY")
                     Text(
-                        "Choose a state, then return Home. All books and apps shown are sample data.",
+                        stringResource(dev.twotechy.inknest.R.string.preview_explanation),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     HomePreviewMode.entries.forEach { choice ->

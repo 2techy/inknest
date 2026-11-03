@@ -8,6 +8,7 @@ import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
+import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
@@ -58,7 +59,13 @@ class HomeViewModelTest {
     ) = HomeViewModel(
         reading,
         object : InstalledAppsRepository {
+            override val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
             override val pinnedApps = pins
+            override val isLoading = MutableStateFlow(false)
+            override suspend fun reload(retainPackages: Set<String>) = Unit
+            override suspend fun pin(componentId: String) = Unit
+            override suspend fun unpin(componentId: String) = Unit
+            override suspend fun movePin(componentId: String, offset: Int) = Unit
         },
         object : ReadingStatsRepository {
             override val stats = this@HomeViewModelTest.stats
@@ -73,22 +80,51 @@ class HomeViewModelTest {
             val vm = viewModel()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
             runCurrent()
-            assertEquals(HomeUiState.Loading, vm.uiState.value)
+            val initialLoaded = vm.uiState.value as HomeUiState.Loaded
+            assertEquals(ReadingSectionState.Loading, initialLoaded.reading)
+
             reading.state.value = ReadingState.Empty
             runCurrent()
-            assertEquals(HomeUiState.Empty, vm.uiState.value)
+            val emptyLoaded = vm.uiState.value as HomeUiState.Loaded
+            assertEquals(ReadingSectionState.Empty, emptyLoaded.reading)
+
             reading.state.value = ReadingState.Error("No permission")
             runCurrent()
-            assertEquals(HomeUiState.Error("No permission"), vm.uiState.value)
+            val errorLoaded = vm.uiState.value as HomeUiState.Loaded
+            assertEquals(ReadingSectionState.Error("No permission"), errorLoaded.reading)
+
             reading.state.value = ReadingState.Content(book)
             runCurrent()
-            val content = vm.uiState.value as HomeUiState.Content
+            val contentLoaded = vm.uiState.value as HomeUiState.Loaded
+            val content = contentLoaded.reading as ReadingSectionState.Content
             assertEquals(book.id, content.current.id)
             assertNull(content.current.author)
             assertNull(content.current.progress)
-            assertNull(content.stats)
-            assertTrue(content.pinnedApps.isEmpty())
+            assertNull(contentLoaded.stats)
+            assertTrue(contentLoaded.pinnedApps.isEmpty())
         }
+
+    @Test
+    fun `pins remain available even when reading state is Error or Empty`() = runTest(dispatcher) {
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+
+        pins.value = listOf(PinnedApp("test/reader", "Reader"))
+        reading.state.value = ReadingState.Error("Storage unavailable")
+        runCurrent()
+
+        val loaded = vm.uiState.value as HomeUiState.Loaded
+        assertEquals(ReadingSectionState.Error("Storage unavailable"), loaded.reading)
+        assertEquals(1, loaded.pinnedApps.size)
+        assertEquals("test/reader", loaded.pinnedApps.first().componentId)
+        assertEquals("Reader", loaded.pinnedApps.first().label)
+
+        reading.state.value = ReadingState.Empty
+        runCurrent()
+        val emptyLoaded = vm.uiState.value as HomeUiState.Loaded
+        assertEquals(ReadingSectionState.Empty, emptyLoaded.reading)
+        assertEquals(1, emptyLoaded.pinnedApps.size)
+    }
 
     @Test
     fun `combines independent book pins and statistics updates`() = runTest(dispatcher) {
@@ -98,16 +134,17 @@ class HomeViewModelTest {
         pins.value = listOf(PinnedApp("test/reader", "Reader"))
         stats.value = ReadingStats(12, 60)
         runCurrent()
-        val content = vm.uiState.value as HomeUiState.Content
-        assertEquals(listOf("Reader"), content.pinnedApps)
+        val content = vm.uiState.value as HomeUiState.Loaded
+        assertEquals(listOf(HomePinUiModel("test/reader", "Reader")), content.pinnedApps)
         assertEquals(HomeReadingStats(12, 60), content.stats)
         pins.value = emptyList()
         stats.value = null
         reading.state.value = ReadingState.Content(book.copy(title = "Changed", progress = 30))
         runCurrent()
-        val updated = vm.uiState.value as HomeUiState.Content
-        assertEquals("Changed", updated.current.title)
-        assertEquals(30, updated.current.progress)
+        val updated = vm.uiState.value as HomeUiState.Loaded
+        val readingContent = updated.reading as ReadingSectionState.Content
+        assertEquals("Changed", readingContent.current.title)
+        assertEquals(30, readingContent.current.progress)
         assertTrue(updated.pinnedApps.isEmpty())
         assertNull(updated.stats)
     }
@@ -128,10 +165,13 @@ class HomeViewModelTest {
             vm.refresh()
             runCurrent()
             assertEquals(1, reading.refreshCalls)
-            assertTrue((vm.uiState.value as HomeUiState.Content).isRefreshing)
+            val loadedState = vm.uiState.value as HomeUiState.Loaded
+            val refreshing = loadedState.reading as ReadingSectionState.Content
+            assertTrue(refreshing.isRefreshing)
             gate.complete(Unit)
             runCurrent()
-            val stale = vm.uiState.value as HomeUiState.Content
+            val staleLoaded = vm.uiState.value as HomeUiState.Loaded
+            val stale = staleLoaded.reading as ReadingSectionState.Content
             assertEquals(book.id, stale.current.id)
             assertFalse(stale.isRefreshing)
             assertNotNull(stale.refreshError)
@@ -139,7 +179,8 @@ class HomeViewModelTest {
                 { reading.state.value = ReadingState.Content(book.copy(progress = 70)) }
             vm.refresh()
             runCurrent()
-            val recovered = vm.uiState.value as HomeUiState.Content
+            val recoveredLoaded = vm.uiState.value as HomeUiState.Loaded
+            val recovered = recoveredLoaded.reading as ReadingSectionState.Content
             assertEquals(2, reading.refreshCalls)
             assertEquals(70, recovered.current.progress)
             assertNull(recovered.refreshError)
@@ -153,7 +194,7 @@ class HomeViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
         vm.refresh()
         runCurrent()
-        val state = vm.uiState.value as HomeUiState.Content
+        val state = (vm.uiState.value as HomeUiState.Loaded).reading as ReadingSectionState.Content
         assertFalse(state.isRefreshing)
         assertNull(state.refreshError)
         reading.refreshAction = {}

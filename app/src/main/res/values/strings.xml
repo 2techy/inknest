@@ -1,3 +1,29 @@
 <resources>
     <string name="app_name">InkNest</string>
+    <string name="apps_title">Apps</string>
+    <string name="search_apps_hint">Search apps…</string>
+    <string name="close_search">Close search</string>
+    <string name="search_apps">Search apps</string>
+    <string name="switch_to_list">Switch to list view</string>
+    <string name="switch_to_grid">Switch to grid view</string>
+    <string name="retry">Retry</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="loading_apps">Scanning apps</string>
+    <string name="loading_apps_detail">Loading your installed applications…</string>
+    <string name="no_apps_found">No apps found</string>
+    <string name="no_launcher_apps">No launcher apps</string>
+    <string name="no_apps_match">No applications match &quot;%1$s&quot;.</string>
+    <string name="no_launcher_apps_detail">No launchable applications were found on this device.</string>
+    <string name="pinned_apps">Pinned</string>
+    <string name="all_apps">All apps</string>
+    <string name="pinned">Pinned</string>
+    <string name="pin_app">Pin to Home</string>
+    <string name="unpin_app">Unpin from Home</string>
+    <string name="move_earlier">Move earlier</string>
+    <string name="move_later">Move later</string>
+    <string name="app_unavailable">App is no longer available</string>
+    <string name="app_launch_denied">Unable to open this app.</string>
+    <string name="home_role_not_set">Default launcher was not set</string>
+    <string name="settings_unavailable">System settings are unavailable.</string>
+    <string name="preview_explanation">Choose a state, then return Home. Reading data is simulated only when preview is enabled; installed apps remain real.</string>
 </resources>

@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "InkNest"
+rootProject.name = "InkNest Launcher"
 include(":app")
