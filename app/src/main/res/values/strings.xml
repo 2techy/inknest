@@ -140,4 +140,13 @@
     <string name="reading_source_action">Reading source</string>
     <string name="reading_unknown_author">Unknown author</string>
     <string name="reading_no_cover">No cover</string>
+    <string name="reading_open_koreader">Open KOReader</string>
+    <string name="reading_continue">Continue reading</string>
+    <string name="reading_open_error">Could not open reader</string>
+    <string name="reading_open_missing_app">KOReader is not installed or is unavailable. Choose the reader in Reading settings.</string>
+    <string name="reading_open_missing_file">This book is no longer in the selected folder. Check the file and refresh your reading source.</string>
+    <string name="reading_open_permission">Access to this book is unavailable. Choose your book folder again in Reading settings.</string>
+    <string name="reading_open_unavailable">The reading source changed or the reader could not be opened. Check Reading settings and try again.</string>
+    <string name="reading_progress_percent">%1$d%% read</string>
+    <string name="reading_progress_unknown">Progress unavailable</string>
 </resources>

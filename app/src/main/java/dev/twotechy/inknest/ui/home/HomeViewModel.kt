@@ -6,9 +6,8 @@ import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
+import dev.twotechy.inknest.model.ReadingSyncIssue
+import java.io.IOException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -40,7 +39,7 @@ internal class HomeViewModel(
         emit(
             HomeUiState.Loaded(
                 reading = ReadingSectionState.Error(
-                    dev.twotechy.inknest.model.ReadingSyncIssue.Cache,
+                    ReadingSyncIssue.Cache,
                 ),
                 pinnedApps = emptyList(),
                 stats = null,
@@ -56,7 +55,7 @@ internal class HomeViewModel(
         viewModelScope.launch {
             try {
                 readingRepository.refresh()
-            } catch (_: java.io.IOException) {
+            } catch (_: IOException) {
                 // Shared repository sync state contains the error; cached content stays visible.
             }
         }
@@ -78,6 +77,7 @@ private fun ReadingState.toReadingSectionState(): ReadingSectionState = when (th
             current.title,
             current.author,
             current.progress,
+            current.coverUri,
         ),
     )
 }

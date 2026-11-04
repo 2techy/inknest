@@ -3,7 +3,6 @@ package dev.twotechy.inknest.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,14 +12,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
 import dev.twotechy.inknest.model.AppPreferences
-import dev.twotechy.inknest.ui.apps.AppsRoute
-import dev.twotechy.inknest.ui.apps.AppsViewModel
 import dev.twotechy.inknest.ui.components.AppScaffold
-import dev.twotechy.inknest.ui.components.LauncherActions
 import dev.twotechy.inknest.ui.components.rememberDefaultLauncher
 import dev.twotechy.inknest.ui.components.rememberLauncherActions
-import dev.twotechy.inknest.ui.home.HomeRoute
-import dev.twotechy.inknest.ui.home.HomeViewModel
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
@@ -62,8 +56,6 @@ private fun InkNestContent(
     onboarding: OnboardingViewModel,
     settingsState: SettingsUiState,
 ) {
-    val homeViewModel: HomeViewModel = viewModel(factory = container.homeViewModelFactory)
-    val appsViewModel: AppsViewModel = viewModel(factory = container.appsViewModelFactory)
     val selected by navigation.selected.collectAsStateWithLifecycle()
     val tab = TopLevelDestination.valueOf(selected)
     val pageName by navigation.settingsPage.collectAsStateWithLifecycle()
@@ -73,17 +65,7 @@ private fun InkNestContent(
     val isDefaultLauncher by rememberDefaultLauncher(container.launcherModeController)
     val launcher = rememberLauncherActions(container.launcherModeController)
     val openPage = { value: SettingsPage -> navigation.openSettingsPage(value.name) }
-    // Back behavior according to plan M9:
-    // - From other tabs -> navigate back to Home
-    // - At Home:
-    //     - If default launcher: do nothing (stay at Home)
-    //     - If standalone app: BackHandler disabled -> system exits Activity
-    BackHandler(enabled = tab != TopLevelDestination.Home || isDefaultLauncher) {
-        if (tab != TopLevelDestination.Home) {
-            navigation.goHome()
-        }
-        // If at Home and isDefaultLauncher is true: consume back gesture to stay on Home launcher
-    }
+    HomeBackHandler(tab, isDefaultLauncher, navigation::goHome)
 
     val showNavigation = !setupVisible &&
         (tab != TopLevelDestination.Settings || page == SettingsPage.Overview)
@@ -102,27 +84,9 @@ private fun InkNestContent(
         } else {
             saveableStateHolder.SaveableStateProvider(tab.name) {
                 when (tab) {
-                    TopLevelDestination.Home -> HomeRoute(
-                        viewModel = homeViewModel,
-                        appLauncher = container.appLauncher,
-                        appIconLoader = container.appIconLoader,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = padding,
-                        onNavigateToApps = {
-                            navigation.select(TopLevelDestination.Apps)
-                        },
-                        onSettings = {
-                            navigation.select(TopLevelDestination.Settings)
-                        },
-                    )
+                    TopLevelDestination.Home -> HomeDestination(container, navigation, padding)
 
-                    TopLevelDestination.Apps -> AppsRoute(
-                        viewModel = appsViewModel,
-                        appLauncher = container.appLauncher,
-                        appIconLoader = container.appIconLoader,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = padding,
-                    )
+                    TopLevelDestination.Apps -> AppsDestination(container, padding)
 
                     TopLevelDestination.Settings -> SettingsRoute(
                         viewModel = settings,
@@ -147,5 +111,17 @@ private fun InkNestContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HomeBackHandler(
+    tab: TopLevelDestination,
+    isDefaultLauncher: Boolean,
+    goHome: () -> Unit,
+) {
+    // Standalone Home lets the system handle Back; the default launcher stays at Home.
+    BackHandler(enabled = tab != TopLevelDestination.Home || isDefaultLauncher) {
+        if (tab != TopLevelDestination.Home) goHome()
     }
 }

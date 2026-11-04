@@ -2,9 +2,10 @@
 
 Both debug and release use `CachedReadingRepository`. Home observes Room-backed current reading
 and an independent `ReadingSyncStatus`; pins, clock and statistics remain separate. No runtime
-sample-data path exists. Reading metadata/progress/cover enrichment and tracked history are later
-steps; current titles use the actual filename, and unknown author/progress/cover stay unknown.
-The current card links to reading Settings; the production reader opener is a separate change.
+sample-data path exists. Current reading and tracked history share the same cache and source
+refresh. Sidecar progress/status and EPUB title/author/cover enrich resolved books; unsupported or
+missing fields remain unknown. The current card opens the configured reader through
+`ReadingItemOpener`, without writing synthetic progress or last-read timestamps.
 
 ## Data and source boundaries
 
@@ -14,9 +15,13 @@ Missing both sources or corrupt data cannot masquerade as a successfully empty s
 file missing/outside grants retains its identity and filename with an availability warning.
 No current-book choice is inferred from statistics or basename/title matches.
 
-Room schema v1 is exported in `app/schemas`. `reading_items` stores source/path identity, filename
-and availability. `reading_sources` stores the current pointer, attempt/success timestamps and
-error. The source/path domain identity remains stable across primary-storage aliases. Physical
+Room schema v2 is exported in `app/schemas`. During development, schema changes do not carry
+migration code: increment the Room version when changing the schema, and allow Room to recreate
+the disposable reading database when no migration exists. Preferences, pins and SAF configuration
+live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
+rebuilds reading data from the configured source. `reading_items` stores source/path identity, availability,
+metadata, progress/status, source last-read time and nullable history order. `reading_sources`
+stores the current pointer, attempt/success timestamps, error and skipped-history count. The source/path domain identity remains stable across primary-storage aliases. Physical
 cache rows additionally use a fingerprint of the two tree assignments, so a candidate Books
 selection cannot overwrite the active partition before DataStore switches to it.
 
@@ -24,6 +29,41 @@ Candidate read/validation and cache write precede DataStore activation. A failed
 active config/cache. Unactivated partitions remain invisible and are removed by clear/disconnect.
 Grant cleanup checks the actual saved config, including after caller cancellation. There is no
 transaction spanning DataStore and Room; the partition/staging order handles the crash gap.
+
+## Metadata, covers and tracked history
+
+History follows the source array order. Canonical-path duplicates keep their first occurrence;
+same-title books at different paths remain separate. Source timestamps are validated seconds and
+converted to epoch milliseconds without overflow. Individual malformed entries are skipped with a
+warning/count. A structurally broken history document retains the previous tracked list; failed
+fallback selection cannot publish a false empty state. A successful replacement, its current
+pointer and history order are committed in one Room transaction. Missing/unresolved books remain
+tracked with their availability. `ReadingRepository.trackedItems` exposes the active partition for
+the upcoming Library screen; Home does not add a Recent section.
+
+Sidecars are reread on refresh, so a lower `percent_finished` replaces a higher previous value.
+Only finite values in [0, 1] are accepted. Explicit `reading`, `complete` and `abandoned` statuses
+map to known states; 100% alone does not imply Finished.
+
+EPUB2/3 extraction reuses the bounded ZIP/XML adapter. Valid title/author survive unsupported or
+missing artwork. Private PNG thumbnails have a longest edge of at most 480 pixels and are written
+through a temporary file plus atomic rename. Their keys include source/partition, canonical path
+and source size/mtime. Unchanged known fingerprints reuse metadata and existing covers; unknown
+fingerprints are reread. Changed files use a new key. Old unreferenced thumbnails are pruned after
+24 hours, allowing concurrent candidate reads to stage files safely. Clear/disconnect removes the
+cover cache along with reading rows. No bitmap is stored in ViewModels or saved state.
+
+## Opening the reader
+
+`ReadingItemOpener` is a main-safe platform boundary shared by reading routes. Source-app fallback
+opens only the selected installed package and is labelled **Open KOReader**. Direct mode is used
+only for an explicitly confirmed package version, re-resolves the original file and passes its
+content URI/MIME through ACTION_VIEW with read permission and ClipData. A changed version falls
+back to ordinary app launch. Missing app/file/grant and a changed source return typed results with
+Settings recovery; sending an intent never mutates reading progress or history.
+
+The virtual KOReader remains configured as SourceAppOnly because cold direct-open was unreliable.
+No additional direct-open compatibility claim is made by the production integration.
 
 ## Refresh and failures
 
@@ -58,3 +98,11 @@ compatibility or production direct-open support.
 Versions were checked against the official [Room releases](https://developer.android.com/jetpack/androidx/releases/room3),
 [SQLite releases](https://developer.android.com/jetpack/androidx/releases/sqlite) and
 [KSP release](https://github.com/google/ksp/releases/tag/2.3.13).
+
+The reading-core extension was checked on 2026-11-05 with six selected JVM tests and targeted
+Android checks for metadata/thumbnail reuse and invalidation, EPUB2/3 and missing
+artwork, decreasing progress, path deduplication, corrupt/partial history and opener failures.
+Existing cache persistence/candidate-cancellation tests also passed. Optimized release opened the
+configured KOReader app cold and warm using real virtual-device data; actual metadata/covers were
+inspected at the existing viewport and 150% font scale. No full launcher regression or hardware
+E-Ink acceptance was repeated.

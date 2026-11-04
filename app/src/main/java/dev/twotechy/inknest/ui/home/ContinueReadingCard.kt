@@ -2,15 +2,11 @@ package dev.twotechy.inknest.ui.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,9 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,6 +28,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.ui.components.BookCover
 import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
@@ -66,7 +61,7 @@ internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
                         coverWidth + InkSpacing.lg + InkReadingTokens.minDetailsWidth * fontScale
                 if (stacked) {
                     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
-                        BookCover(Modifier.width(coverWidth).aspectRatio(0.7f))
+                        BookCover(book.coverUri, Modifier.width(coverWidth).aspectRatio(0.7f))
                         CurrentBookDetails(book)
                     }
                 } else {
@@ -74,7 +69,7 @@ internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(InkSpacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BookCover(Modifier.width(coverWidth).aspectRatio(0.7f))
+                        BookCover(book.coverUri, Modifier.width(coverWidth).aspectRatio(0.7f))
                         CurrentBookDetails(book, Modifier.weight(1f))
                     }
                 }
@@ -99,9 +94,14 @@ private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier)
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ProgressLabel(book.progress)
+        val action = if (book.canContinue) {
+            R.string.reading_continue
+        } else {
+            R.string.reading_open_koreader
+        }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                stringResource(R.string.reading_source_action),
+                stringResource(action),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -115,42 +115,11 @@ private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier)
 }
 
 @Composable
-private fun BookCover(modifier: Modifier) {
-    val ink = MaterialTheme.colorScheme.onSurfaceVariant
-    val description = stringResource(R.string.reading_no_cover)
-    Box(
-        modifier.background(
-            MaterialTheme.colorScheme.surfaceVariant,
-            RoundedCornerShape(InkRadius.small),
-        )
-            .border(
-                InkBorder.default,
-                MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(InkRadius.small),
-            )
-            .padding(InkSpacing.sm).semantics {
-                contentDescription = description
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        // Cover art is decorative: drawing it avoids scaled text overflowing tiny thumbnails.
-        Canvas(Modifier.fillMaxSize()) {
-            drawLine(
-                ink,
-                Offset(size.width * 0.3f, size.height * 0.5f),
-                Offset(size.width * 0.7f, size.height * 0.5f),
-                InkReadingTokens.artworkStroke.toPx(),
-            )
-        }
-    }
-}
-
-@Composable
 private fun ProgressLabel(progress: Int?) {
     Text(
         progress?.let {
-            "$it% read"
-        } ?: "Progress unavailable",
+            stringResource(R.string.reading_progress_percent, it)
+        } ?: stringResource(R.string.reading_progress_unknown),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -160,10 +129,11 @@ private fun ProgressLabel(progress: Int?) {
 private fun ProgressTrack(progress: Int) {
     val ink = MaterialTheme.colorScheme.onSurface
     val track = MaterialTheme.colorScheme.outlineVariant
+    val description = stringResource(R.string.reading_progress_percent, progress)
     Canvas(
         Modifier.fillMaxWidth().height(InkReadingTokens.progressHeight).semantics {
             contentDescription =
-                "$progress percent read"
+                description
         },
     ) {
         drawRect(track)
