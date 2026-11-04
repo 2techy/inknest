@@ -13,6 +13,8 @@ import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UnconnectedReadingStatsRepository
 import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
+import dev.twotechy.inknest.data.source.BookCoverCache
+import dev.twotechy.inknest.data.source.BookMetadataReader
 import dev.twotechy.inknest.data.source.BookProbeDataSource
 import dev.twotechy.inknest.data.source.KoreaderCurrentSource
 import dev.twotechy.inknest.data.source.SafSourceAccess
@@ -22,6 +24,8 @@ import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.LauncherModeController
 import dev.twotechy.inknest.platform.PackageChangeReceiver
+import dev.twotechy.inknest.platform.ReadingItemOpener
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,12 +51,22 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
     val sourceConfig = ReadingSourceConfigRepository(appContext.userPreferencesDataStore)
     val sourceAccess = SafSourceAccess(appContext.contentResolver)
     val database = ReadingDatabase.create(appContext)
+    val cache = ReadingCache(database.readingDao())
+    val covers = BookCoverCache(
+        File(appContext.filesDir, "reading-covers"),
+    )
+    val metadata = BookMetadataReader(
+        books,
+        covers,
+        cache::metadata,
+    )
     val reading =
         CachedReadingRepository(
             sourceConfig,
-            ReadingCache(database.readingDao()),
-            KoreaderCurrentSource(files, books, access = sourceAccess),
+            cache,
+            KoreaderCurrentSource(files, books, access = sourceAccess, metadataReader = metadata),
             scope,
+            covers,
         )
     val realSources =
         SafSourceSettingsRepository(
@@ -67,6 +81,11 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
     PackageChangeReceiver(apps, scope, icons::clear).register(appContext)
     return AppContainer(
         readingRepository = reading,
+        readingItemOpener = ReadingItemOpener(
+            appContext,
+            sourceConfig,
+            books,
+        ),
         installedAppsRepository = apps,
         readingStatsRepository = UnconnectedReadingStatsRepository(),
         userPreferencesRepository = preferences,

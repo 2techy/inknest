@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
+import dev.twotechy.inknest.data.source.BookCoverCache
 import dev.twotechy.inknest.data.source.CurrentReadingSource
 import dev.twotechy.inknest.data.source.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -38,6 +39,7 @@ internal class CachedReadingRepository(
     private val cache: ReadingCache,
     private val source: CurrentReadingSource,
     private val scope: CoroutineScope,
+    private val covers: BookCoverCache? = null,
 ) : ReadingRepository {
     private val transition = Mutex()
     private val requests = Mutex()
@@ -56,6 +58,21 @@ internal class CachedReadingRepository(
             }.onStart { emit(ReadingCacheObservation(active)) }
         }
     }.stateIn(scope, SharingStarted.Eagerly, ReadingCacheObservation(null))
+
+    private val history = key.flatMapLatest { active ->
+        if (active ==
+            null
+        ) {
+            flowOf(null to emptyList())
+        } else {
+            cache.observeHistory(active).map { rows ->
+                active to rows.map { it.toReadingItem() }
+            }.onStart { emit(active to emptyList()) }
+        }
+    }
+    override val trackedItems = combine(history, key) { (observed, items), active ->
+        if (observed == active) items else emptyList()
+    }
 
     override val reading = combine(observation, key, writeErrors) { state, active, errors ->
         state.readingState(active, errors[active])
@@ -110,6 +127,7 @@ internal class CachedReadingRepository(
             withActiveSource(active) {
                 cache.save(active, result, attempt)
                 writeErrors.update { it - active }
+                covers?.prune(cache.coverUris())
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -160,13 +178,12 @@ internal class CachedReadingRepository(
         val snapshot = if (nextKey != null) source.read(candidate) else null
         transition.withLock {
             if (config.config.first() != before) throw IOException("Source selection changed")
-            if (snapshot !=
-                null
-            ) {
+            if (snapshot != null) {
                 cache.save(checkNotNull(nextKey), snapshot, System.currentTimeMillis())
             }
             config.activateTree(before, candidate)
             if (nextKey != null) writeErrors.update { it - nextKey }
+            covers?.prune(cache.coverUris())
         }
     }
 
@@ -175,13 +192,15 @@ internal class CachedReadingRepository(
         config.disconnect()
         writeErrors.value = emptyMap()
         cache.clearAll()
+        covers?.clear()
     }
 
     suspend fun clearCache() {
         transition.withLock {
-            val active = config.config.first().readingCacheKey() ?: return
-            requests.withLock { jobs[active]?.cancel() }
+            if (config.config.first().readingCacheKey() == null) return
+            requests.withLock { jobs.values.forEach { it.cancel() } }
             cache.clearAll()
+            covers?.clear()
         }
         refresh()
     }

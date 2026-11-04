@@ -7,6 +7,7 @@ import dev.twotechy.inknest.data.local.reading.ReadingSourceEntity
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.ReadingStatus
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 
@@ -40,6 +41,7 @@ internal data class ReadingCacheObservation(
             running = running,
             error = issue,
             stale = source.isStale(issue),
+            skippedHistoryEntries = source?.skippedHistoryEntries ?: 0,
         )
     }
 }
@@ -51,11 +53,14 @@ private fun CachedReading.readingState(): ReadingState {
         ?: ReadingState.Loading
 }
 
-private fun ReadingBookEntity.toReadingItem() = ReadingItem(
+internal fun ReadingBookEntity.toReadingItem() = ReadingItem(
     id = ReadingItemId(sourceId, path),
     title = title,
-    author = null,
-    progress = null,
+    author = author,
+    progress = progress,
+    coverUri = coverUri,
+    status = ReadingStatus.valueOf(status),
+    lastReadAt = lastReadAt,
     availability = BookAvailability.valueOf(availability),
 )
 

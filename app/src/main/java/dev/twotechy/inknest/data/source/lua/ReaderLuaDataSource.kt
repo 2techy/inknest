@@ -1,6 +1,7 @@
 package dev.twotechy.inknest.data.source.lua
 
 import java.io.InputStream
+import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 
 internal data class HistoryEntryDto(val file: String, val time: Long)
@@ -12,22 +13,51 @@ internal class ReaderLuaDataSource(private val loader: BoundedLuaLoader = Bounde
     }
 
     suspend fun history(input: InputStream): List<HistoryEntryDto> = loader.read(input) { table ->
-        val keys = table.keys()
-        if (keys.size > 100_000 || keys.any { !it.isinttype() || it.toint() < 1 }) invalid()
-        val ordered = keys.map { it.toint() }.sorted()
-        if (ordered != (1..ordered.size).toList()) invalid()
-        ordered.map { index ->
-            val entry = table.rawget(index)
-            if (!entry.istable()) invalid()
-            val time = entry.rawget("time")
-            if (time.type() != LuaValue.TNUMBER || !time.todouble().isFinite() ||
-                time.todouble() < 0 || time.todouble() >= Long.MAX_VALUE.toDouble() ||
-                time.todouble() != time.tolong().toDouble()
-            ) {
-                invalid()
+        historyIndices(table).map { historyEntry(table.rawget(it)) }
+    }
+
+    // A malformed row cannot discard independent valid entries in an otherwise valid document.
+    suspend fun trackedHistory(input: InputStream): TrackedHistoryDto =
+        loader.read(input) { table ->
+            var skipped = 0
+            val entries = historyIndices(table).mapNotNull { index ->
+                try {
+                    historyEntry(table.rawget(index))
+                } catch (error: LuaSourceException) {
+                    if (error.reason != LuaFailure.InvalidData) throw error
+                    skipped++
+                    null
+                }
             }
-            HistoryEntryDto(strictPath(entry.rawget("file")), time.tolong())
+            TrackedHistoryDto(entries, skipped)
         }
+
+    private fun historyIndices(table: LuaTable): List<Int> {
+        val keys = table.keys()
+        if (keys.size > 100_000) invalid()
+        val ordered = keys.map { key ->
+            if (!key.isinttype()) invalid()
+            val index = key.toint()
+            if (index < 1) invalid()
+            index
+        }.sorted()
+        if (ordered != (1..ordered.size).toList()) invalid()
+        return ordered
+    }
+
+    private fun historyEntry(entry: LuaValue): HistoryEntryDto {
+        if (!entry.istable()) invalid()
+        val time = historyTimestamp(entry.rawget("time"))
+        return HistoryEntryDto(strictPath(entry.rawget("file")), time)
+    }
+
+    private fun historyTimestamp(value: LuaValue): Long {
+        if (value.type() != LuaValue.TNUMBER) invalid()
+        val seconds = value.todouble()
+        if (!seconds.isFinite()) invalid()
+        if (seconds !in 0.0..(Long.MAX_VALUE / 1000).toDouble()) invalid()
+        if (seconds != value.tolong().toDouble()) invalid()
+        return value.tolong()
     }
 
     suspend fun sidecar(input: InputStream): SidecarDto = loader.read(input) { table ->
@@ -59,3 +89,5 @@ internal class ReaderLuaDataSource(private val loader: BoundedLuaLoader = Bounde
 }
 
 internal data class SidecarDto(val percent: Double?, val status: String?)
+
+internal data class TrackedHistoryDto(val entries: List<HistoryEntryDto>, val skipped: Int = 0)

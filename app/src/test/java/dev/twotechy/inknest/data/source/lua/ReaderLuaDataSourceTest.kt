@@ -42,6 +42,13 @@ class ReaderLuaDataSourceTest {
             source("return {{file='b.epub',time=1},{file='a.epub',time=9}}"),
         )
         assertEquals(listOf("b.epub", "a.epub"), entries.map { it.file })
+        val partial = reader.trackedHistory(
+            source(
+                "return {{file='/a',time=2},false,{file='/b',time=1e30},{file='/c',time=3}}",
+            ),
+        )
+        assertEquals(listOf("/a", "/c"), partial.entries.map { it.file })
+        assertEquals(2, partial.skipped)
         assertTrue(reader.history(source("return {}")).isEmpty())
         for (script in listOf(
             "return {{file='a',time='9'}}",

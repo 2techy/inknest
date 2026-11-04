@@ -9,4 +9,5 @@ data class ReadingSyncStatus(
     val running: Boolean = false,
     val error: ReadingSyncIssue? = null,
     val stale: Boolean = false,
+    val skippedHistoryEntries: Int = 0,
 )

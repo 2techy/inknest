@@ -16,6 +16,7 @@ import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.LauncherModeController
+import dev.twotechy.inknest.platform.ReadingItemOpener
 import dev.twotechy.inknest.ui.apps.AppsViewModel
 import dev.twotechy.inknest.ui.home.HomeViewModel
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
@@ -35,6 +36,7 @@ internal class AppContainer(
     val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
     val safSourceAccess: SafSourceAccess? = null,
     val readerProbeRepository: ReaderProbeRepository? = null,
+    val readingItemOpener: ReadingItemOpener? = null,
 ) {
     val settingsViewModelFactory = viewModelFactory {
         initializer {

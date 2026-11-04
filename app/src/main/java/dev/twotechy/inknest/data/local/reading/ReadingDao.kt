@@ -10,7 +10,10 @@ import kotlinx.coroutines.flow.Flow
 
 private const val CURRENT_QUERY = """
     SELECT s.*, b.sourceId AS book_sourceId, b.snapshotKey AS book_snapshotKey,
-        b.path AS book_path, b.title AS book_title, b.availability AS book_availability
+        b.path AS book_path, b.title AS book_title, b.availability AS book_availability,
+        b.author AS book_author, b.progress AS book_progress, b.coverUri AS book_coverUri,
+        b.status AS book_status, b.lastReadAt AS book_lastReadAt, b.historyOrder AS book_historyOrder,
+        b.fingerprint AS book_fingerprint
     FROM reading_sources s LEFT JOIN reading_items b
         ON s.sourceId=b.sourceId AND s.snapshotKey=b.snapshotKey AND s.currentPath=b.path
     WHERE s.sourceId=:sourceId AND s.snapshotKey=:snapshotKey
@@ -23,6 +26,29 @@ internal interface ReadingDao {
 
     @Query(CURRENT_QUERY)
     suspend fun get(sourceId: String, snapshotKey: String): CachedReading?
+
+    @Query(
+        "SELECT * FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND historyOrder IS NOT NULL ORDER BY historyOrder",
+    )
+    fun observeHistory(sourceId: String, snapshotKey: String): Flow<List<ReadingBookEntity>>
+
+    @Query(
+        "SELECT * FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND path=:path",
+    )
+    suspend fun book(sourceId: String, snapshotKey: String, path: String): ReadingBookEntity?
+
+    @Query("SELECT coverUri FROM reading_items WHERE coverUri IS NOT NULL")
+    suspend fun coverUris(): List<String>
+
+    @Query(
+        "UPDATE reading_items SET historyOrder=NULL WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey",
+    )
+    suspend fun resetHistory(sourceId: String, snapshotKey: String)
+
+    @Query(
+        "DELETE FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND historyOrder IS NULL AND (:currentPath IS NULL OR path != :currentPath)",
+    )
+    suspend fun pruneBooks(sourceId: String, snapshotKey: String, currentPath: String?)
 
     @Upsert suspend fun putBook(book: ReadingBookEntity)
 
@@ -48,8 +74,26 @@ internal interface ReadingDao {
     }
 
     @Transaction
-    suspend fun save(source: ReadingSourceEntity, book: ReadingBookEntity?) {
-        if (book != null) putBook(book)
+    suspend fun save(
+        source: ReadingSourceEntity,
+        books: List<ReadingBookEntity>,
+        replaceHistory: Boolean,
+    ) {
+        if (replaceHistory) resetHistory(source.sourceId, source.snapshotKey)
+        for (book in books) {
+            putBook(
+                if (!replaceHistory && book.historyOrder == null) {
+                    val previous = book(source.sourceId, source.snapshotKey, book.path)
+                    book.copy(
+                        historyOrder = previous?.historyOrder,
+                        lastReadAt = previous?.lastReadAt,
+                    )
+                } else {
+                    book
+                },
+            )
+        }
+        pruneBooks(source.sourceId, source.snapshotKey, source.currentPath)
         putSource(source)
     }
 

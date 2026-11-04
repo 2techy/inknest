@@ -45,6 +45,15 @@ internal class BookProbeDataSource(
             throw UnresolvedBookPath()
         }
 
+    suspend fun resolveIdentity(config: ReadingSourceConfig, path: String): ResolvedBook = resolve(
+        config,
+        if (path.startsWith("primary:")) {
+            Environment.getExternalStorageDirectory().path + "/" + path.removePrefix("primary:")
+        } else {
+            path
+        },
+    )
+
     suspend fun canonicalPath(path: String): String = withContext(Dispatchers.IO) {
         pathResolver().relative(path, "primary:")?.let { "primary:" + it.joinToString("/") } ?: path
     }
@@ -67,7 +76,10 @@ internal class BookProbeDataSource(
         return files.read(book.tree, path, ReaderLuaDataSource()::sidecar)
     }
 
-    suspend fun epub(book: ResolvedBook): EpubProbeResult = withContext(Dispatchers.IO) {
+    suspend fun epub(
+        book: ResolvedBook,
+        onCover: suspend (ByteArray) -> Unit = {},
+    ): EpubProbeResult = withContext(Dispatchers.IO) {
         if (!book.relative.last().endsWith(
                 ".epub",
                 ignoreCase = true,
@@ -87,7 +99,7 @@ internal class BookProbeDataSource(
                 file.outputStream().use { copyBounded(input, it, 256L * 1024 * 1024) }
             }
             try {
-                EpubProbe().read(file)
+                EpubProbe().read(file, onCover)
             } catch (
                 error: SourceLimitExceeded,
             ) {

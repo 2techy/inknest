@@ -9,8 +9,12 @@ data class ReadingItem(
     val progress: Int?,
     val coverUri: String? = null,
     val availability: BookAvailability = BookAvailability.Available,
+    val status: ReadingStatus = ReadingStatus.Unknown,
+    val lastReadAt: Long? = null,
 )
 
 data class ReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)
 
 data class PinnedApp(val componentId: String, val label: String, val iconVersion: Long = 0)
+
+enum class ReadingStatus { Reading, Finished, Abandoned, Unknown }

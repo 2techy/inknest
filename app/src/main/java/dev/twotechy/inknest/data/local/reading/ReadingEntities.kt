@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data.local.reading
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Embedded
 import androidx.room3.Entity
 
@@ -10,6 +11,14 @@ internal data class ReadingBookEntity(
     val path: String,
     val title: String,
     val availability: String,
+    val author: String? = null,
+    val progress: Int? = null,
+    val coverUri: String? = null,
+    @ColumnInfo(defaultValue = "'Unknown'")
+    val status: String = "Unknown",
+    val lastReadAt: Long? = null,
+    val historyOrder: Int? = null,
+    val fingerprint: String? = null,
 )
 
 @Entity(tableName = "reading_sources", primaryKeys = ["sourceId", "snapshotKey"])
@@ -20,6 +29,8 @@ internal data class ReadingSourceEntity(
     val lastAttemptAt: Long? = null,
     val lastSuccessAt: Long? = null,
     val error: String? = null,
+    @ColumnInfo(defaultValue = "0")
+    val skippedHistoryEntries: Int = 0,
 )
 
 internal data class CachedReading(

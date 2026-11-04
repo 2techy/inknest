@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 
 @Database(
     entities = [ReadingBookEntity::class, ReadingSourceEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 internal abstract class ReadingDatabase : RoomDatabase() {
@@ -19,6 +19,9 @@ internal abstract class ReadingDatabase : RoomDatabase() {
         fun create(context: Context): ReadingDatabase = Room.databaseBuilder<ReadingDatabase>(
             context.applicationContext,
             "reading.db",
-        ).setDriver(AndroidSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO).build()
+        ).fallbackToDestructiveMigration(dropAllTables = true)
+            .setDriver(AndroidSQLiteDriver())
+            .setQueryCoroutineContext(Dispatchers.IO)
+            .build()
     }
 }

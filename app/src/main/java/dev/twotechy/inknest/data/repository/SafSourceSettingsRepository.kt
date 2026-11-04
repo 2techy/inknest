@@ -131,5 +131,5 @@ internal class SafSourceSettingsRepository(
         throw IOException("Selected directory has no KOReader settings or history")
     }
 
-    override suspend fun clearCache() = reading.clearCache()
+    override suspend fun clearCache() = mutex.withLock { reading.clearCache() }
 }
