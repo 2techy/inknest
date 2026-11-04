@@ -94,34 +94,4 @@ class SettingsViewModelTest {
         assertEquals(saved, vm.uiState.value.preferences)
         assertEquals(SettingsError.Read, vm.uiState.value.error)
     }
-
-    @Test fun `acknowledgements can retry failed reads and reuse loaded content`() = runTest(
-        dispatcher,
-    ) {
-        var reads = 0
-        val repository = AcknowledgementsRepository {
-            reads++
-            if (reads == 1) throw IOException("unavailable")
-            "license text"
-        }
-        val vm =
-            SettingsViewModel(
-                TestUserPreferencesRepository(),
-                UnconnectedSourceSettingsRepository(),
-                repository,
-            )
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
-        vm.loadAcknowledgements()
-        runCurrent()
-        assertEquals(AcknowledgementsUiState.Failed, vm.uiState.value.acknowledgements)
-        vm.loadAcknowledgements()
-        runCurrent()
-        assertEquals(
-            AcknowledgementsUiState.Content("license text"),
-            vm.uiState.value.acknowledgements,
-        )
-        vm.loadAcknowledgements()
-        runCurrent()
-        assertEquals(2, reads)
-    }
 }

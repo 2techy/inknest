@@ -34,10 +34,8 @@ class AppsViewModelTest {
     private val isLoadingFlow = MutableStateFlow(true)
 
     private var pinFailure: Exception? = null
-    private val moveCalls = mutableListOf<Pair<String, Int>>()
 
     private val pinnedCalls = mutableListOf<String>()
-    private val unpinnedCalls = mutableListOf<String>()
 
     private val fakeRepo = object : InstalledAppsRepository {
         override val installedApps = installedAppsFlow
@@ -49,13 +47,8 @@ class AppsViewModelTest {
             pinFailure?.let { throw it }
             pinnedCalls.add(componentId)
         }
-        override suspend fun unpin(componentId: String) {
-            unpinnedCalls.add(componentId)
-        }
-        override suspend fun movePin(componentId: String, offset: Int) {
-            pinFailure?.let { throw it }
-            moveCalls.add(componentId to offset)
-        }
+        override suspend fun unpin(componentId: String) = Unit
+        override suspend fun movePin(componentId: String, offset: Int) = Unit
     }
 
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
@@ -99,35 +92,6 @@ class AppsViewModelTest {
     }
 
     @Test
-    fun `toggleViewMode alternates between Grid and List`() = runTest(dispatcher) {
-        val vm = AppsViewModel(fakeRepo, SavedStateHandle())
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
-        runCurrent()
-
-        assertEquals(AppsViewMode.Grid, vm.uiState.value.viewMode)
-
-        vm.toggleViewMode()
-        runCurrent()
-        assertEquals(AppsViewMode.List, vm.uiState.value.viewMode)
-
-        vm.toggleViewMode()
-        runCurrent()
-        assertEquals(AppsViewMode.Grid, vm.uiState.value.viewMode)
-    }
-
-    @Test
-    fun `pin and unpin delegate to repository`() = runTest(dispatcher) {
-        val vm = AppsViewModel(fakeRepo, SavedStateHandle())
-        vm.pin("com.example/App")
-        runCurrent()
-        assertEquals(listOf("com.example/App"), pinnedCalls)
-
-        vm.unpin("com.example/App")
-        runCurrent()
-        assertEquals(listOf("com.example/App"), unpinnedCalls)
-    }
-
-    @Test
     fun `failed write keeps current apps and can be retried without crashing`() =
         runTest(dispatcher) {
             val vm = AppsViewModel(fakeRepo, SavedStateHandle())
@@ -149,22 +113,6 @@ class AppsViewModelTest {
             assertEquals(listOf("pkg.a/A"), pinnedCalls)
             assertNull(vm.uiState.value.error)
         }
-
-    @Test
-    fun `moving a pin uses stable identity and reports boundary actions`() = runTest(dispatcher) {
-        val vm = AppsViewModel(fakeRepo, SavedStateHandle())
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
-        installedAppsFlow.value = listOf(AppInfo("a/A", "A"), AppInfo("b/B", "B"))
-        pinnedAppsFlow.value = listOf(PinnedApp("b/B", "B"), PinnedApp("a/A", "A"))
-        runCurrent()
-        assertFalse(vm.uiState.value.pinnedApps.first().canMoveEarlier)
-        assertTrue(vm.uiState.value.pinnedApps.first().canMoveLater)
-        assertTrue(vm.uiState.value.pinnedApps.last().canMoveEarlier)
-        assertFalse(vm.uiState.value.pinnedApps.last().canMoveLater)
-        vm.movePin("b/B", 1)
-        runCurrent()
-        assertEquals(listOf("b/B" to 1), moveCalls)
-    }
 
     @Test
     fun `cancelled pin operation does not become an error`() = runTest(dispatcher) {

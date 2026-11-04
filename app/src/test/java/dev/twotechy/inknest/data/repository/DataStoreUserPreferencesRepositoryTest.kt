@@ -32,32 +32,14 @@ class DataStoreUserPreferencesRepositoryTest {
     }
 
     @Test
-    fun `starts empty and pins apps in order`() = testScope.runTest {
+    fun `pin changes preserve ordering and uniqueness`() = testScope.runTest {
         val repo = createRepository()
         assertTrue(repo.pinnedComponentIds.first().isEmpty())
-
         repo.pin("pkg.a/ActivityA")
         repo.pin("pkg.b/ActivityB")
-
+        repo.pin("pkg.a/ActivityA")
         assertEquals(listOf("pkg.a/ActivityA", "pkg.b/ActivityB"), repo.pinnedComponentIds.first())
-    }
-
-    @Test
-    fun `pinning duplicate component does not duplicate`() = testScope.runTest {
-        val repo = createRepository()
-        repo.pin("pkg.a/ActivityA")
-        repo.pin("pkg.a/ActivityA")
-
-        assertEquals(listOf("pkg.a/ActivityA"), repo.pinnedComponentIds.first())
-    }
-
-    @Test
-    fun `unpin removes component`() = testScope.runTest {
-        val repo = createRepository()
-        repo.pin("pkg.a/ActivityA")
-        repo.pin("pkg.b/ActivityB")
         repo.unpin("pkg.a/ActivityA")
-
         assertEquals(listOf("pkg.b/ActivityB"), repo.pinnedComponentIds.first())
     }
 
