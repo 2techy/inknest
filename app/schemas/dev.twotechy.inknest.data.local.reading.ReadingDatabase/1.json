@@ -1,0 +1,102 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "cc6de9881ceb47cefa4990a3c932e35a",
+    "entities": [
+      {
+        "tableName": "reading_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` TEXT NOT NULL, `snapshotKey` TEXT NOT NULL, `path` TEXT NOT NULL, `title` TEXT NOT NULL, `availability` TEXT NOT NULL, PRIMARY KEY(`sourceId`, `snapshotKey`, `path`))",
+        "fields": [
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "snapshotKey",
+            "columnName": "snapshotKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "path",
+            "columnName": "path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "availability",
+            "columnName": "availability",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sourceId",
+            "snapshotKey",
+            "path"
+          ]
+        }
+      },
+      {
+        "tableName": "reading_sources",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` TEXT NOT NULL, `snapshotKey` TEXT NOT NULL, `currentPath` TEXT, `lastAttemptAt` INTEGER, `lastSuccessAt` INTEGER, `error` TEXT, PRIMARY KEY(`sourceId`, `snapshotKey`))",
+        "fields": [
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "snapshotKey",
+            "columnName": "snapshotKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentPath",
+            "columnName": "currentPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastAttemptAt",
+            "columnName": "lastAttemptAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastSuccessAt",
+            "columnName": "lastSuccessAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "error",
+            "columnName": "error",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sourceId",
+            "snapshotKey"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cc6de9881ceb47cefa4990a3c932e35a')"
+    ]
+  }
+}

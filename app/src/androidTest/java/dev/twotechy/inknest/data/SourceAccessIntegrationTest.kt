@@ -5,12 +5,17 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.InkNestApplication
+import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.source.ReadingRefreshException
+import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.IOException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.FixMethodOrder
@@ -54,7 +59,7 @@ class SourceAccessIntegrationTest {
         assertEquals(prefs, container.userPreferencesRepository.appPreferences.first())
     }
 
-    @Test fun bRevokedBooksGrantIsIndependentOfReaderGrant() = runBlocking {
+    @Test fun bRevokedGrantsRetainCachedReadingIdentity() = runBlocking {
         assumeTrue(enabled())
         val container = container()
         val repository = checkNotNull(container.readingSourceConfigRepository)
@@ -62,6 +67,10 @@ class SourceAccessIntegrationTest {
         val access = checkNotNull(container.safSourceAccess)
         assumeTrue(config.booksTreeUri != null && config.koreaderTreeUri != null)
         val resolver = InstrumentationRegistry.getInstrumentation().targetContext.contentResolver
+        val reading = container.readingRepository
+        val cached = withTimeout(5_000) {
+            reading.reading.first { it is ReadingState.Content }
+        } as ReadingState.Content
         resolver.releasePersistableUriPermission(
             Uri.parse(config.booksTreeUri),
             Intent.FLAG_GRANT_READ_URI_PERMISSION,
@@ -69,5 +78,24 @@ class SourceAccessIntegrationTest {
         assertEquals(SourceAccessState.PermissionLost, access.inspect(config.booksTreeUri))
         assertEquals(SourceAccessState.Granted, access.inspect(config.koreaderTreeUri))
         assertEquals(config, repository.config.first())
+        resolver.releasePersistableUriPermission(
+            Uri.parse(config.koreaderTreeUri),
+            Intent.FLAG_GRANT_READ_URI_PERMISSION,
+        )
+        try {
+            reading.refresh()
+            fail("Lost KOReader access must fail refresh")
+        } catch (error: ReadingRefreshException) {
+            assertEquals(ReadingSyncIssue.PermissionLost, error.issue)
+        }
+        val sync = withTimeout(5_000) {
+            reading.sync.first {
+                it.error ==
+                    ReadingSyncIssue.PermissionLost
+            }
+        }
+        assertTrue(sync.stale)
+        val retained = reading.reading.first { it is ReadingState.Content } as ReadingState.Content
+        assertEquals(cached.current.id, retained.current.id)
     }
 }

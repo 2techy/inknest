@@ -1,13 +1,14 @@
 package dev.twotechy.inknest.ui.home
 
 import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.ReadingSyncIssue
+import dev.twotechy.inknest.model.ReadingSyncStatus
 
 data class BookUiModel(
     val id: ReadingItemId,
     val title: String,
     val author: String?,
     val progress: Int?,
-    val coverLabel: String? = null,
 )
 
 data class HomePinUiModel(val componentId: String, val label: String, val iconVersion: Long = 0)
@@ -15,12 +16,9 @@ data class HomePinUiModel(val componentId: String, val label: String, val iconVe
 sealed interface ReadingSectionState {
     data object Loading : ReadingSectionState
     data object Empty : ReadingSectionState
-    data class Error(val message: String) : ReadingSectionState
-    data class Content(
-        val current: BookUiModel,
-        val isRefreshing: Boolean = false,
-        val refreshError: String? = null,
-    ) : ReadingSectionState
+    data object NotConfigured : ReadingSectionState
+    data class Error(val issue: ReadingSyncIssue) : ReadingSectionState
+    data class Content(val current: BookUiModel) : ReadingSectionState
 }
 
 data class HomeReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)
@@ -32,5 +30,6 @@ sealed interface HomeUiState {
         val reading: ReadingSectionState,
         val pinnedApps: List<HomePinUiModel>,
         val stats: HomeReadingStats? = null,
+        val sync: ReadingSyncStatus = ReadingSyncStatus(),
     ) : HomeUiState
 }

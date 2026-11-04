@@ -70,11 +70,15 @@ class HomeViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
 
         pins.value = listOf(PinnedApp("test/reader", "Reader"))
-        reading.state.value = ReadingState.Error("Storage unavailable")
+        reading.state.value =
+            ReadingState.Error(dev.twotechy.inknest.model.ReadingSyncIssue.PermissionLost)
         runCurrent()
 
         val loaded = vm.uiState.value as HomeUiState.Loaded
-        assertEquals(ReadingSectionState.Error("Storage unavailable"), loaded.reading)
+        assertEquals(
+            ReadingSectionState.Error(dev.twotechy.inknest.model.ReadingSyncIssue.PermissionLost),
+            loaded.reading,
+        )
         assertEquals(1, loaded.pinnedApps.size)
         assertEquals("test/reader", loaded.pinnedApps.first().componentId)
         assertEquals("Reader", loaded.pinnedApps.first().label)
@@ -84,60 +88,6 @@ class HomeViewModelTest {
         val emptyLoaded = vm.uiState.value as HomeUiState.Loaded
         assertEquals(ReadingSectionState.Empty, emptyLoaded.reading)
         assertEquals(1, emptyLoaded.pinnedApps.size)
-    }
-
-    @Test
-    fun `refresh coalesces requests retains content on failure and recovers`() =
-        runTest(dispatcher) {
-            val gate = CompletableDeferred<Unit>()
-            reading.refreshAction = {
-                gate.await()
-                error("source unavailable")
-            }
-            reading.state.value = ReadingState.Content(book)
-            val vm = viewModel()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
-            runCurrent()
-            vm.refresh()
-            vm.refresh()
-            runCurrent()
-            assertEquals(1, reading.refreshCalls)
-            val loadedState = vm.uiState.value as HomeUiState.Loaded
-            val refreshing = loadedState.reading as ReadingSectionState.Content
-            assertTrue(refreshing.isRefreshing)
-            gate.complete(Unit)
-            runCurrent()
-            val staleLoaded = vm.uiState.value as HomeUiState.Loaded
-            val stale = staleLoaded.reading as ReadingSectionState.Content
-            assertEquals(book.id, stale.current.id)
-            assertFalse(stale.isRefreshing)
-            assertNotNull(stale.refreshError)
-            reading.refreshAction =
-                { reading.state.value = ReadingState.Content(book.copy(progress = 70)) }
-            vm.refresh()
-            runCurrent()
-            val recoveredLoaded = vm.uiState.value as HomeUiState.Loaded
-            val recovered = recoveredLoaded.reading as ReadingSectionState.Content
-            assertEquals(2, reading.refreshCalls)
-            assertEquals(70, recovered.current.progress)
-            assertNull(recovered.refreshError)
-        }
-
-    @Test
-    fun `cancelled refresh is not shown as an error and can be retried`() = runTest(dispatcher) {
-        reading.state.value = ReadingState.Content(book)
-        reading.refreshAction = { throw CancellationException("cancelled") }
-        val vm = viewModel()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
-        vm.refresh()
-        runCurrent()
-        val state = (vm.uiState.value as HomeUiState.Loaded).reading as ReadingSectionState.Content
-        assertFalse(state.isRefreshing)
-        assertNull(state.refreshError)
-        reading.refreshAction = {}
-        vm.refresh()
-        runCurrent()
-        assertEquals(2, reading.refreshCalls)
     }
 
     private class TestReadingRepository : ReadingRepository {

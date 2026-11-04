@@ -30,6 +30,7 @@ internal fun HomeRoute(
         contentPadding = contentPadding,
         iconLoader = appIconLoader,
         onReadingAction = onSettings,
+        onRefresh = viewModel::refresh,
         onAppClick = rememberAppLaunchAction(appLauncher, viewModel::refreshApps),
         onNavigateToApps = onNavigateToApps,
         onSettings = onSettings,

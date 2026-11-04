@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.theme.InkBorder
@@ -65,7 +66,7 @@ internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
                         coverWidth + InkSpacing.lg + InkReadingTokens.minDetailsWidth * fontScale
                 if (stacked) {
                     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
-                        BookCover(book, Modifier.width(coverWidth).aspectRatio(0.7f))
+                        BookCover(Modifier.width(coverWidth).aspectRatio(0.7f))
                         CurrentBookDetails(book)
                     }
                 } else {
@@ -73,7 +74,7 @@ internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(InkSpacing.lg),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BookCover(book, Modifier.width(coverWidth).aspectRatio(0.7f))
+                        BookCover(Modifier.width(coverWidth).aspectRatio(0.7f))
                         CurrentBookDetails(book, Modifier.weight(1f))
                     }
                 }
@@ -86,16 +87,21 @@ internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
 @Composable
 private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
-        Text(book.title, style = InkTextStyles.cardTitle)
         Text(
-            book.author ?: "Unknown author",
+            book.title,
+            style = InkTextStyles.cardTitle,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            book.author ?: stringResource(R.string.reading_unknown_author),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ProgressLabel(book.progress)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                stringResource(R.string.continue_reading_action),
+                stringResource(R.string.reading_source_action),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -109,8 +115,9 @@ private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier)
 }
 
 @Composable
-private fun BookCover(book: BookUiModel, modifier: Modifier) {
+private fun BookCover(modifier: Modifier) {
     val ink = MaterialTheme.colorScheme.onSurfaceVariant
+    val description = stringResource(R.string.reading_no_cover)
     Box(
         modifier.background(
             MaterialTheme.colorScheme.surfaceVariant,
@@ -122,40 +129,18 @@ private fun BookCover(book: BookUiModel, modifier: Modifier) {
                 RoundedCornerShape(InkRadius.small),
             )
             .padding(InkSpacing.sm).semantics {
-                contentDescription =
-                    if (book.coverLabel == null) "No cover" else "Sample book cover"
+                contentDescription = description
             },
         contentAlignment = Alignment.Center,
     ) {
         // Cover art is decorative: drawing it avoids scaled text overflowing tiny thumbnails.
         Canvas(Modifier.fillMaxSize()) {
-            if (book.coverLabel != null) {
-                drawLine(
-                    ink,
-                    Offset(size.width * 0.15f, 0f),
-                    Offset(size.width * 0.15f, size.height),
-                    InkReadingTokens.artworkStroke.toPx(),
-                )
-                drawCircle(
-                    ink,
-                    size.width * 0.22f,
-                    Offset(size.width * 0.6f, size.height * 0.4f),
-                    style = Stroke(InkReadingTokens.artworkStroke.toPx()),
-                )
-                drawLine(
-                    ink,
-                    Offset(size.width * 0.35f, size.height * 0.75f),
-                    Offset(size.width * 0.85f, size.height * 0.75f),
-                    InkReadingTokens.artworkStroke.toPx(),
-                )
-            } else {
-                drawLine(
-                    ink,
-                    Offset(size.width * 0.3f, size.height * 0.5f),
-                    Offset(size.width * 0.7f, size.height * 0.5f),
-                    InkReadingTokens.artworkStroke.toPx(),
-                )
-            }
+            drawLine(
+                ink,
+                Offset(size.width * 0.3f, size.height * 0.5f),
+                Offset(size.width * 0.7f, size.height * 0.5f),
+                InkReadingTokens.artworkStroke.toPx(),
+            )
         }
     }
 }

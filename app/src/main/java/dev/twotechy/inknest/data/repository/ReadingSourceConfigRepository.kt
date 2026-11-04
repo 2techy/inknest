@@ -39,6 +39,34 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
         }
     }
 
+    fun treeCandidate(
+        before: ReadingSourceConfig,
+        folder: SourceFolder,
+        uri: String,
+    ): ReadingSourceConfig = before.copy(
+        sourceId = if (before.sourceId == null ||
+            (folder == SourceFolder.KOReader && before.koreaderTreeUri != uri)
+        ) {
+            UUID.randomUUID().toString()
+        } else {
+            before.sourceId
+        },
+        koreaderTreeUri = if (folder == SourceFolder.KOReader) uri else before.koreaderTreeUri,
+        booksTreeUri = if (folder == SourceFolder.Books) uri else before.booksTreeUri,
+    )
+
+    suspend fun activateTree(before: ReadingSourceConfig, candidate: ReadingSourceConfig) {
+        store.edit { values ->
+            check(
+                values[sourceId] == before.sourceId && values[koreader] == before.koreaderTreeUri &&
+                    values[books] == before.booksTreeUri,
+            )
+            values[sourceId] = checkNotNull(candidate.sourceId)
+            candidate.koreaderTreeUri?.let { values[koreader] = it }
+            candidate.booksTreeUri?.let { values[books] = it }
+        }
+    }
+
     suspend fun setSourcePackage(packageName: String) {
         require(packageName.isNotBlank() && '/' !in packageName)
         store.edit {

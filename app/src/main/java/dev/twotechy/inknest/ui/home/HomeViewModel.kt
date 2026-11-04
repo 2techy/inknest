@@ -21,30 +21,26 @@ internal class HomeViewModel(
     private val installedAppsRepository: InstalledAppsRepository,
     readingStatsRepository: ReadingStatsRepository,
 ) : ViewModel() {
-    internal data class RefreshState(val running: Boolean = false, val error: String? = null)
-
-    private val refreshState = MutableStateFlow(RefreshState())
-    private var refreshJob: Job? = null
-
     val uiState: StateFlow<HomeUiState> = combine(
         readingRepository.reading,
         installedAppsRepository.pinnedApps,
         readingStatsRepository.stats,
-        refreshState,
-    ) { reading, apps, stats, refresh ->
-        val readingSection = reading.toReadingSectionState(refresh)
+        readingRepository.sync,
+    ) { reading, apps, stats, sync ->
+        val readingSection = reading.toReadingSectionState()
         val homePins = apps.map { HomePinUiModel(it.componentId, it.label, it.iconVersion) }
         val homeStats = stats?.let { HomeReadingStats(it.todayMinutes, it.weekMinutes) }
         HomeUiState.Loaded(
             reading = readingSection,
             pinnedApps = homePins,
             stats = homeStats,
+            sync = sync,
         )
     }.catch {
         emit(
             HomeUiState.Loaded(
                 reading = ReadingSectionState.Error(
-                    "Reading data is unavailable. Please try again.",
+                    dev.twotechy.inknest.model.ReadingSyncIssue.Cache,
                 ),
                 pinnedApps = emptyList(),
                 stats = null,
@@ -57,31 +53,24 @@ internal class HomeViewModel(
     }
 
     fun refresh() {
-        if (refreshJob?.isActive == true) return
-        refreshJob = viewModelScope.launch {
-            refreshState.value = RefreshState(running = true)
+        viewModelScope.launch {
             try {
                 readingRepository.refresh()
-                refreshState.value = RefreshState()
-            } catch (cancelled: CancellationException) {
-                refreshState.value = RefreshState()
-                throw cancelled
-            } catch (_: Exception) {
-                refreshState.value =
-                    RefreshState(error = "Unable to refresh books. Please try again.")
+            } catch (_: java.io.IOException) {
+                // Shared repository sync state contains the error; cached content stays visible.
             }
         }
     }
 }
 
-private fun ReadingState.toReadingSectionState(
-    refresh: HomeViewModel.RefreshState,
-): ReadingSectionState = when (this) {
+private fun ReadingState.toReadingSectionState(): ReadingSectionState = when (this) {
     ReadingState.Loading -> ReadingSectionState.Loading
 
     ReadingState.Empty -> ReadingSectionState.Empty
 
-    is ReadingState.Error -> ReadingSectionState.Error(message)
+    ReadingState.NotConfigured -> ReadingSectionState.NotConfigured
+
+    is ReadingState.Error -> ReadingSectionState.Error(issue)
 
     is ReadingState.Content -> ReadingSectionState.Content(
         current = BookUiModel(
@@ -89,9 +78,6 @@ private fun ReadingState.toReadingSectionState(
             current.title,
             current.author,
             current.progress,
-            current.coverUri,
         ),
-        isRefreshing = refresh.running,
-        refreshError = refresh.error,
     )
 }

@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.android.application)
+    alias(libs.plugins.room)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -37,6 +39,10 @@ android {
     }
 }
 
+room3 {
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
     // AndroidX platform integration
     implementation(libs.androidx.core.ktx)
@@ -53,6 +59,9 @@ dependencies {
 
     // Persistence
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.sqlite.framework)
+    ksp(libs.androidx.room.compiler)
 
     // Compose UI: the BOM manages versions for all Compose libraries below
     implementation(platform(libs.compose.bom))

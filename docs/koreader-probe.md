@@ -8,9 +8,10 @@ preserves the old configuration. Obsolete grants are released. Disconnect remove
 and their grants, preserving pins, display preferences and onboarding.
 
 Source identity, tree URIs, selected package and verified open mode share the existing preferences
-DataStore. No second DataStore or reading database is created. Refresh currently checks source
-capabilities; it does not populate Home/Library. Reading cache and its clear action await the
-reading-core implementation. Debug and release contain no runtime sample-data mode. Home stays empty until real reading-cache integration.
+DataStore. No second DataStore is created. Production refresh now populates the Room current-book
+cache shared by Home and Settings; debug capability diagnostics remain a separate read-only probe.
+Reading cache architecture and current verification are described in [Reading cache](reading-cache.md).
+Debug and release contain no runtime sample-data mode.
 
 ## Supported access and identity
 
@@ -81,24 +82,18 @@ No raw Lua, book contents or personal document URIs are recorded in this documen
 
 ## Verification scope
 
-Unit tests cover bounded Lua failures/recovery, configuration compatibility, resolver boundaries
-and lifecycle/navigation state. Android tests cover real ZIP/XML/Bitmap and SQLite/WAL behavior,
-query cancellation, corrupt/schema failures, fresh-snapshot retry/cleanup, book identity and sidecar
-separation. Opt-in source-access integration tests exercise actual configured grants without
-running destructive permission checks by default. Formatting, debug/release builds, lint and both
-unit-test variants are required. Current verification (2026-11-04): 43 shared unit tests passed in both debug and release after removing redundant wiring,
-framework-behavior and delegation tests. Source-error classifications, parser limits, persistence
-and lifecycle regressions remain covered. Seven Android parser/SQLite/identity tests passed again after the
-refactor. Two opt-in real SAF access tests passed earlier; their permission-revocation scenario
-was not repeated for this structural change. Debug/release APK builds, Spotless and lint completed
-(lint warnings remain; no errors). Optimized release source refresh was verified before the
-refactor; the shared parser/snapshot changes were then covered by both release compilation and
-Android platform tests. No broad launcher/device behavior matrix was repeated.
+The current pass has 41 shared JVM tests passing in both variants. Existing coverage retains
+bounded Lua/parser recovery, configuration compatibility, path boundaries and HOME/process-death
+regressions. Seven Android ZIP/XML/SQLite/WAL/identity tests passed during source-probe refactoring.
+The current-cache pass adds six targeted Android tests and repeats two real SAF access tests.
+The latter require explicit opt-in and an existing current-book cache; default runs never revoke
+device grants. Both configured grants were restored through Settings after the opt-in test.
 
-Phase implementation and virtual source validation are complete; the Tango-specific compatibility
-acceptance above remains explicit. Virtual results do not establish physical E-Ink behavior or
-hardware direct-open support. Home/Library/cache/statistics screens are later milestones.
-
+Debug/release builds, lint and Spotless passed. Optimized release was verified with actual
+KOReader data for current cache, manual refresh, clear/reload and restart. No broad launcher/device
+matrix was repeated. See [Reading cache](reading-cache.md) for the current architecture and gate.
+Virtual results do not establish Tango hardware compatibility or direct-open support. Tracked
+Library, metadata/progress/cover enrichment and statistics remain separate work.
 
 ## Maintainability boundaries
 

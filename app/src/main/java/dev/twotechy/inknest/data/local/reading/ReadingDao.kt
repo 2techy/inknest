@@ -1,0 +1,78 @@
+package dev.twotechy.inknest.data.local.reading
+
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Transaction
+import androidx.room3.Upsert
+import kotlinx.coroutines.flow.Flow
+
+private const val CURRENT_QUERY = """
+    SELECT s.*, b.sourceId AS book_sourceId, b.snapshotKey AS book_snapshotKey,
+        b.path AS book_path, b.title AS book_title, b.availability AS book_availability
+    FROM reading_sources s LEFT JOIN reading_items b
+        ON s.sourceId=b.sourceId AND s.snapshotKey=b.snapshotKey AND s.currentPath=b.path
+    WHERE s.sourceId=:sourceId AND s.snapshotKey=:snapshotKey
+"""
+
+@Dao
+internal interface ReadingDao {
+    @Query(CURRENT_QUERY)
+    fun observe(sourceId: String, snapshotKey: String): Flow<CachedReading?>
+
+    @Query(CURRENT_QUERY)
+    suspend fun get(sourceId: String, snapshotKey: String): CachedReading?
+
+    @Upsert suspend fun putBook(book: ReadingBookEntity)
+
+    @Upsert suspend fun putSource(source: ReadingSourceEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun ensureSource(source: ReadingSourceEntity)
+
+    @Query(
+        "UPDATE reading_sources SET lastAttemptAt=:time WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey",
+    )
+    suspend fun updateAttempt(sourceId: String, snapshotKey: String, time: Long)
+
+    @Query(
+        "UPDATE reading_sources SET error=:error WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey",
+    )
+    suspend fun updateError(sourceId: String, snapshotKey: String, error: String)
+
+    @Transaction
+    suspend fun attempt(sourceId: String, snapshotKey: String, time: Long) {
+        ensureSource(ReadingSourceEntity(sourceId, snapshotKey))
+        updateAttempt(sourceId, snapshotKey, time)
+    }
+
+    @Transaction
+    suspend fun save(source: ReadingSourceEntity, book: ReadingBookEntity?) {
+        if (book != null) putBook(book)
+        putSource(source)
+    }
+
+    @Query("DELETE FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey")
+    suspend fun deleteBooks(sourceId: String, snapshotKey: String)
+
+    @Query("DELETE FROM reading_sources WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey")
+    suspend fun deleteSource(sourceId: String, snapshotKey: String)
+
+    @Transaction
+    suspend fun clear(sourceId: String, snapshotKey: String) {
+        deleteBooks(sourceId, snapshotKey)
+        deleteSource(sourceId, snapshotKey)
+    }
+
+    @Query("DELETE FROM reading_items")
+    suspend fun clearBooks()
+
+    @Query("DELETE FROM reading_sources")
+    suspend fun clearSources()
+
+    @Transaction suspend fun clearAll() {
+        clearBooks()
+        clearSources()
+    }
+}

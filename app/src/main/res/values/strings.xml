@@ -66,7 +66,7 @@
     <string name="cache_bytes">%1$d bytes</string>
     <string name="refreshing">Refreshing…</string>
     <string name="clear_reading_cache">Clear reading cache</string>
-    <string name="clear_cache_description">Remove cached reading data only. Keep source folders, access permissions, pinned apps and app preferences.</string>
+    <string name="clear_cache_description">Clear saved reading data, then read the source again. Keep source folders, access permissions, pinned apps and app preferences.</string>
     <string name="confirm_clear_cache">Clear cache</string>
     <string name="unknown_value">—</string>
     <string name="notices_title">Acknowledgements</string>
@@ -126,4 +126,18 @@
     <string name="home_options_heading">Home sections</string>
     <string name="source_app_title">Source app</string>
     <string name="source_app_missing">KOReader is not installed. Existing source data can still be read.</string>
+    <string name="refresh_reading">Refresh reading data</string>
+    <string name="reading_refreshing">Refreshing reading data…</string>
+    <string name="reading_cached_warning">Showing saved reading data. %1$s</string>
+    <string name="reading_cached">Showing saved reading data.</string>
+    <string name="reading_permission_lost">Folder access was lost. Reconnect it in Settings.</string>
+    <string name="reading_missing_data">The source file is missing or outside the selected folders.</string>
+    <string name="reading_invalid_data">KOReader data could not be parsed. Try refreshing after saving in KOReader.</string>
+    <string name="reading_provider_error">The reading source could not be reached. Try refreshing.</string>
+    <string name="reading_cache_error">Saved reading data could not be updated. Try again.</string>
+    <string name="home_reading_empty">No current book</string>
+    <string name="home_reading_empty_detail">Open a book in KOReader, then refresh here.</string>
+    <string name="reading_source_action">Reading source</string>
+    <string name="reading_unknown_author">Unknown author</string>
+    <string name="reading_no_cover">No cover</string>
 </resources>

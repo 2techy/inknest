@@ -8,6 +8,7 @@ data class ReadingItem(
     val author: String?,
     val progress: Int?,
     val coverUri: String? = null,
+    val availability: BookAvailability = BookAvailability.Available,
 )
 
 data class ReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)

@@ -5,8 +5,10 @@ import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.model.SourceAccessState
+import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,21 +26,22 @@ import kotlinx.coroutines.withContext
 internal class SafSourceSettingsRepository(
     private val config: ReadingSourceConfigRepository,
     private val access: SafSourceAccess,
-    private val reader: ReaderProbeRepository,
+    private val reading: CachedReadingRepository,
+    private val cacheFile: File,
     private val files: SourceDocumentReader,
     scope: CoroutineScope,
 ) : SourceSettingsRepository {
-    private data class Refresh(
-        val running: Boolean = false,
-        val updated: Long? = null,
-        val generation: Long = 0,
-    )
+    private data class Refresh(val generation: Long = 0)
     private val refreshState = MutableStateFlow(Refresh())
     private val mutex = Mutex()
-    override val state = combine(config.config, refreshState) { source, refresh ->
-        source to refresh
+    override val state = combine(config.config, refreshState, reading.sync) {
+            source,
+            refresh,
+            sync,
+        ->
+        Triple(source, refresh, sync)
     }
-        .mapLatest { (source, refresh) ->
+        .mapLatest { (source, _, sync) ->
             val grant = access.inspect(source.koreaderTreeUri)
             SourceSettingsState(
                 available = true,
@@ -53,8 +56,23 @@ internal class SafSourceSettingsRepository(
                 koreaderAccess = grant,
                 booksAccess = access.inspect(source.booksTreeUri),
                 sourcePackage = source.sourcePackage,
-                refreshing = refresh.running,
-                lastUpdated = refresh.updated,
+                refreshing = sync.running,
+                lastUpdated = sync.lastSuccessAt,
+                cacheBytes = if (source.koreaderTreeUri ==
+                    null
+                ) {
+                    null
+                } else {
+                    withContext(Dispatchers.IO) {
+                        listOf(
+                            cacheFile,
+                            File(cacheFile.path + "-wal"),
+                            File(cacheFile.path + "-shm"),
+                        ).sumOf {
+                            it.length()
+                        }
+                    }
+                },
             )
         }.stateIn(
             scope,
@@ -74,45 +92,33 @@ internal class SafSourceSettingsRepository(
             try {
                 access.persist(Uri.parse(uri), flags)
                 if (folder == SourceFolder.KOReader) validateReaderTree(uri)
-                config.setTree(folder, uri)
-            } catch (error: Exception) {
-                if (uri !in
-                    retainedBefore
-                ) {
-                    withContext(NonCancellable) { access.releaseUnused(uri, retainedBefore) }
+                reading.replaceSource(before, config.treeCandidate(before, folder, uri))
+            } finally {
+                // DataStore may commit before the caller observes cancellation. Retain grants
+                // referenced by the actual configuration, including a newly activated candidate.
+                withContext(NonCancellable) {
+                    val saved = config.config.first()
+                    val retained = listOfNotNull(saved.koreaderTreeUri, saved.booksTreeUri).toSet()
+                    (retainedBefore + uri).forEach { access.releaseUnused(it, retained) }
                 }
-                throw error
-            }
-            val after = config.config.first()
-            val retained = listOfNotNull(after.koreaderTreeUri, after.booksTreeUri).toSet()
-            listOfNotNull(before.koreaderTreeUri, before.booksTreeUri).filterNot {
-                it in retained
-            }.forEach {
-                access.releaseUnused(it, retained)
             }
             refreshState.update { Refresh(generation = it.generation + 1) }
         }
 
     override suspend fun disconnect() = mutex.withLock {
         val before = config.config.first()
-        config.disconnect()
+        reading.disconnect()
         listOfNotNull(before.koreaderTreeUri, before.booksTreeUri).distinct().forEach {
             access.releaseUnused(it, emptySet())
         }
         refreshState.update { Refresh(generation = it.generation + 1) }
     }
 
-    override suspend fun refresh() = mutex.withLock {
-        refreshState.update { it.copy(running = true) }
+    override suspend fun refresh() {
         try {
-            val result = reader.probe(config.config.first())
-            check(
-                result.current.result is ProbeRead.Success &&
-                    result.history.result is ProbeRead.Success,
-            )
-            refreshState.update { it.copy(updated = System.currentTimeMillis()) }
+            reading.refresh()
         } finally {
-            refreshState.update { it.copy(running = false, generation = it.generation + 1) }
+            refreshState.update { Refresh(generation = it.generation + 1) }
         }
     }
     private suspend fun validateReaderTree(tree: String) {
@@ -125,5 +131,5 @@ internal class SafSourceSettingsRepository(
         throw IOException("Selected directory has no KOReader settings or history")
     }
 
-    override suspend fun clearCache(): Unit = error("Reading cache is not implemented")
+    override suspend fun clearCache() = reading.clearCache()
 }

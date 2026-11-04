@@ -30,6 +30,7 @@ internal fun HomeScreen(
     contentPadding: PaddingValues,
     iconLoader: AppIconLoader? = null,
     onReadingAction: () -> Unit,
+    onRefresh: () -> Unit,
     onAppClick: (String) -> Unit,
     onNavigateToApps: () -> Unit,
     onSettings: () -> Unit,
@@ -39,7 +40,14 @@ internal fun HomeScreen(
         modifier = modifier,
         contentPadding = contentPadding,
         header = {
-            ScreenHeader(stringResource(R.string.brand_name))
+            ScreenHeader(stringResource(R.string.brand_name)) {
+                HeaderIconButton(
+                    R.drawable.ic_settings_sync,
+                    stringResource(R.string.refresh_reading),
+                ) {
+                    if (state !is HomeUiState.Loaded || !state.sync.running) onRefresh()
+                }
+            }
         },
     ) {
         LazyColumn(
@@ -62,6 +70,9 @@ internal fun HomeScreen(
                         DateTimeHeader(clockTick, state.stats, preferences.showHomeStats)
                     }
 
+                    if (state.sync.running || state.sync.stale) {
+                        item { ReadingSyncNotice(state.sync) }
+                    }
                     // Reading section
                     when (val reading = state.reading) {
                         ReadingSectionState.Loading -> item {
@@ -71,7 +82,7 @@ internal fun HomeScreen(
                             )
                         }
 
-                        ReadingSectionState.Empty -> item {
+                        ReadingSectionState.NotConfigured -> item {
                             HomeReadingNotice(
                                 stringResource(R.string.home_connect_reader),
                                 stringResource(R.string.home_connect_reader_detail),
@@ -79,10 +90,17 @@ internal fun HomeScreen(
                             )
                         }
 
+                        ReadingSectionState.Empty -> item {
+                            HomeReadingNotice(
+                                stringResource(R.string.home_reading_empty),
+                                stringResource(R.string.home_reading_empty_detail),
+                            )
+                        }
+
                         is ReadingSectionState.Error -> item {
                             HomeReadingNotice(
                                 stringResource(R.string.home_reading_error),
-                                reading.message,
+                                readingIssueMessage(reading.issue),
                                 onClick = onSettings,
                             )
                         }

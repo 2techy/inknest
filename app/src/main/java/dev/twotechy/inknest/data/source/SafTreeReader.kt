@@ -70,6 +70,9 @@ internal class SafTreeReader(private val resolver: ContentResolver) : SourceDocu
                 DocumentsContract.isTreeUri(uri),
         )
         requireNotNull(PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(uri)))
+        if (resolver.persistedUriPermissions.none { it.uri == uri && it.isReadPermission }) {
+            throw SecurityException("Persisted folder access was lost")
+        }
         return uri
     }
 

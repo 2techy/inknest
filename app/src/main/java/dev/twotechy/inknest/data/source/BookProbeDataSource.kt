@@ -28,11 +28,7 @@ internal class BookProbeDataSource(
 ) {
     suspend fun resolve(config: ReadingSourceConfig, path: String): ResolvedBook =
         withContext(Dispatchers.IO) {
-            val canonical = Environment.getExternalStorageDirectory().canonicalFile
-            val aliases = listOf(canonical.path, "/sdcard", "/storage/self/primary").filter {
-                File(it).canonicalFile == canonical
-            }.toSet()
-            val resolver = BookPathResolver(aliases)
+            val resolver = pathResolver()
             for (tree in listOfNotNull(config.booksTreeUri, config.koreaderTreeUri).distinct()) {
                 val uri = Uri.parse(tree)
                 if (uri.authority != "com.android.externalstorage.documents") continue
@@ -48,6 +44,18 @@ internal class BookProbeDataSource(
             }
             throw UnresolvedBookPath()
         }
+
+    suspend fun canonicalPath(path: String): String = withContext(Dispatchers.IO) {
+        pathResolver().relative(path, "primary:")?.let { "primary:" + it.joinToString("/") } ?: path
+    }
+
+    private fun pathResolver(): BookPathResolver {
+        val canonical = Environment.getExternalStorageDirectory().canonicalFile
+        val aliases = listOf(canonical.path, "/sdcard", "/storage/self/primary").filter {
+            File(it).canonicalFile == canonical
+        }.toSet()
+        return BookPathResolver(aliases)
+    }
 
     suspend fun sidecar(book: ResolvedBook): SidecarDto {
         val name = book.relative.last()
