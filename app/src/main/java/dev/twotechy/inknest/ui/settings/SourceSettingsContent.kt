@@ -1,5 +1,7 @@
 package dev.twotechy.inknest.ui.settings
 
+import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceStatus
+import dev.twotechy.inknest.model.SourceAccessState
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import java.text.DateFormat
 import java.util.Date
@@ -18,9 +21,6 @@ import java.util.Date
 internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActions) {
     val source = state.source
     Column {
-        if (source.isSample) {
-            Text(stringResource(R.string.sample_data), style = MaterialTheme.typography.labelSmall)
-        }
         SettingsValue(stringResource(R.string.source_status), sourceStatusLabel(source.status))
         if (!source.available) {
             Text(
@@ -30,14 +30,34 @@ internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActi
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Text(stringResource(R.string.source_app_title), style = MaterialTheme.typography.labelLarge)
+        if (state.sourceApps.isEmpty()) {
+            Text(
+                stringResource(R.string.source_app_missing),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        state.sourceApps.forEach { app ->
+            val packageName = app.componentId.substringBefore('/')
+            SettingsChoice(
+                app.label,
+                source.sourcePackage == packageName,
+                !state.saving,
+                description = packageName,
+            ) { actions.sourceApp(packageName) }
+        }
         SourceFolder.entries.forEach { folder ->
             val isKOReader = folder == SourceFolder.KOReader
             val path = if (isKOReader) source.koreaderFolder else source.booksFolder
+            val access = if (isKOReader) source.koreaderAccess else source.booksAccess
+            val label =
+                path?.let(::sourceFolderLabel) ?: stringResource(R.string.folder_not_selected)
+            val detail = sourceAccessError(access)?.let { stringResource(it) }
             SettingsRow(
                 title = stringResource(
                     if (isKOReader) R.string.koreader_folder else R.string.books_folder,
                 ),
-                description = path ?: stringResource(R.string.folder_not_selected),
+                description = if (detail == null) label else "$label · $detail",
                 enabled = source.available && !state.saving,
                 onClick = { actions.connect(folder) },
             )
@@ -89,4 +109,29 @@ internal fun DataSettingsContent(state: SettingsUiState, actions: SettingsAction
             actions.clearCache,
         )
     }
+}
+
+private fun sourceFolderLabel(path: String): String = try {
+    if (path.startsWith(
+            "content://",
+        )
+    ) {
+        DocumentsContract.getTreeDocumentId(Uri.parse(path)).substringAfter(':').ifEmpty {
+            "/"
+        }
+    } else {
+        path
+    }
+} catch (_: IllegalArgumentException) {
+    path
+}
+
+private fun sourceAccessError(access: SourceAccessState?): Int? = when (access) {
+    SourceAccessState.PermissionLost -> R.string.source_permission_lost
+
+    SourceAccessState.InvalidFolder, SourceAccessState.Unsupported,
+    SourceAccessState.ProviderError,
+    -> R.string.source_error
+
+    else -> null
 }

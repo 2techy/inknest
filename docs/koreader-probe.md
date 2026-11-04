@@ -1,85 +1,113 @@
-# KOReader probe
+# KOReader integration probe
 
-Debug builds expose **Settings → About → Developer tools → Reading source probe**.
-This screen uses actual Android document-tree grants, independently of sample source settings.
-Select a KOReader directory and optionally a Books directory. Cancel preserves the previous
-configuration. Recheck access queries the provider and checks persisted read permission.
+InkNest uses one source implementation in debug and release. **Settings → Reading & data**
+selects the installed `org.koreader.launcher` package and two independent folders: KOReader data
+and Books. Each uses the system document-tree picker and persisted read permission. Changing
+folders validates the new grant before committing configuration; invalid selection/cancellation
+preserves the old configuration. Obsolete grants are released. Disconnect removes source keys
+and their grants, preserving pins, display preferences and onboarding.
 
-Currently supported storage is the primary Android ExternalStorageProvider only. Document IDs
-are treated as volume/path segments; arbitrary providers and other volumes are rejected. No
-absolute file path is inferred from a URI, and no broad storage/write permission is requested.
+Source identity, tree URIs, selected package and verified open mode share the existing preferences
+DataStore. No second DataStore or reading database is created. Refresh currently checks source
+capabilities; it does not populate Home/Library. Reading cache and its clear action await the
+reading-core implementation. Debug and release contain no runtime sample-data mode. Home stays empty until real reading-cache integration.
 
-A successful access check means the selected directory is readable. Use **Read KOReader data**
-to read `settings.reader.lua` and `history.lua` relatively from that tree. Results distinguish
-missing files, invalid data, lost permission, provider failure and parser limits. A success can
-still represent no current file or an empty history. This does not establish sidecar/EPUB/statistics compatibility. Production Settings
-continues to use its prior source boundary until the real integration is connected.
+## Supported access and identity
 
-Source keys share the existing DataStore but do not alter pins or appearance/onboarding keys.
-Mock selections never write these keys. Source package selection and disconnection/grant cleanup
-will be connected as the remaining M2 capabilities are implemented.
+Only primary internal storage through Android ExternalStorageProvider is supported. Other
+providers/volumes are explicitly unsupported. Document IDs are checked by volume/path segments;
+children must remain inside the selected tree. No absolute path is inferred from URI text.
+Source paths resolve only into the configured Books or KOReader trees. Primary aliases are
+accepted only after canonical filesystem identity is verified on the running device. Unicode,
+case and spaces are retained. Dot segments, sibling-prefix matches and title/basename matching
+are rejected. Missing or revoked files are rechecked before any open intent.
 
-Virtual QA uses dedicated empty folders under Download/InkNestProbe. These directories establish
-SAF access only, not reader compatibility. Tango/KOReader content and direct-open verification
-remain hardware acceptance work; M2 is not complete.
+## Parsers and limits
 
-## Tango access check — 2026-11-03
+- LuaJ 3.0.1 uses fresh globals without standard libraries. A private DebugLib instruction hook
+  is initialized and removed with its empty bootstrap `package` table before evaluation.
+  Files are bounded to 8 MiB and execution to 5 million instructions. Cancellation interrupts
+  the hook; subsequent parses remain usable. Only typed Kotlin DTOs leave the data source.
+- `settings.reader.lua` supplies typed `lastfile`; `history.lua` preserves contiguous array order.
+  Empty data, missing files, invalid types and provider failures have different outcomes.
+- Sidecars are the exact adjacent `<stem>.sdr/metadata.<extension>.lua`, with finite progress
+  in [0, 1] and optional summary status. Centralized/out-of-grant sidecars are unavailable;
+  another book's sidecar is never substituted.
+- EPUB is copied once to a private temporary directory, bounded to 256 MiB. ZIP has at most
+  100,000 entries; XML is bounded to 2 MiB, 50,000 nodes and depth 64. DTD/external entities,
+  absolute/escaping archive paths are rejected. Container/OPF yields title, first creator and
+  EPUB2/3 cover reference. Cover bytes are bounded to 8 MiB and verified with bitmap bounds;
+  raster support follows Android's decoder. SVG covers are unsupported. Thumbnail storage/UI
+  belongs to the later metadata milestone.
+- Statistics reads `settings/statistics.sqlite3` and any observed WAL/SHM into a fresh private
+  directory, at most 256 MiB total. A mutex covers copy/validate/read. Observable metadata before
+  and after copy must match; SQLite quick_check and required book/page_stat_data columns must
+  pass. Transient transport/SQLite/change errors retry once with a new directory. Unsupported
+  schema is a distinct outcome. Only the private copy is opened read-only. Streams, cursors,
+  databases and temporary directories are closed/removed on completion, failure or cancellation.
 
-Tango 2, Android 14, KOReader `org.koreader.launcher` v2026.07.1:
-KOReader tree is `koreader`; Books tree is `webdav`, as confirmed by the user.
-Both read grants and the saved configuration survived an app process restart.
-Recheck and picker cancellation passed. The initial `Books` directory selection was
-superseded by `webdav`. This establishes directory access only; content parsing and
-reader compatibility remain untested.
+**Snapshot limits:** SAF cannot atomically copy files while KOReader writes. Size/mtime may be
+missing or unchanged despite writes. KOReader may not have flushed current statistics. A passing
+snapshot is a validated observation, not a transactionally current reading total.
 
-## Lua implementation and current verification
+## Debug diagnostics and open-mode decision
 
-The data layer uses LuaJ 3.0.1 with fresh globals for each file. No standard host libraries
-are installed. A private DebugLib instruction hook is initialized then removed from the Lua
-namespace along with its empty bootstrap package table. Execution is bounded to 5 million
-instructions and observes coroutine cancellation; input is bounded to 8 MiB. IO runs on IO,
-execution/DTO mapping on Default. The dependency notice is included in About acknowledgements.
+**Settings → About → Developer tools → Reading source probe** exposes the shared source layer
+with independent, timestamped capability outcomes. Route owns platform dispatch; ViewModel
+owns jobs/saved pending picker state; Screen only renders state/callbacks. Re-run/source change,
+configuration recreation and HOME cancel/close diagnostics without stale results. Pending picker
+results survive process recreation; HOME clears the pending route without reopening overlays.
+Probe controls and Developer tools are absent from release. Runtime mock repositories and preview controls have been removed from debug as well.
 
-`ReaderLuaDataSource` validates types and preserves history array order. Sparse/corrupt history
-is an error, not a successful empty list. Only Kotlin data leaves the source layer. The probe
-serializes read jobs, cancels on disposal/source change and does not log Lua or book paths.
+The probe opens the source app normally and can send original document URIs with MIME,
+ACTION_VIEW, read permission and ClipData. Its A/B confirmations require observed correct book
+and saved position in both cold and warm runs. Intent dispatch alone never confirms direct-open.
+Open mode is recorded for the selected package/version; version changes invalidate confirmation.
+`SourceAppOnly` is the accepted fallback. See the observed decision below.
 
-Virtual fixtures: current file plus two history entries; instruction-limited current settings
-with independent successful history; then valid current settings parsed again. Unit tests also
-cover cancellation followed by successful parsing. Tango SAF grants were verified previously,
-and Tango was subsequently reconnected: real reader settings and two history entries parsed successfully.
-Path-to-book identity resolution, sidecars, EPUB, statistics snapshots and direct-open remain
-pending. Reading data on Home remains unchanged.
+## Compatibility matrix
 
-API reference used for the private hook: https://www.luaj.org/luaj/3.0/api/org/luaj/vm2/lib/DebugLib.html
+InkNest: `0.1.0-dev` (versionCode 1), working changes based on `567783e`.
+No raw Lua, book contents or personal document URIs are recorded in this document.
 
-## Tango Lua check — 2026-11-03
+| Target | Platform / source | Observation | Result / limits |
+| --- | --- | --- | --- |
+| Tango 2, 2026-11-03 | Android 14; KOReader org.koreader.launcher v2026.07.1; firmware not captured | KOReader=`koreader`, Books=`webdav`; independent persisted grants, cancel/restart; real lastfile and 2 history entries | Access and typed Lua parsing passed. Resolved book/sidecar/EPUB/statistics and open-mode recheck still require Tango. |
+| Tango_2_Virtual, 2026-11-04 | Android 14 x86_64; build UE1A.230829.050/12077443; 862×1648, density 320; KOReader v2026.07.1 | KOReader=`koreader`, Books=`Download/Calibre Library`; real lastfile/history resolve through grants | Current/history identity passed on virtual, including KOReader-owned quickstart under its own tree. |
+| Same virtual | Real adjacent EPUB sidecar, OPF and raster cover; real statistics database | Valid progress/status, title/author/cover, readable book/page counts | Passed. Counts are observations and may change after native reading. Actual WAL behavior additionally covered by Android tests. |
+| Same virtual | Native A/B/A through original URIs | Warm runs reached correct books and saved positions (419/12794 and 1/7) | Warm pass; first cold VIEW unreliable. **Use SourceAppOnly**, not DirectConfirmed. Normal cold source-app launch passed. |
+| Same virtual | Actual system picker/process recreation | Invalid reader folder preserves config; lost Books grant independent of KOReader; kill while picker open, then select or HOME | Passed. Original grants restored after permission test. |
+| Same virtual, optimized release | Production source selection and diagnostic refresh | Same real source layer; no debug tools/mock fixtures | Source selection, successful refresh timestamp and absence of debug tools verified at runtime. Home reading-cache integration remains deferred. |
 
-The debug probe read the configured KOReader tree through SAF after reinstalling the parser
-build. Reader settings returned a nonempty current-file path, and history returned two entries.
-A separate read-only structure check counted two file fields in the original history file.
-Settings/history sizes were 14,477 / 444 bytes. No book paths or Lua payloads were logged or
-saved as fixtures; KOReader files were not modified. Both configured tree grants remained valid.
+## Verification scope
 
-| Capability | Result |
-| --- | --- |
-| KOReader and webdav tree read access | Supported on this Tango setup |
-| settings.reader.lua, typed lastfile | Supported; path recorded |
-| history.lua, typed array entries | Supported; 2 entries |
-| Resolve current/history paths into granted webdav files | Not tested / pending implementation |
-| Sidecar, EPUB, statistics, direct-open | Not tested / pending implementation |
+Unit tests cover bounded Lua failures/recovery, configuration compatibility, resolver boundaries
+and lifecycle/navigation state. Android tests cover real ZIP/XML/Bitmap and SQLite/WAL behavior,
+query cancellation, corrupt/schema failures, fresh-snapshot retry/cleanup, book identity and sidecar
+separation. Opt-in source-access integration tests exercise actual configured grants without
+running destructive permission checks by default. Formatting, debug/release builds, lint and both
+unit-test variants are required. Current verification (2026-11-04): 43 shared unit tests passed in both debug and release after removing redundant wiring,
+framework-behavior and delegation tests. Source-error classifications, parser limits, persistence
+and lifecycle regressions remain covered. Seven Android parser/SQLite/identity tests passed again after the
+refactor. Two opt-in real SAF access tests passed earlier; their permission-revocation scenario
+was not repeated for this structural change. Debug/release APK builds, Spotless and lint completed
+(lint warnings remain; no errors). Optimized release source refresh was verified before the
+refactor; the shared parser/snapshot changes were then covered by both release compilation and
+Android platform tests. No broad launcher/device behavior matrix was repeated.
 
-This validates parsing on KOReader v2026.07.1, not the entire M2 gate. The probe was left open
-on Tango showing current/history results.
+Phase implementation and virtual source validation are complete; the Tango-specific compatibility
+acceptance above remains explicit. Virtual results do not establish physical E-Ink behavior or
+hardware direct-open support. Home/Library/cache/statistics screens are later milestones.
 
-## Code boundaries
 
-- `SourceProbeRoute`: lifecycle-aware collection, picker and dialog ownership.
-- `SourceProbeScreen`: state/callback rendering, without repositories or Android storage access.
-- `SourceProbeViewModel` / `SourceProbeUiState`: access actions, cancellation and stale-result guards.
-- `ReaderProbeRepository` / `ReaderProbeResult`: serialized, independently typed capability outcomes.
-- `SourceFileReader`: testable transport contract; `SafTreeReader` enforces granted-tree boundaries.
-- `ReaderLuaDataSource` / `BoundedLuaLoader`: strict DTO conversion and bounded isolated evaluation.
+## Maintainability boundaries
 
-Completed scope is persisted tree access plus bounded reader-settings/history diagnostics.
-This does not mark M2's unresolved identity/sidecar/metadata/statistics/open-mode gate complete.
+The probe repository coordinates independently observed capabilities. `ProbeCapabilities` owns
+expected-source-error classification and timestamps; cancellation and unexpected programming
+errors propagate. Exact book resolution and parsing stay in the source layer. SQLite snapshot
+copy, integrity validation, schema validation and querying are separate operations under the same
+mutex/retry/cleanup boundary. `BoundedXmlReader` owns one XML parser/stack/budget per entry.
+
+Debug `SourceProbeRoute` owns visibility, lifecycle and picker/dialog wiring. `SourceAppProbeRoute`
+binds installed apps and A/B confirmations; `SourceProbeLauncher` handles Android package-version
+lookup, original-file re-resolution and intent dispatch. Screens remain state/callback renderers.

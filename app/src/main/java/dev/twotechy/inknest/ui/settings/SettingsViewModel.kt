@@ -1,10 +1,13 @@
 package dev.twotechy.inknest.ui.settings
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.UnconnectedInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
@@ -22,7 +25,17 @@ internal class SettingsViewModel(
     private val preferences: UserPreferencesRepository,
     private val sources: SourceSettingsRepository,
     private val acknowledgementsRepository: AcknowledgementsRepository,
+    private val savedState: SavedStateHandle = SavedStateHandle(),
+    installedApps: InstalledAppsRepository = UnconnectedInstalledAppsRepository(),
 ) : ViewModel() {
+    val pendingFolder = savedState.getStateFlow<SourceFolder?>("settingsPendingFolder", null)
+    fun requestFolder(folder: SourceFolder) {
+        savedState["settingsPendingFolder"] = folder
+    }
+    fun dismissFolder() {
+        savedState["settingsPendingFolder"] = null
+    }
+
     private data class ActionState(val saving: Boolean = false, val error: SettingsError? = null)
     private val action = MutableStateFlow(ActionState())
     private val acknowledgements =
@@ -43,6 +56,14 @@ internal class SettingsViewModel(
             saving = operation.saving,
             error = operation.error ?: if (readError != null) SettingsError.Read else null,
             acknowledgements = notices,
+        )
+    }.combine(installedApps.installedApps) { state, apps ->
+        state.copy(
+            sourceApps = apps.filter {
+                it.componentId.substringBefore('/') ==
+                    "org.koreader.launcher"
+            }
+                .distinctBy { it.componentId.substringBefore('/') },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
@@ -68,7 +89,9 @@ internal class SettingsViewModel(
     fun setDisplayMode(mode: DisplayMode) = save { preferences.setDisplayMode(mode) }
     fun showStats(show: Boolean) = save { preferences.setShowHomeStats(show) }
     fun showPins(show: Boolean) = save { preferences.setShowHomePinnedApps(show) }
-    fun connect(folder: SourceFolder) = sourceAction { sources.connect(folder) }
+    fun selectSourceApp(packageName: String) = sourceAction { sources.selectApp(packageName) }
+    fun connectTree(folder: SourceFolder, uri: String, flags: Int) =
+        sourceAction { sources.connectTree(folder, uri, flags) }
     fun disconnect() = sourceAction { sources.disconnect() }
     fun refresh() = sourceAction { sources.refresh() }
     fun clearCache() = sourceAction { sources.clearCache() }

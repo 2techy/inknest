@@ -30,6 +30,25 @@ internal class ReaderLuaDataSource(private val loader: BoundedLuaLoader = Bounde
         }
     }
 
+    suspend fun sidecar(input: InputStream): SidecarDto = loader.read(input) { table ->
+        val percent = table.rawget("percent_finished")
+        val value = if (percent.isnil()) {
+            null
+        } else {
+            if (percent.type() != LuaValue.TNUMBER || !percent.todouble().isFinite() ||
+                percent.todouble() !in 0.0..1.0
+            ) {
+                invalid()
+            }
+            percent.todouble()
+        }
+        val summary = table.rawget("summary")
+        if (!summary.isnil() && !summary.istable()) invalid()
+        val status = if (summary.isnil()) LuaValue.NIL else summary.rawget("status")
+        if (!status.isnil() && status.type() != LuaValue.TSTRING) invalid()
+        SidecarDto(value, if (status.isnil()) null else status.tojstring())
+    }
+
     private fun strictPath(value: LuaValue): String {
         if (value.type() != LuaValue.TSTRING) invalid()
         val path = value.tojstring()
@@ -38,3 +57,5 @@ internal class ReaderLuaDataSource(private val loader: BoundedLuaLoader = Bounde
     }
     private fun invalid(): Nothing = throw LuaSourceException(LuaFailure.InvalidData)
 }
+
+internal data class SidecarDto(val percent: Double?, val status: String?)

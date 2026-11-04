@@ -27,10 +27,10 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
     }
     private var initialLaunchHandled = false
 
-    fun handleInitialLaunch(isHome: Boolean, fromHistory: Boolean) {
+    fun handleInitialLaunch(isHome: Boolean, fromHistory: Boolean, restoring: Boolean = false) {
         if (initialLaunchHandled) return
         initialLaunchHandled = true
-        if (isHome && !fromHistory) {
+        if (isHome && !fromHistory && !restoring) {
             savedState["selectedDestination"] = TopLevelDestination.Home.name
             savedState["settingsPage"] = "Overview"
             savedState["onboardingVisible"] = false

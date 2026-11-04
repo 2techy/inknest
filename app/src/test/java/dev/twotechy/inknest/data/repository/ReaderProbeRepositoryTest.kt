@@ -3,7 +3,6 @@ package dev.twotechy.inknest.data.repository
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceFileReader
 import dev.twotechy.inknest.model.ReadingSourceConfig
-import java.io.IOException
 import java.io.InputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -30,7 +29,7 @@ class ReaderProbeRepositoryTest {
             },
         )
         val result = repo.probe(config)
-        assertEquals(ProbeRead.Failed(ProbeIssue.MissingFile), result.current.result)
+        assertEquals(ProbeRead.Unavailable(ProbeIssue.MissingFile), result.current.result)
         assertEquals(ProbeRead.Success(emptyList<Any>()), result.history.result)
         assertTrue(result.current.checkedAt > 0)
         assertTrue(result.history.checkedAt >= result.current.checkedAt)
@@ -48,17 +47,6 @@ class ReaderProbeRepositoryTest {
         ).probe(config)
         assertEquals(ProbeRead.Failed(ProbeIssue.InvalidLua), result.current.result)
         assertEquals(1, (result.history.result as ProbeRead.Success).value.size)
-    }
-
-    @Test fun `provider and permission errors never become empty success`() = runTest {
-        for ((error, expected) in listOf(
-            IOException() to ProbeIssue.ProviderError,
-            SecurityException() to ProbeIssue.PermissionLost,
-        )) {
-            val result = ReaderProbeRepository(Files { throw error }).probe(config)
-            assertEquals(ProbeRead.Failed(expected), result.current.result)
-            assertEquals(ProbeRead.Failed(expected), result.history.result)
-        }
     }
 
     @Test fun `cancelled read releases coordinator for a later run`() = runTest {

@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.data.repository.CapabilityResult
 import dev.twotechy.inknest.data.repository.ProbeIssue
 import dev.twotechy.inknest.data.repository.ProbeRead
 import dev.twotechy.inknest.data.repository.SourceFolder
@@ -23,6 +24,7 @@ import dev.twotechy.inknest.ui.theme.InkSpacing
 @Composable
 internal fun SourceProbeScreen(
     state: SourceProbeUiState,
+    sourceControls: @Composable () -> Unit,
     close: () -> Unit,
     recheck: () -> Unit,
     runProbe: () -> Unit,
@@ -42,6 +44,7 @@ internal fun SourceProbeScreen(
         )
         if (state.failed) Text(stringResource(R.string.probe_source_failed))
         SettingsCommand(stringResource(R.string.probe_recheck), !state.busy, recheck)
+        sourceControls()
         SourceFolder.entries.forEach { folder ->
             val status = if (folder == SourceFolder.KOReader) state.koreader else state.books
             SettingsValue(
@@ -87,6 +90,8 @@ internal fun SourceProbeScreen(
                         },
                     )
 
+                    is ProbeRead.Unavailable -> probeIssueLabel(item.issue)
+
                     is ProbeRead.Failed -> probeIssueLabel(item.issue)
 
                     ProbeRead.NotTested -> stringResource(R.string.probe_not_tested)
@@ -100,10 +105,66 @@ internal fun SourceProbeScreen(
                         item.value.size,
                     )
 
+                    is ProbeRead.Unavailable -> probeIssueLabel(item.issue)
+
                     is ProbeRead.Failed -> probeIssueLabel(item.issue)
 
                     ProbeRead.NotTested -> stringResource(R.string.probe_not_tested)
                 },
+            )
+            ProbeCapability(
+                stringResource(R.string.probe_resolve_current),
+                result.resolvedCurrent,
+            ) {
+                stringResource(
+                    if (it ==
+                        null
+                    ) {
+                        R.string.probe_empty_current
+                    } else {
+                        R.string.probe_resolved
+                    },
+                )
+            }
+            result.resolvedHistory.forEachIndexed { index, item ->
+                ProbeCapability(stringResource(R.string.probe_resolve_history, index + 1), item) {
+                    stringResource(R.string.probe_resolved)
+                }
+            }
+            ProbeCapability(stringResource(R.string.probe_sidecar), result.sidecar) {
+                if (it == null) {
+                    stringResource(R.string.probe_empty_current)
+                } else {
+                    stringResource(
+                        R.string.probe_sidecar_value,
+                        it.percent?.let { value -> (value * 100).toInt().toString() } ?: "—",
+                        it.status ?: "—",
+                    )
+                }
+            }
+            ProbeCapability(stringResource(R.string.probe_epub), result.epub) {
+                if (it == null) {
+                    stringResource(R.string.probe_empty_current)
+                } else {
+                    stringResource(
+                        R.string.probe_epub_value,
+                        it.title ?: "—",
+                        it.author ?: "—",
+                        it.cover.toString(),
+                    )
+                }
+            }
+            ProbeCapability(stringResource(R.string.probe_statistics), result.statistics) {
+                stringResource(
+                    R.string.probe_statistics_value,
+                    it.books,
+                    it.pageRows,
+                    it.walPresent.toString(),
+                )
+            }
+            Text(
+                stringResource(R.string.probe_snapshot_limit),
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -115,9 +176,46 @@ private fun probeIssueLabel(issue: ProbeIssue): String = stringResource(
         ProbeIssue.NotConfigured -> R.string.folder_not_selected
         ProbeIssue.MissingFile -> R.string.probe_missing_file
         ProbeIssue.PermissionLost -> R.string.source_permission_lost
+        ProbeIssue.InvalidSnapshot -> R.string.probe_invalid_snapshot
+        ProbeIssue.SourceChanged -> R.string.probe_source_changed
+        ProbeIssue.InvalidMetadata -> R.string.probe_invalid_metadata
         ProbeIssue.InvalidLua -> R.string.probe_invalid_lua
         ProbeIssue.TooLarge -> R.string.probe_too_large
         ProbeIssue.BudgetExceeded -> R.string.probe_budget_exceeded
         ProbeIssue.ProviderError -> R.string.probe_provider_error
+        ProbeIssue.UnresolvedPath -> R.string.probe_outside_tree
+        ProbeIssue.Unsupported -> R.string.probe_unsupported_format
+        ProbeIssue.UnsupportedSchema -> R.string.probe_unsupported_schema
     },
 )
+
+@Composable
+private fun <T> ProbeCapability(
+    title: String,
+    capability: CapabilityResult<T>,
+    value: @Composable (T) -> String,
+) {
+    val detail = when (val result = capability.result) {
+        is ProbeRead.Success -> value(result.value)
+
+        is ProbeRead.Unavailable -> stringResource(
+            R.string.probe_unavailable_value,
+            probeIssueLabel(result.issue),
+        )
+
+        is ProbeRead.Failed -> stringResource(
+            R.string.probe_failed_value,
+            probeIssueLabel(result.issue),
+        )
+
+        ProbeRead.NotTested -> stringResource(R.string.probe_not_tested)
+    }
+    val checked = if (capability.checkedAt >
+        0
+    ) {
+        java.text.DateFormat.getTimeInstance().format(java.util.Date(capability.checkedAt))
+    } else {
+        "—"
+    }
+    SettingsValue(title, stringResource(R.string.probe_checked_value, detail, checked))
+}

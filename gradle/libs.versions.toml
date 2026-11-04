@@ -27,6 +27,7 @@ luaj = "3.0.1"
 # Testing: local JVM tests and Android instrumentation tests
 junit = "4.13.2"
 junitVersion = "1.3.0"
+androidxTestRunner = "1.7.0"
 
 [libraries]
 # AndroidX platform integration
@@ -47,8 +48,6 @@ compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeB
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 
 # KOReader data parsing (no platform standard globals)
 luaj-jse = { module = "org.luaj:luaj-jse", version.ref = "luaj" }
@@ -58,6 +57,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
 # Android instrumentation tests
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 
 [plugins]

@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         navigation.handleInitialLaunch(
             isHome = intent.isHomeRequest(),
+            restoring = savedInstanceState != null,
             fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0,
         )
         enableEdgeToEdge()

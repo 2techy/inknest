@@ -1,15 +1,9 @@
 <resources>
     <string name="developer_tools">Developer tools</string>
-    <string name="home_preview">Home preview</string>
-    <string name="source_preview">Source preview</string>
-    <string name="fail_next_source_action">Fail next source action</string>
-    <string name="choose_sample_folder">Choose a sample folder</string>
-    <string name="sample_folder_explanation">This is a demonstration. No storage permission is requested and no real folder is accessed.</string>
-    <string name="use_sample_folder">Use sample folder</string>
     <string name="show_tools">Show</string>
     <string name="hide_tools">Hide</string>
     <string name="reading_source_probe">Reading source probe</string>
-    <string name="probe_grants_description">Real folders, separate from sample settings. Select the KOReader directory and optionally your books directory. Read access only. Lua diagnostics stay separate from Home.</string>
+    <string name="probe_grants_description">Select the KOReader data folder and your books folder. Access is read-only. Diagnostics check the configured source; Home reading integration is not available yet.</string>
     <string name="probe_source_failed">Unable to read or save source access. The previous configuration is kept.</string>
     <string name="probe_granted">Read access granted</string>
     <string name="probe_invalid_folder">Invalid directory</string>
@@ -27,4 +21,38 @@
     <string name="probe_invalid_lua">Invalid Lua data</string>
     <string name="probe_too_large">File exceeds 8 MiB limit</string>
     <string name="probe_budget_exceeded">Lua instruction limit exceeded</string>
+    <string name="probe_resolve_current">Current book file</string>
+    <string name="probe_resolve_history">History file %1$d</string>
+    <string name="probe_resolved">Resolved inside granted tree</string>
+    <string name="probe_sidecar">Current sidecar</string>
+    <string name="probe_sidecar_value">%1$s%% · status: %2$s</string>
+    <string name="probe_epub">Current EPUB</string>
+    <string name="probe_epub_value">%1$s · %2$s · cover: %3$s</string>
+    <string name="probe_statistics">Statistics snapshot</string>
+    <string name="probe_statistics_value">%1$d books · %2$d page rows · WAL: %3$s</string>
+    <string name="probe_snapshot_limit">Snapshot is not atomic while KOReader is writing. Recent data may not have flushed yet.</string>
+    <string name="probe_outside_tree">Path is outside configured trees or uses an unverified storage alias</string>
+    <string name="probe_unsupported_format">Book format is not supported by the EPUB probe</string>
+    <string name="probe_unsupported_schema">Statistics schema is unsupported</string>
+    <string name="probe_unavailable_value">Unavailable: %1$s</string>
+    <string name="probe_failed_value">Failed: %1$s</string>
+    <string name="probe_checked_value">%1$s
+Checked: %2$s</string>
+    <string name="probe_reader_missing">KOReader launcher package is not installed.</string>
+    <string name="probe_launch_reader">Open source app</string>
+    <string name="probe_open_book">Try opening book %1$s</string>
+    <string name="probe_open_failed">Reader could not open this request.</string>
+    <string name="probe_open_warning">Verify A → B → A in the reader, including saved position. Sending an intent alone does not verify direct-open.</string>
+    <string name="probe_confirm_a">Book A and saved position verified</string>
+    <string name="probe_confirm_b">Book B and saved position verified</string>
+    <string name="probe_save_direct">Record verified direct-open</string>
+    <string name="probe_save_fallback">Use source-app-only fallback</string>
+    <string name="probe_open_mode">Verified open mode</string>
+    <string name="probe_invalid_metadata">Invalid book metadata</string>
+    <string name="probe_cold_warm">Cold and warm starts checked</string>
+    <string name="probe_mode_unverified">Unverified</string>
+    <string name="probe_mode_app_only">Source app only</string>
+    <string name="probe_mode_direct">Direct-open confirmed</string>
+    <string name="probe_invalid_snapshot">Statistics snapshot is corrupt or unreadable</string>
+    <string name="probe_source_changed">Source changed while taking the snapshot; retry later</string>
 </resources>

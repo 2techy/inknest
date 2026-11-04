@@ -1,17 +1,12 @@
 package dev.twotechy.inknest.ui.settings
 
-import android.app.Activity
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
@@ -26,55 +21,54 @@ import dev.twotechy.inknest.di.AppContainer
 
 @Composable
 internal fun ReadingSourceProbeEntry(container: AppContainer) {
-    var visible by remember { mutableStateOf(false) }
-    SettingsCommand(stringResource(R.string.reading_source_probe)) { visible = true }
+    val model = rememberSourceProbeViewModel(container)
+    val visible by model.visible.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
+    DisposableEffect(model, activity) {
+        onDispose {
+            if (activity?.isChangingConfigurations == true) model.cancelProbe() else model.close()
+        }
+    }
+    SettingsCommand(stringResource(R.string.reading_source_probe), onClick = model::open)
     if (!visible) return
+    val state by model.uiState.collectAsStateWithLifecycle()
+    val pending by model.pending.collectAsStateWithLifecycle()
+    SourceFolderPicker(pending, model::select, model::dismissFolder)
+    Dialog(
+        onDismissRequest = model::close,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(Modifier.fillMaxSize()) {
+            SourceProbeScreen(
+                state,
+                { SourceAppProbeRoute(container, model, state) },
+                model::close,
+                model::recheck,
+                model::runProbe,
+                model::cancelProbe,
+                model::chooseFolder,
+            )
+        }
+    }
+}
+
+@Composable
+private fun rememberSourceProbeViewModel(container: AppContainer): SourceProbeViewModel {
     val repository = checkNotNull(container.readingSourceConfigRepository)
     val access = checkNotNull(container.safSourceAccess)
     val reader = checkNotNull(container.readerProbeRepository)
     val factory = remember(repository, access, reader) {
         viewModelFactory {
             initializer {
-                SourceProbeViewModel(repository, access, createSavedStateHandle(), reader)
-            }
-        }
-    }
-    val model: SourceProbeViewModel = viewModel(key = "reading-source-probe", factory = factory)
-    val state by model.uiState.collectAsStateWithLifecycle()
-    DisposableEffect(model) { onDispose { model.cancelProbe() } }
-    val picker =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-        ) { result ->
-            val data = result.data
-            model.select(
-                if (result.resultCode ==
-                    Activity.RESULT_OK
-                ) {
-                    data?.data
-                } else {
-                    null
-                },
-                data?.flags ?: 0,
-            )
-        }
-    Dialog(onDismissRequest = {
-        visible = false
-    }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize()) {
-            SourceProbeScreen(state, {
-                visible = false
-            }, model::recheck, model::runProbe, model::cancelProbe) { folder ->
-                model.pending = folder
-                picker.launch(
-                    Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                        addFlags(
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
-                        )
-                    },
+                SourceProbeViewModel(
+                    repository,
+                    access,
+                    createSavedStateHandle(),
+                    reader,
+                    container.sourceSettingsRepository,
                 )
             }
         }
     }
+    return viewModel(key = "reading-source-probe", factory = factory)
 }

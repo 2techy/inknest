@@ -1,13 +1,14 @@
 package dev.twotechy.inknest.ui.settings
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.ReaderProbeRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.repository.SourceSettingsRepository
 import dev.twotechy.inknest.data.source.SafSourceAccess
+import dev.twotechy.inknest.model.ReadingOpenMode
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -21,16 +22,28 @@ internal class SourceProbeViewModel(
     private val access: SafSourceAccess,
     private val savedState: SavedStateHandle,
     private val readerRepository: ReaderProbeRepository,
+    private val sourceSettings: SourceSettingsRepository,
 ) : ViewModel() {
     private val current = MutableStateFlow(SourceProbeUiState())
     val uiState = current.asStateFlow()
     private var probeJob: Job? = null
     private var probeGeneration = 0L
-    var pending: SourceFolder?
-        get() = savedState.get<String>("probeFolder")?.let(SourceFolder::valueOf)
-        set(value) {
-            savedState["probeFolder"] = value?.name
-        }
+    val visible = savedState.getStateFlow("probeVisible", false)
+    val pending = savedState.getStateFlow<SourceFolder?>("probePendingFolder", null)
+    fun open() {
+        savedState["probeVisible"] = true
+    }
+    fun close() {
+        cancelProbe()
+        dismissFolder()
+        savedState["probeVisible"] = false
+    }
+    fun chooseFolder(folder: SourceFolder) {
+        savedState["probePendingFolder"] = folder
+    }
+    fun dismissFolder() {
+        savedState["probePendingFolder"] = null
+    }
 
     init {
         viewModelScope.launch {
@@ -92,16 +105,19 @@ internal class SourceProbeViewModel(
         current.update { it.copy(probing = false) }
     }
 
-    fun select(uri: Uri?, flags: Int) {
-        val folder = pending ?: return
-        pending = null
-        if (uri == null) return
+    fun select(folder: SourceFolder, uri: String, flags: Int) {
+        dismissFolder()
         accessAction {
             cancelProbe()
-            access.persist(uri, flags)
-            repository.setTree(folder, uri.toString())
+            sourceSettings.connectTree(folder, uri, flags)
         }
     }
+
+    fun selectPackage(packageName: String) = accessAction {
+        repository.setSourcePackage(packageName)
+    }
+    fun recordOpenMode(mode: ReadingOpenMode, version: String) =
+        accessAction { repository.recordOpenMode(mode, version) }
 
     private fun accessAction(block: suspend () -> Unit) {
         if (current.value.busy) return

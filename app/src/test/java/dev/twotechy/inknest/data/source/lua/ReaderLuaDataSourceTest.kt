@@ -91,4 +91,25 @@ class ReaderLuaDataSourceTest {
         } catch (_: TimeoutCancellationException) { }
         assertNull(ReaderLuaDataSource().lastFile(source("return {}")))
     }
+
+    @Test fun `sidecar percent and status are typed and bounded`() = runTest {
+        val reader = ReaderLuaDataSource()
+        assertEquals(
+            SidecarDto(0.35, "reading"),
+            reader.sidecar(source("return {percent_finished=0.35,summary={status='reading'}}")),
+        )
+        assertEquals(SidecarDto(null, null), reader.sidecar(source("return {}")))
+        for (script in listOf(
+            "return {percent_finished=1.5}",
+            "return {percent_finished=0/0}",
+            "return {summary={status=42}}",
+        )) {
+            try {
+                reader.sidecar(source(script))
+                fail("Invalid sidecar accepted")
+            } catch (
+                _: LuaSourceException,
+            ) { }
+        }
+    }
 }

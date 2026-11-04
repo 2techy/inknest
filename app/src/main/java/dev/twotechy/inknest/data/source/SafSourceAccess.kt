@@ -29,27 +29,46 @@ internal class SafSourceAccess(private val resolver: ContentResolver) {
                 uri,
                 DocumentsContract.getTreeDocumentId(uri),
             )
-            resolver.query(
-                document,
-                arrayOf(DocumentsContract.Document.COLUMN_MIME_TYPE),
-                null,
-                null,
-                null,
-            )
-                ?.use { cursor ->
-                    if (!cursor.moveToFirst() ||
-                        cursor.getString(0) != DocumentsContract.Document.MIME_TYPE_DIR
+            cancellableQuery { signal ->
+                val cursor = resolver.query(
+                    document,
+                    arrayOf(DocumentsContract.Document.COLUMN_MIME_TYPE),
+                    null,
+                    null,
+                    null,
+                    signal,
+                ) ?: return@cancellableQuery SourceAccessState.ProviderError
+                cursor.use {
+                    if (!it.moveToFirst() ||
+                        it.getString(0) != DocumentsContract.Document.MIME_TYPE_DIR
                     ) {
-                        return@withContext SourceAccessState.InvalidFolder
+                        SourceAccessState.InvalidFolder
+                    } else {
+                        SourceAccessState.Granted
                     }
-                } ?: return@withContext SourceAccessState.ProviderError
-            SourceAccessState.Granted
+                }
+            }
         } catch (_: SecurityException) {
             SourceAccessState.PermissionLost
         } catch (_: IllegalArgumentException) {
             SourceAccessState.InvalidFolder
         } catch (_: IOException) {
             SourceAccessState.ProviderError
+        }
+    }
+
+    suspend fun releaseUnused(uri: String, retained: Set<String>) = withContext(Dispatchers.IO) {
+        if (uri in retained) return@withContext
+        val parsed = Uri.parse(uri)
+        if (resolver.persistedUriPermissions.any { it.uri == parsed && it.isReadPermission }) {
+            // Source config is already committed. An expired grant must not turn a successful
+            // source change into a false save failure.
+            try {
+                resolver.releasePersistableUriPermission(
+                    parsed,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            } catch (_: SecurityException) { }
         }
     }
 

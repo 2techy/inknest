@@ -132,8 +132,6 @@ private fun InkNestContent(
                         isDefaultLauncher = isDefaultLauncher,
                         developerTools = {
                             DeveloperSettingsRoute(
-                                homeViewModel,
-                                container.sourcePreviewController,
                                 container,
                             )
                         },

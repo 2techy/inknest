@@ -1,59 +1,71 @@
 package dev.twotechy.inknest.data.repository
 
-import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.BookProbeDataSource
+import dev.twotechy.inknest.data.source.ResolvedBook
 import dev.twotechy.inknest.data.source.SourceFileReader
-import dev.twotechy.inknest.data.source.lua.LuaFailure
-import dev.twotechy.inknest.data.source.lua.LuaSourceException
+import dev.twotechy.inknest.data.source.lua.HistoryEntryDto
 import dev.twotechy.inknest.data.source.lua.ReaderLuaDataSource
+import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
 import dev.twotechy.inknest.model.ReadingSourceConfig
-import java.io.IOException
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 internal class ReaderProbeRepository(
     private val files: SourceFileReader,
     private val lua: ReaderLuaDataSource = ReaderLuaDataSource(),
+    private val books: BookProbeDataSource? = null,
+    private val stats: StatisticsSnapshotProbe? = null,
 ) {
     private val mutex = Mutex()
+
     suspend fun probe(config: ReadingSourceConfig): ReaderProbeResult = mutex.withLock {
+        val current = readConfiguredCapability(config.koreaderTreeUri) { tree ->
+            files.read(tree, listOf("settings.reader.lua"), lua::lastFile)
+        }
+        val history = readConfiguredCapability(config.koreaderTreeUri) { tree ->
+            files.read(tree, listOf("history.lua"), lua::history)
+        }
+        val resolved = resolveCurrent(config, current.result)
+        val book = (resolved.result as? ProbeRead.Success)?.value
         ReaderProbeResult(
-            current = capability(config.koreaderTreeUri) { tree ->
-                files.read(tree, listOf("settings.reader.lua"), lua::lastFile)
-            },
-            history = capability(config.koreaderTreeUri) { tree ->
-                files.read(tree, listOf("history.lua"), lua::history)
-            },
+            current = current,
+            history = history,
+            resolvedCurrent = resolved,
+            resolvedHistory = resolveHistory(config, history.result),
+            sidecar = withCurrentBook(book) { source, item -> source.sidecar(item) },
+            epub = withCurrentBook(book) { source, item -> source.epub(item) },
+            statistics = stats?.let { readConfiguredCapability(config.koreaderTreeUri, it::read) }
+                ?: notTestedCapability(),
         )
     }
 
-    private suspend fun <T> capability(
-        tree: String?,
-        block: suspend (String) -> T,
+    suspend fun resolveForOpen(config: ReadingSourceConfig, sourcePath: String): ResolvedBook =
+        checkNotNull(books).resolve(config, sourcePath)
+
+    private suspend fun resolveCurrent(
+        config: ReadingSourceConfig,
+        current: ProbeRead<String?>,
+    ): CapabilityResult<ResolvedBook?> {
+        val source = books ?: return notTestedCapability()
+        if (current !is ProbeRead.Success) return notTestedCapability()
+        return readCapability { current.value?.let { source.resolve(config, it) } }
+    }
+
+    private suspend fun resolveHistory(
+        config: ReadingSourceConfig,
+        history: ProbeRead<List<HistoryEntryDto>>,
+    ): List<CapabilityResult<ResolvedBook>> {
+        val source = books ?: return emptyList()
+        val entries = (history as? ProbeRead.Success)?.value.orEmpty()
+        return entries.map { entry -> readCapability { source.resolve(config, entry.file) } }
+    }
+
+    private suspend fun <T> withCurrentBook(
+        book: ResolvedBook?,
+        read: suspend (BookProbeDataSource, ResolvedBook) -> T,
     ): CapabilityResult<T> {
-        val result = if (tree == null) {
-            ProbeRead.Failed(ProbeIssue.NotConfigured)
-        } else {
-            try {
-                ProbeRead.Success(block(tree))
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: MissingSourceFile) {
-                ProbeRead.Failed(ProbeIssue.MissingFile)
-            } catch (_: SecurityException) {
-                ProbeRead.Failed(ProbeIssue.PermissionLost)
-            } catch (error: LuaSourceException) {
-                ProbeRead.Failed(
-                    when (error.reason) {
-                        LuaFailure.TooLarge -> ProbeIssue.TooLarge
-                        LuaFailure.InstructionLimit -> ProbeIssue.BudgetExceeded
-                        LuaFailure.InvalidData -> ProbeIssue.InvalidLua
-                    },
-                )
-            } catch (_: IOException) {
-                ProbeRead.Failed(ProbeIssue.ProviderError)
-            }
-        }
-        return CapabilityResult(result, System.currentTimeMillis())
+        val source = books ?: return notTestedCapability()
+        if (book == null) return notTestedCapability()
+        return readCapability { read(source, book) }
     }
 }

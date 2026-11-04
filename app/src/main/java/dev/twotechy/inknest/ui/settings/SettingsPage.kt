@@ -20,6 +20,7 @@ internal data class SettingsActions(
     val showStats: (Boolean) -> Unit,
     val showPins: (Boolean) -> Unit,
     val connect: (SourceFolder) -> Unit,
+    val sourceApp: (String) -> Unit,
     val disconnect: () -> Unit,
     val refresh: () -> Unit,
     val clearCache: () -> Unit,

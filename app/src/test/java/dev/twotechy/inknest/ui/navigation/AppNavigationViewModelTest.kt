@@ -9,36 +9,21 @@ class AppNavigationViewModelTest {
         SavedStateHandle(mapOf("selectedDestination" to TopLevelDestination.Apps.name)),
     )
 
-    @Test fun `HOME before UI subscribes is retained`() {
-        val vm = restoredApps()
-        vm.goHome()
-        assertEquals(TopLevelDestination.Home.name, vm.selected.value)
-    }
-
-    @Test fun `new HOME intent overrides restored tab after process death`() {
+    @Test fun `initial HOME overrides a restored tab only once`() {
         val vm = restoredApps()
         vm.handleInitialLaunch(isHome = true, fromHistory = false)
         assertEquals(TopLevelDestination.Home.name, vm.selected.value)
-    }
-
-    @Test fun `configuration recreation does not replay the initial HOME intent`() {
-        val vm = restoredApps()
-        vm.handleInitialLaunch(isHome = true, fromHistory = false)
         vm.select(TopLevelDestination.Apps)
         vm.handleInitialLaunch(isHome = true, fromHistory = false)
         assertEquals(TopLevelDestination.Apps.name, vm.selected.value)
     }
 
-    @Test fun `recents restores the tab instead of replaying old HOME intent`() {
-        val vm = restoredApps()
-        vm.handleInitialLaunch(isHome = true, fromHistory = true)
-        assertEquals(TopLevelDestination.Apps.name, vm.selected.value)
-    }
-
-    @Test fun `standalone launcher entry keeps the restored tab`() {
-        val vm = restoredApps()
-        vm.handleInitialLaunch(isHome = false, fromHistory = false)
-        assertEquals(TopLevelDestination.Apps.name, vm.selected.value)
+    @Test fun `recents and standalone launches keep the restored tab`() {
+        for ((isHome, fromHistory) in listOf(true to true, false to false)) {
+            val vm = restoredApps()
+            vm.handleInitialLaunch(isHome = isHome, fromHistory = fromHistory)
+            assertEquals(TopLevelDestination.Apps.name, vm.selected.value)
+        }
     }
 
     @Test
@@ -71,5 +56,21 @@ class AppNavigationViewModelTest {
         val vm = AppNavigationViewModel(saved)
         vm.offerSetup(false)
         assertEquals(true, vm.onboardingVisible.value)
+    }
+
+    @Test fun `restored picker keeps settings while a new HOME still resets navigation`() {
+        val saved = SavedStateHandle(
+            mapOf(
+                "selectedDestination" to "Settings",
+                "settingsPage" to "ReadingData",
+            ),
+        )
+        val model = AppNavigationViewModel(saved)
+        model.handleInitialLaunch(isHome = true, fromHistory = false, restoring = true)
+        assertEquals("Settings", model.selected.value)
+        assertEquals("ReadingData", model.settingsPage.value)
+        model.goHome()
+        assertEquals("Home", model.selected.value)
+        assertEquals("Overview", model.settingsPage.value)
     }
 }

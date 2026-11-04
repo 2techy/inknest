@@ -29,7 +29,6 @@ internal fun HomeScreen(
     modifier: Modifier,
     contentPadding: PaddingValues,
     iconLoader: AppIconLoader? = null,
-    sampleData: Boolean = false,
     onReadingAction: () -> Unit,
     onAppClick: (String) -> Unit,
     onNavigateToApps: () -> Unit,
@@ -40,14 +39,7 @@ internal fun HomeScreen(
         modifier = modifier,
         contentPadding = contentPadding,
         header = {
-            ScreenHeader(stringResource(R.string.brand_name)) {
-                if (sampleData) {
-                    Text(
-                        stringResource(R.string.sample_data),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-            }
+            ScreenHeader(stringResource(R.string.brand_name))
         },
     ) {
         LazyColumn(

@@ -60,14 +60,11 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
 
-    // Preview fixtures and tooling are excluded from release
-    debugImplementation(libs.compose.ui.tooling.preview)
-    debugImplementation(libs.compose.ui.tooling)
-
     // Local JVM tests
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
 
     // Android instrumentation tests
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }

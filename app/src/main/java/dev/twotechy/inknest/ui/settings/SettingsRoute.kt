@@ -5,8 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -39,7 +41,13 @@ internal fun SettingsRoute(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmation by remember(page) { mutableStateOf<Confirmation?>(null) }
-    var folder by remember(page) { mutableStateOf<SourceFolder?>(null) }
+    val folder by viewModel.pendingFolder.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
+    DisposableEffect(viewModel, page, activity) {
+        onDispose {
+            if (activity?.isChangingConfigurations != true) viewModel.dismissFolder()
+        }
+    }
     LaunchedEffect(page) {
         if (page == SettingsPage.Notices) viewModel.loadAcknowledgements()
     }
@@ -59,7 +67,11 @@ internal fun SettingsRoute(
         displayMode = viewModel::setDisplayMode,
         showStats = viewModel::showStats,
         showPins = viewModel::showPins,
-        connect = { folder = it }, disconnect = { confirmation = Confirmation.Disconnect },
+        connect = viewModel::requestFolder,
+        sourceApp = viewModel::selectSourceApp, disconnect = {
+            confirmation =
+                Confirmation.Disconnect
+        },
         refresh = viewModel::refresh, clearCache = { confirmation = Confirmation.ClearCache },
         requestLauncher = launcher.request, systemSettings = launcher.openSettings,
         reviewSetup = onReviewSetup,
@@ -102,11 +114,11 @@ internal fun SettingsRoute(
     }
     SourceFolderPicker(
         folder = folder,
-        onSelect = { selected ->
-            folder = null
-            viewModel.connect(selected)
+        onSelect = { selected, uri, flags ->
+            viewModel.dismissFolder()
+            viewModel.connectTree(selected, uri, flags)
         },
-        onDismiss = { folder = null },
+        onDismiss = viewModel::dismissFolder,
     )
     confirmation?.let { selected ->
         val disconnect = selected == Confirmation.Disconnect

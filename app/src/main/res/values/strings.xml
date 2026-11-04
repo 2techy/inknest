@@ -25,7 +25,6 @@
     <string name="app_launch_denied">Unable to open this app.</string>
     <string name="home_role_not_set">Default launcher was not set</string>
     <string name="settings_unavailable">System settings are unavailable.</string>
-    <string name="preview_explanation">Choose a state, then return Home. Reading data is simulated only when preview is enabled; installed apps remain real.</string>
     <string name="settings_title">Settings</string>
     <string name="appearance_title">Appearance</string>
     <string name="appearance_summary">Display mode and Home sections</string>
@@ -34,7 +33,6 @@
     <string name="about_title">About</string>
     <string name="about_summary">App details, setup and acknowledgements</string>
     <string name="back">Back</string>
-    <string name="sample_data">Sample data</string>
     <string name="integration_unavailable">Reading integration is not available yet. Apps and launcher features remain ready to use.</string>
     <string name="source_not_connected">Not connected</string>
     <string name="source_connected">Connected</string>
@@ -126,4 +124,6 @@
     <string name="reading_source_heading">Reading source</string>
     <string name="reading_cache_heading">Refresh &amp; cache</string>
     <string name="home_options_heading">Home sections</string>
+    <string name="source_app_title">Source app</string>
+    <string name="source_app_missing">KOReader is not installed. Existing source data can still be read.</string>
 </resources>

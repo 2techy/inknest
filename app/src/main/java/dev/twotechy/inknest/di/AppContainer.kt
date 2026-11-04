@@ -3,8 +3,6 @@ package dev.twotechy.inknest.di
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import dev.twotechy.inknest.data.preview.HomePreviewController
-import dev.twotechy.inknest.data.preview.SourcePreviewController
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ReaderProbeRepository
@@ -33,9 +31,7 @@ internal class AppContainer(
     val appIconLoader: AppIconLoader,
     val launcherModeController: LauncherModeController,
     val acknowledgementsRepository: AcknowledgementsRepository,
-    val homePreviewController: HomePreviewController? = null,
     val sourceSettingsRepository: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
-    val sourcePreviewController: SourcePreviewController? = null,
     val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
     val safSourceAccess: SafSourceAccess? = null,
     val readerProbeRepository: ReaderProbeRepository? = null,
@@ -46,6 +42,8 @@ internal class AppContainer(
                 userPreferencesRepository,
                 sourceSettingsRepository,
                 acknowledgementsRepository,
+                createSavedStateHandle(),
+                installedAppsRepository,
             )
         }
     }
@@ -59,8 +57,6 @@ internal class AppContainer(
                 readingRepository,
                 installedAppsRepository,
                 readingStatsRepository,
-                createSavedStateHandle(),
-                homePreviewController,
             )
         }
     }
