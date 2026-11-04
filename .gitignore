@@ -3,6 +3,7 @@
 .kotlin/
 /.idea/
 **/build/
+/app/release/
 /local.properties
 /captures/
 .externalNativeBuild/

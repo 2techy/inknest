@@ -1,51 +1,40 @@
 package dev.twotechy.inknest.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.platform.clock.rememberMinuteClock
 import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
-import dev.twotechy.inknest.ui.theme.InkTextStyles
 import dev.twotechy.inknest.ui.theme.LocalAppPreferences
 
 @Composable
 internal fun HomeScreen(
-    clockTick: Long,
     state: HomeUiState,
-    modifier: Modifier,
-    contentPadding: PaddingValues,
-    iconLoader: AppIconLoader? = null,
-    onReadingAction: () -> Unit,
-    onRefresh: () -> Unit,
-    onAppClick: (String) -> Unit,
-    onNavigateToApps: () -> Unit,
-    onSettings: () -> Unit,
+    actions: HomeActions,
+    iconLoader: AppIconLoader?,
+    modifier: Modifier = Modifier,
 ) {
     val preferences = LocalAppPreferences.current
+    val loaded = state as? HomeUiState.Loaded
     ScreenScaffold(
         modifier = modifier,
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(),
         header = {
             ScreenHeader(stringResource(R.string.brand_name)) {
                 HeaderIconButton(
                     R.drawable.ic_settings_sync,
                     stringResource(R.string.refresh_reading),
                 ) {
-                    if (state !is HomeUiState.Loaded || !state.sync.running) onRefresh()
+                    if (loaded?.sync?.running != true) actions.refresh()
                 }
             }
         },
@@ -54,114 +43,24 @@ internal fun HomeScreen(
             Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap),
         ) {
-            when (state) {
-                HomeUiState.Loading -> {
-                    item { DateTimeHeader(clockTick, null, preferences.showHomeStats) }
-                    item {
-                        HomeReadingNotice(
-                            stringResource(R.string.home_reading_loading),
-                            stringResource(R.string.home_reading_loading_detail),
-                        )
-                    }
+            item { HomeClockHeader(loaded?.stats, preferences.showHomeStats) }
+            if (loaded == null) {
+                item { HomeReadingSection(ReadingSectionState.Loading, actions) }
+            } else {
+                if (loaded.sync.running || loaded.sync.stale) {
+                    item { ReadingSyncNotice(loaded.sync) }
                 }
-
-                is HomeUiState.Loaded -> {
-                    item {
-                        DateTimeHeader(clockTick, state.stats, preferences.showHomeStats)
-                    }
-
-                    if (state.sync.running || state.sync.stale) {
-                        item { ReadingSyncNotice(state.sync) }
-                    }
-                    // Reading section
-                    when (val reading = state.reading) {
-                        ReadingSectionState.Loading -> item {
-                            HomeReadingNotice(
-                                stringResource(R.string.home_reading_loading),
-                                stringResource(R.string.home_reading_loading_detail),
-                            )
-                        }
-
-                        ReadingSectionState.NotConfigured -> item {
-                            HomeReadingNotice(
-                                stringResource(R.string.home_connect_reader),
-                                stringResource(R.string.home_connect_reader_detail),
-                                onClick = onSettings,
-                            )
-                        }
-
-                        ReadingSectionState.Empty -> item {
-                            HomeReadingNotice(
-                                stringResource(R.string.home_reading_empty),
-                                stringResource(R.string.home_reading_empty_detail),
-                            )
-                        }
-
-                        is ReadingSectionState.Error -> item {
-                            HomeReadingNotice(
-                                stringResource(R.string.home_reading_error),
-                                readingIssueMessage(reading.issue),
-                                onClick = onSettings,
-                            )
-                        }
-
-                        is ReadingSectionState.Content -> item {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(
-                                    InkLayoutTokens.sectionContentGap,
-                                ),
-                            ) {
-                                Text(
-                                    stringResource(R.string.home_now_reading),
-                                    style = InkTextStyles.sectionTitle,
-                                )
-                                ContinueReadingCard(reading.current, onReadingAction)
-                            }
-                        }
-                    }
-
-                    // Hiding this section does not remove persisted pins.
-                    if (preferences.showHomePinnedApps) {
-                        item {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(
-                                    InkLayoutTokens.sectionContentGap,
-                                ),
-                            ) {
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        stringResource(R.string.home_pinned_apps),
-                                        style = InkTextStyles.sectionTitle,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    HeaderIconButton(
-                                        R.drawable.ic_chevron_right,
-                                        stringResource(R.string.home_all_apps),
-                                        onNavigateToApps,
-                                    )
-                                }
-                                if (state.pinnedApps.isEmpty()) {
-                                    HomeReadingNotice(
-                                        stringResource(R.string.home_choose_apps),
-                                        stringResource(R.string.home_choose_apps_detail),
-                                        icon = R.drawable.ic_nav_apps_outline,
-                                        onClick = onNavigateToApps,
-                                    )
-                                } else {
-                                    HomePinnedApps(
-                                        pins = state.pinnedApps,
-                                        iconLoader = iconLoader,
-                                        onAppClick = onAppClick,
-                                    )
-                                }
-                            }
-                        }
-                    }
+                item { HomeReadingSection(loaded.reading, actions) }
+                if (preferences.showHomePinnedApps) {
+                    item { HomePinnedAppsSection(loaded.pinnedApps, iconLoader, actions) }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun HomeClockHeader(stats: HomeReadingStats?, showStats: Boolean) {
+    // Clock state is read here, so minute ticks invalidate only the visible header.
+    DateTimeHeader(rememberMinuteClock(), stats, showStats)
 }

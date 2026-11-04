@@ -30,30 +30,18 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
         )
     }.distinctUntilChanged()
 
-    suspend fun setTree(folder: SourceFolder, uri: String) {
-        store.edit {
-            if (it[sourceId] == null || (folder == SourceFolder.KOReader && it[koreader] != uri)) {
-                it[sourceId] = UUID.randomUUID().toString()
-            }
-            it[if (folder == SourceFolder.KOReader) koreader else books] = uri
-        }
-    }
-
     fun treeCandidate(
         before: ReadingSourceConfig,
         folder: SourceFolder,
         uri: String,
-    ): ReadingSourceConfig = before.copy(
-        sourceId = if (before.sourceId == null ||
-            (folder == SourceFolder.KOReader && before.koreaderTreeUri != uri)
-        ) {
-            UUID.randomUUID().toString()
-        } else {
-            before.sourceId
-        },
-        koreaderTreeUri = if (folder == SourceFolder.KOReader) uri else before.koreaderTreeUri,
-        booksTreeUri = if (folder == SourceFolder.Books) uri else before.booksTreeUri,
-    )
+    ): ReadingSourceConfig {
+        val updated = before.copy(
+            koreaderTreeUri = if (folder == SourceFolder.KOReader) uri else before.koreaderTreeUri,
+            booksTreeUri = if (folder == SourceFolder.Books) uri else before.booksTreeUri,
+        )
+        val identity = before.sourceId?.takeIf { before.koreaderTreeUri == updated.koreaderTreeUri }
+        return updated.copy(sourceId = identity ?: UUID.randomUUID().toString())
+    }
 
     suspend fun activateTree(before: ReadingSourceConfig, candidate: ReadingSourceConfig) {
         store.edit { values ->

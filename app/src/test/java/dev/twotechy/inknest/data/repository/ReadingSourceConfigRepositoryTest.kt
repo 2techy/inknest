@@ -6,6 +6,7 @@ import dev.twotechy.inknest.model.ReadingSourceConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
@@ -25,14 +26,38 @@ class ReadingSourceConfigRepositoryTest {
         user.pin("reader/Activity")
         user.setShowHomeStats(false)
         assertEquals(ReadingSourceConfig(), source.config.first())
-        source.setTree(SourceFolder.KOReader, "content://tree/koreader")
+        val initial = source.config.first()
+        source.activateTree(
+            initial,
+            source.treeCandidate(initial, SourceFolder.KOReader, "content://tree/koreader"),
+        )
         val id = source.config.first().sourceId
         assertNotNull(id)
-        source.setTree(SourceFolder.Books, "content://tree/books")
+        val reader = source.config.first()
+        source.activateTree(
+            reader,
+            source.treeCandidate(reader, SourceFolder.Books, "content://tree/books"),
+        )
         val saved = ReadingSourceConfigRepository(store).config.first()
         assertEquals(id, saved.sourceId)
         assertEquals("content://tree/koreader", saved.koreaderTreeUri)
         assertEquals("content://tree/books", saved.booksTreeUri)
+        assertEquals(
+            id,
+            source.treeCandidate(
+                saved,
+                SourceFolder.KOReader,
+                checkNotNull(saved.koreaderTreeUri),
+            ).sourceId,
+        )
+        assertNotEquals(
+            id,
+            source.treeCandidate(
+                saved,
+                SourceFolder.KOReader,
+                "content://tree/another-reader",
+            ).sourceId,
+        )
         source.setSourcePackage("org.koreader.launcher")
         source.recordOpenMode(ReadingOpenMode.SourceAppOnly, "1")
         assertEquals(ReadingOpenMode.SourceAppOnly, source.config.first().openMode)

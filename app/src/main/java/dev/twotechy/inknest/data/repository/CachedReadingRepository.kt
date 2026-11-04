@@ -1,18 +1,13 @@
 package dev.twotechy.inknest.data.repository
 
 import android.database.sqlite.SQLiteException
-import dev.twotechy.inknest.data.local.reading.CachedReading
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.CurrentReadingSource
 import dev.twotechy.inknest.data.source.ReadingRefreshException
-import dev.twotechy.inknest.model.BookAvailability
-import dev.twotechy.inknest.model.ReadingItem
-import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
-import dev.twotechy.inknest.model.ReadingSyncStatus
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +39,6 @@ internal class CachedReadingRepository(
     private val source: CurrentReadingSource,
     private val scope: CoroutineScope,
 ) : ReadingRepository {
-    private data class Observation(val key: ReadingCacheKey?, val cached: CachedReading? = null)
     private val transition = Mutex()
     private val requests = Mutex()
     private val jobs = mutableMapOf<ReadingCacheKey, Deferred<Unit>>()
@@ -55,56 +49,20 @@ internal class CachedReadingRepository(
         if (active ==
             null
         ) {
-            flowOf(Observation(null))
+            flowOf(ReadingCacheObservation(null))
         } else {
             cache.observe(active).map {
-                Observation(active, it)
-            }.onStart { emit(Observation(active)) }
+                ReadingCacheObservation(active, it)
+            }.onStart { emit(ReadingCacheObservation(active)) }
         }
-    }.stateIn(scope, SharingStarted.Eagerly, Observation(null))
-
-    private fun Observation.toReadingState(): ReadingState {
-        val row = cached ?: return ReadingState.Loading
-        val book = row.book
-        if (book != null) {
-            return ReadingState.Content(
-                ReadingItem(
-                    ReadingItemId(book.sourceId, book.path),
-                    book.title,
-                    null,
-                    null,
-                    availability = BookAvailability.valueOf(book.availability),
-                ),
-            )
-        }
-        if (row.source.lastSuccessAt != null) return ReadingState.Empty
-        val issue = row.source.error ?: return ReadingState.Loading
-        return ReadingState.Error(ReadingSyncIssue.valueOf(issue))
-    }
+    }.stateIn(scope, SharingStarted.Eagerly, ReadingCacheObservation(null))
 
     override val reading = combine(observation, key, writeErrors) { state, active, errors ->
-        val failure = errors[active]
-        when {
-            active == null -> ReadingState.NotConfigured
-            state.key != active -> ReadingState.Loading
-            state.cached == null && failure != null -> ReadingState.Error(failure)
-            else -> state.toReadingState()
-        }
+        state.readingState(active, errors[active])
     }
     override val sync =
         combine(observation, key, running, writeErrors) { state, active, inFlight, errors ->
-            val saved = state.cached?.source?.takeIf { state.key == active }
-            val issue = errors[active] ?: saved?.error?.let { value ->
-                ReadingSyncIssue.entries.find { it.name == value }
-            }
-            ReadingSyncStatus(
-                saved?.lastAttemptAt,
-                saved?.lastSuccessAt,
-                active != null && active in inFlight,
-                issue,
-                saved?.lastSuccessAt != null &&
-                    (issue != null || (saved.lastAttemptAt ?: 0) > saved.lastSuccessAt),
-            )
+            state.syncStatus(active, active != null && active in inFlight, errors[active])
         }
 
     init {
@@ -145,13 +103,11 @@ internal class CachedReadingRepository(
         val token = Any()
         running.update { it + (active to token) }
         try {
-            transition.withLock {
-                ensureActiveSource(active)
+            withActiveSource(active) {
                 cache.attempt(active, attempt)
             }
             val result = source.read(selected)
-            transition.withLock {
-                ensureActiveSource(active)
+            withActiveSource(active) {
                 cache.save(active, result, attempt)
                 writeErrors.update { it - active }
             }
@@ -167,8 +123,7 @@ internal class CachedReadingRepository(
 
     private suspend fun recordRefreshFailure(active: ReadingCacheKey, error: Exception): Nothing {
         val issue = (error as? ReadingRefreshException)?.issue ?: ReadingSyncIssue.Cache
-        transition.withLock {
-            ensureActiveSource(active)
+        withActiveSource(active) {
             writeErrors.update { it + (active to issue) }
             try {
                 cache.fail(active, issue)
@@ -180,6 +135,12 @@ internal class CachedReadingRepository(
         }
         throw ReadingRefreshException(issue, error)
     }
+
+    private suspend fun <T> withActiveSource(active: ReadingCacheKey, update: suspend () -> T): T =
+        transition.withLock {
+            ensureActiveSource(active)
+            update()
+        }
 
     private suspend fun ensureActiveSource(active: ReadingCacheKey) {
         currentCoroutineContext().ensureActive()

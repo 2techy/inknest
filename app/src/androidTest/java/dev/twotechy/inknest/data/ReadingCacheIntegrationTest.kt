@@ -168,8 +168,13 @@ class ReadingCacheIntegrationTest {
     private suspend fun withHarness(test: suspend (Harness) -> Unit) = withTimeout(20_000) {
         val h = Harness()
         try {
-            h.config.setTree(SourceFolder.KOReader, "content://test/reader")
-            h.config.setTree(SourceFolder.Books, "content://test/books")
+            for ((folder, uri) in listOf(
+                SourceFolder.KOReader to "content://test/reader",
+                SourceFolder.Books to "content://test/books",
+            )) {
+                val before = h.config.config.first()
+                h.config.activateTree(before, h.config.treeCandidate(before, folder, uri))
+            }
             test(h)
         } finally {
             h.close()
