@@ -26,6 +26,15 @@ android {
         buildConfig = true
     }
 
+    packaging {
+        resources {
+            // AGP's default service merge takes precedence over exclusions.
+            merges -= "/META-INF/services/**"
+            // LuaJ's desktop JSR-223 provider is unused; Android has no javax.script API.
+            excludes += "META-INF/services/javax.script.ScriptEngineFactory"
+        }
+    }
+
     buildTypes {
         release {
             optimization {
