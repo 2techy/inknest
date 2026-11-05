@@ -186,7 +186,7 @@ Month/weekday axes remain; week-count and Less/More captions are omitted.
 
 ## Content gestures
 
-`InkGestureTokens` owns the 64dp tab-swipe and 80dp pull-refresh thresholds. Direction
+`InkGestureTokens` owns the 40dp tab-swipe and 56dp pull-refresh thresholds. Direction
 locks after system touch slop when one axis exceeds the other by 1.5 times. Actions fire
 on release; cancelled and multi-touch gestures do not fire. System Back edge insets and
 child-consumed horizontal scrolls take priority.
