@@ -171,6 +171,17 @@ extra tinted backgrounds are required to distinguish these sections.
   paragraph. The same choices are used in onboarding.
 - About groups icon/name/version/author into one identity row. Developer tools have been removed.
 
+## Onboarding
+
+- Three steps use the same page headers, gutters and display choices as Settings.
+- A static three-segment progress strip is 3dp high, with a visible step count and
+  progress semantics. It does not animate or accept navigation gestures.
+- Content scrolls independently of a fixed footer. The full-width primary action comes
+  first; Skip setup is a separate text action with at least a 48dp touch target.
+- Reading setup explains the real Settings connection flow. Launcher setup is optional
+  and shows the current system role; role requests remain explicit button actions.
+- Save errors are announced politely. Saving disables navigation and completion controls.
+
 ## Compact choice tabs
 
 Library filters and Stats units use the shared ChoiceTab component: labelMedium 12sp/16sp,

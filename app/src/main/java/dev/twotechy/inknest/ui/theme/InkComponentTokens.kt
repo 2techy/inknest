@@ -106,3 +106,7 @@ internal object InkChoiceTokens {
     val horizontalPadding = InkSpacing.md
     val verticalPadding = InkSpacing.sm
 }
+
+internal object InkOnboardingTokens {
+    val progressHeight = 3.dp
+}

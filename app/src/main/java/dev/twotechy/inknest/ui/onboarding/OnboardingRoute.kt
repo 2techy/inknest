@@ -24,17 +24,21 @@ internal fun OnboardingRoute(
     val error by onboarding.error.collectAsStateWithLifecycle()
     BackHandler { if (!saving && !preferencesSaving) onboarding.back() }
     OnboardingScreen(
-        step = step,
-        mode = displayMode,
-        saving = saving || preferencesSaving,
-        saveError = error,
-        preferenceError = preferencesSaveError,
-        isDefaultLauncher = isDefault,
-        onMode = onDisplayMode,
-        onNext = onboarding::next,
-        onBack = onboarding::back,
-        onFinish = onboarding::finish,
-        onRoleRequest = launcher.request,
+        state = OnboardingUiState(
+            step = step,
+            mode = displayMode,
+            saving = saving || preferencesSaving,
+            saveError = error,
+            preferenceError = preferencesSaveError,
+            isDefaultLauncher = isDefault,
+        ),
+        actions = OnboardingActions(
+            mode = onDisplayMode,
+            next = onboarding::next,
+            back = onboarding::back,
+            finish = onboarding::finish,
+            requestLauncher = launcher.request,
+        ),
         contentPadding = padding,
     )
 }
