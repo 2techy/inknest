@@ -146,6 +146,7 @@
     <string name="reading_open_missing_file">This book is no longer in the selected folder. Check the file and refresh your reading source.</string>
     <string name="reading_open_permission">Access to this book is unavailable. Choose your book folder again in Reading settings.</string>
     <string name="reading_open_unavailable">The reading source changed or the reader could not be opened. Check Reading settings and try again.</string>
+    <string name="library_cover_progress_percent">%1$d%%</string>
     <string name="reading_progress_percent">%1$d%% read</string>
     <string name="reading_progress_unknown">Progress unavailable</string>
     <string name="library_title">Library</string>

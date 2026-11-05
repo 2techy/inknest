@@ -1,11 +1,14 @@
 package dev.twotechy.inknest.ui.library
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -18,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
@@ -37,8 +42,8 @@ internal fun LibraryGridBook(book: ReadingItem, onClick: () -> Unit, onDetails: 
         verticalArrangement = Arrangement.spacedBy(InkSpacing.sm),
     ) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            BookCover(
-                book.coverUri,
+            LibraryBookCover(
+                book,
                 Modifier.widthIn(
                     max = InkLibraryTokens.maxCoverWidth,
                 ).fillMaxWidth().aspectRatio(0.7f),
@@ -58,8 +63,8 @@ internal fun LibraryListBook(book: ReadingItem, onClick: () -> Unit, onDetails: 
             horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BookCover(
-                book.coverUri,
+            LibraryBookCover(
+                book,
                 Modifier.width(InkLibraryTokens.listCoverWidth).aspectRatio(0.7f),
             )
             LibraryBookDetails(book, Modifier.weight(1f), compact = false)
@@ -68,6 +73,27 @@ internal fun LibraryListBook(book: ReadingItem, onClick: () -> Unit, onDetails: 
             thickness = InkBorder.thin,
             color = MaterialTheme.colorScheme.outlineVariant,
         )
+    }
+}
+
+@Composable
+private fun LibraryBookCover(book: ReadingItem, modifier: Modifier = Modifier) {
+    Box(modifier) {
+        BookCover(book.coverUri, Modifier.fillMaxSize())
+        book.progress?.let { progress ->
+            val description = stringResource(R.string.reading_progress_percent, progress)
+            Text(
+                stringResource(R.string.library_cover_progress_percent, progress),
+                modifier = Modifier.align(Alignment.BottomEnd)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(InkBorder.thin, MaterialTheme.colorScheme.outline)
+                    .padding(horizontal = InkSpacing.xs)
+                    .clearAndSetSemantics { contentDescription = description },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -96,12 +122,6 @@ private fun LibraryBookDetails(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        book.progress?.let {
-            Text(
-                stringResource(R.string.reading_progress_percent, it),
-                style = MaterialTheme.typography.labelMedium,
             )
         }
         if (book.status == ReadingStatus.Finished || book.status == ReadingStatus.Abandoned) {
