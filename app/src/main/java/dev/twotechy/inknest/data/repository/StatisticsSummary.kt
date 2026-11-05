@@ -1,25 +1,18 @@
 package dev.twotechy.inknest.data.repository
 
-import dev.twotechy.inknest.model.ReadingEvent
+import dev.twotechy.inknest.model.StatisticsAmount
 import java.time.DayOfWeek
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
 internal fun miniStatistics(
-    events: List<ReadingEvent>,
+    days: Map<LocalDate, StatisticsAmount>,
     today: LocalDate,
-    zone: ZoneId,
 ): Pair<Int, Int> {
     val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    var daily = 0L
-    var weekly = 0L
-    for (event in events) {
-        val day = Instant.ofEpochMilli(event.startedAt).atZone(zone).toLocalDate()
-        if (event.seconds <= 0) continue
-        if (day == today) daily += event.seconds
-        if (day >= monday && day <= today) weekly += event.seconds
+    val daily = days[today]?.seconds ?: 0
+    val weekly = days.entries.sumOf { (day, amount) ->
+        if (day >= monday && day <= today) amount.seconds else 0
     }
     return (daily / 60).coerceAtMost(Int.MAX_VALUE.toLong()).toInt() to
         (weekly / 60).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()

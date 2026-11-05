@@ -63,7 +63,7 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
     val statistics = KoreaderStatisticsRepository(
         config,
         database.statisticsDao(),
-        statisticsSnapshot::events,
+        statisticsSnapshot,
         scope,
         transition,
     )

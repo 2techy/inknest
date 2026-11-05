@@ -61,12 +61,20 @@ produce totals different from KOReader's rescaled view; this limitation is docum
 The same bounded snapshot reader serves diagnostics and production. It copies SQLite and
 existing WAL/SHM into a private temporary directory, validates metadata, integrity and required
 columns, opens read-only and removes the copy in finally. Source change/cancellation interrupts
-queries. One retry handles an unstable snapshot; SAF remains best effort while KOReader writes.
+queries. Up to three attempts handle transient snapshot failures; SAF remains best effort while KOReader writes.
 Unflushed reading is absent. At most one million rows and 256 MiB of source files are accepted.
 Malformed numeric/time values are rejected; missing page metadata does not discard valid time.
 
-Room schema 5 stores page/layout fields, events and the successful snapshot timestamp in an
-atomic replacement. Refresh does not append or double count. Failure retains cached content.
+The reader streams at most 500 events per batch into a private Room staging generation.
+Room schema 6 keeps raw page/layout events on disk and precomputes daily seconds/page counts
+in SQL. UI state exposes only daily summaries, the generation, timezone and snapshot timestamp;
+it never retains the full event list or per-event page sets.
+
+A successful, fully closed snapshot activates its generation atomically. Retry attempts use
+separate generations; failure/cancellation preserves the previous active snapshot. An import token
+registered before copying is invalidated by cache clear, so pending copies cannot repopulate it.
+Cleanup uses Room's committed pointer, including when cancellation races with activation. Abandoned
+generations are removed after each operation and pruned at startup. Refresh does not append or double count.
 The KOReader tree partitions this cache; changing Books does not invalidate statistics.
 Clear reading cache/disconnect includes statistics, preserving UI preferences and pins.
 Development schema changes rebuild disposable reading data without migrations.
@@ -78,14 +86,18 @@ The reading-source transition mutex prevents older snapshots repopulating discon
 ## Calendar and state
 
 Timestamps are epoch milliseconds internally, interpreted in the current system timezone.
-Rows crossing midnight belong to their start day. DST/timezone changes re-bin cached instants
-without changing recorded durations. Future records are excluded. Duration and page data remain
+Rows crossing midnight belong to their start day, calculated with Java ZoneId (including DST).
+Timezone changes re-bin raw Room rows in batches of at most 500 into another staging generation,
+without rereading SAF or changing the source update timestamp. Future summaries remain on disk;
+Home and Stats exclude them until their calendar day arrives. Duration and page data remain
 independent of the current book. Time arithmetic retains seconds until display.
 
-Aggregation runs on Default, source/snapshot I/O on IO; no parsing is done by a Screen. Base
-aggregation is reused for unit/granularity changes, and an old projection is hidden on source change.
+SQL aggregation and bounded imports run through Room, source/snapshot I/O on IO and dashboard
+projection on Default; no parsing is done by a Screen. Home mini stats and the Stats dashboard share
+the same daily summaries. Unit/granularity changes do not read raw rows, and source changes select
+the corresponding cached generation.
 StatsViewModel owns unit/granularity in SavedStateHandle. Route collects lifecycle-aware state; Screen
-renders state/callbacks. The calendar flow stops with UI subscribers and checks at minute resolution.
+renders state/callbacks. The calendar checks date/timezone at minute resolution; repository timezone maintenance is application-scoped.
 
 The dashboard omits the average-period caption and page-count explanatory paragraph.
 Chart totals show just their value and unit. The calendar fills the content width with a responsive calendar density.

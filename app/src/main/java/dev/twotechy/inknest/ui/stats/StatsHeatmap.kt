@@ -27,7 +27,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.StatisticsAmount
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.theme.InkHeatmapPalette
 import dev.twotechy.inknest.ui.theme.InkSpacing

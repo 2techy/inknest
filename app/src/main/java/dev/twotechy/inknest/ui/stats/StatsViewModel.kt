@@ -3,12 +3,12 @@ package dev.twotechy.inknest.ui.stats
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.twotechy.inknest.data.repository.StatisticsAmount
 import dev.twotechy.inknest.data.repository.StatisticsBucket
+import dev.twotechy.inknest.data.repository.StatisticsDashboard
 import dev.twotechy.inknest.data.repository.StatisticsPeriod
 import dev.twotechy.inknest.data.repository.StatisticsRepository
-import dev.twotechy.inknest.data.repository.buildStatisticsDashboard
 import dev.twotechy.inknest.data.repository.localStatisticsClock
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
 import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
@@ -17,9 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -60,18 +58,19 @@ internal class StatsViewModel(
                 ?: StatisticsGranularity.Days,
         )
     }
-    private val dashboard = combine(
-        repository.data.map { it.updatedAt to it.events }.distinctUntilChanged(),
-        localStatisticsClock(),
-    ) { (updated, events), (today, zone) ->
-        (updated to events) to updated?.let { buildStatisticsDashboard(events, today, zone) }
-    }.flowOn(Dispatchers.Default)
-
-    val uiState = combine(repository.data, dashboard, options) { data, dashboard, options ->
+    val uiState = combine(repository.data, localStatisticsClock(), options) {
+            data,
+            clock,
+            options,
+        ->
+        val today = clock.first
+        val dashboard = data.updatedAt?.let {
+            StatisticsDashboard(today, data.days.filterKeys { it <= today })
+        }
         StatsUiState(
             options,
             data,
-            dashboard.second?.takeIf { dashboard.first == (data.updatedAt to data.events) }?.let {
+            dashboard?.let {
                 StatsOverview(
                     it.average(options.unit),
                     it.streak(options.unit),

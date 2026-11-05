@@ -4,7 +4,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocumentReader
-import dev.twotechy.inknest.model.ReadingEvent
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -26,20 +25,19 @@ internal class UnsupportedStatisticsSchema : IOException()
 internal class StatisticsSnapshotProbe(
     private val files: SourceDocumentReader,
     private val cache: File,
-) {
+) : StatisticsEventSource {
     private val mutex = Mutex()
     suspend fun read(tree: String): StatisticsProbeResult =
         readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, wal ->
             probeStatisticsDatabase(db, wal)
         }
 
-    suspend fun events(tree: String): List<ReadingEvent> =
-        readSnapshotData(StatisticsSnapshotFiles(files, tree)) {
-                db,
-                _,
-            ->
-            readStatisticsEvents(db)
-        }
+    override suspend fun <T> withEvents(
+        tree: String,
+        consume: suspend (StatisticsEventReader) -> T,
+    ): T = readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, _ ->
+        consume(StatisticsEventReader { batch -> readStatisticsEvents(db, batch) })
+    }
 
     private suspend fun <T> readSnapshotData(
         source: StatisticsSnapshotFiles,

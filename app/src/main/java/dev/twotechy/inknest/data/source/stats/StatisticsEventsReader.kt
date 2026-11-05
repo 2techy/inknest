@@ -3,28 +3,35 @@ package dev.twotechy.inknest.data.source.stats
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import dev.twotechy.inknest.data.source.SourceLimitExceeded
-import dev.twotechy.inknest.data.source.cancellableQuery
+import dev.twotechy.inknest.data.source.withCancellableSignal
 import dev.twotechy.inknest.model.ReadingEvent
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
-internal suspend fun readStatisticsEvents(db: SQLiteDatabase): List<ReadingEvent> {
+internal suspend fun readStatisticsEvents(
+    db: SQLiteDatabase,
+    consume: suspend (List<ReadingEvent>) -> Unit,
+) {
     val context = currentCoroutineContext()
-    return cancellableQuery { signal ->
+    withCancellableSignal { signal ->
         val layout = if (hasLayoutColumn(db)) "total_pages" else "NULL AS total_pages"
         db.rawQuery(
             "SELECT start_time, duration, id_book, page, $layout FROM page_stat_data",
             null,
             signal,
         ).use { cursor ->
-            buildList {
-                var visited = 0
-                while (cursor.moveToNext()) {
-                    context.ensureActive()
-                    if (++visited > 1_000_000) throw SourceLimitExceeded()
-                    cursor.readEvent()?.let { add(it) }
+            val batch = ArrayList<ReadingEvent>(StatisticsEventReader.BATCH_SIZE)
+            var visited = 0
+            while (cursor.moveToNext()) {
+                context.ensureActive()
+                if (++visited > 1_000_000) throw SourceLimitExceeded()
+                cursor.readEvent()?.let { batch.add(it) }
+                if (batch.size == StatisticsEventReader.BATCH_SIZE) {
+                    consume(batch.toList())
+                    batch.clear()
                 }
             }
+            if (batch.isNotEmpty()) consume(batch.toList())
         }
     }
 }

@@ -123,6 +123,6 @@ configured KOReader app cold and warm using real virtual-device data; actual met
 inspected at the existing viewport and 150% font scale. No full launcher regression or hardware
 E-Ink acceptance was repeated.
 
-Statistics snapshots share the reading database (schema 5), but retain their own source
-identity and repository. Cache clear/disconnect includes both events and snapshot timestamps.
+Statistics snapshots share the reading database (schema 6), but retain their own source
+identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps.
 See [Statistics](statistics.md).

@@ -20,8 +20,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.StatisticsAmount
 import dev.twotechy.inknest.data.repository.StatisticsBucket
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.theme.InkSpacing

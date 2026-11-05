@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsGranularity
 import java.time.DayOfWeek
 import java.time.LocalDate

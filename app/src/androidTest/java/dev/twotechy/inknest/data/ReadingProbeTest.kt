@@ -145,12 +145,39 @@ class ReadingProbeTest {
             db.execSQL("INSERT INTO page_stat_data VALUES(1, 1e30, 60, 6)")
             db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, NULL)")
             db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, 'invalid')")
-            val events = StatisticsSnapshotProbe(documents, cache).events("tree")
+            val events = StatisticsSnapshotProbe(documents, cache).withEvents("tree") { reader ->
+                buildList { reader.forEachBatch { addAll(it) } }
+            }
             assertEquals(4, events.size)
             assertEquals(300L, events.sumOf { it.seconds })
             assertEquals(2, events.count { it.page == 1L })
             assertEquals(2, events.count { it.page == null })
             assertEquals(1000L, events.first().startedAt)
+            assertTrue(cache.listFiles().orEmpty().isEmpty())
+        } finally {
+            db.close()
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test fun snapshotStreamsBoundedBatches() = runBlocking {
+        val dir = workspace()
+        val source = File(dir, "source").apply { mkdir() }
+        val cache = File(dir, "snapshots").apply { mkdir() }
+        val db = statisticsDatabase(source)
+        try {
+            db.beginTransaction()
+            try {
+                repeat(1200) { db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, 1)") }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+            val sizes = mutableListOf<Int>()
+            StatisticsSnapshotProbe(Documents(source), cache).withEvents("tree") { reader ->
+                reader.forEachBatch { sizes += it.size }
+            }
+            assertEquals(listOf(500, 500, 201), sizes)
             assertTrue(cache.listFiles().orEmpty().isEmpty())
         } finally {
             db.close()

@@ -8,6 +8,8 @@ import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
+import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
 import dev.twotechy.inknest.model.ReadingEvent
 import java.io.File
 import java.io.IOException
@@ -69,12 +71,23 @@ private class StatisticsFixture {
     private val calls = AtomicInteger()
     private var gate = CompletableDeferred<Unit>().apply { complete(Unit) }
     private val transition = Mutex()
-    val repository = KoreaderStatisticsRepository(config, database.statisticsDao(), {
-        calls.incrementAndGet()
-        gate.await()
-        if (fail.get()) throw IOException("Unavailable")
-        listOf(ReadingEvent(1000, if (it == "first") 60 else 120, 1))
-    }, scope, transition)
+    private val source = object : StatisticsEventSource {
+        override suspend fun <T> withEvents(
+            tree: String,
+            consume: suspend (StatisticsEventReader) -> T,
+        ): T {
+            calls.incrementAndGet()
+            gate.await()
+            if (fail.get()) throw IOException("Unavailable")
+            return consume(
+                StatisticsEventReader { batch ->
+                    batch(listOf(ReadingEvent(1000, if (tree == "first") 60 else 120, 1)))
+                },
+            )
+        }
+    }
+    val repository =
+        KoreaderStatisticsRepository(config, database.statisticsDao(), source, scope, transition)
 
     suspend fun select(tree: String) {
         val before = config.config.first()
@@ -83,12 +96,17 @@ private class StatisticsFixture {
 
     suspend fun verifyReplacementAndFailure() {
         repository.refresh()
-        assertEquals(60L, repository.data.first { !it.sync.running }.events.sumOf { it.seconds })
-        assertEquals(1, database.statisticsDao().observeSnapshot("first").first()?.events?.size)
+        assertEquals(
+            60L,
+            repository.data.first {
+                !it.sync.running
+            }.days.values.sumOf { it.seconds },
+        )
+        assertEquals(1, database.statisticsDao().observeSnapshot("first").first()?.days?.size)
         fail.set(true)
         repository.refresh()
         val stale = repository.data.first { it.sync.error != null }
-        assertEquals(60L, stale.events.single().seconds)
+        assertEquals(60L, stale.days.values.single().seconds)
         assertTrue(stale.sync.stale)
         fail.set(false)
     }
@@ -116,15 +134,20 @@ private class StatisticsFixture {
         transition.unlock()
         previous.join()
         val second = repository.data.first {
-            it.updatedAt != null && it.events.singleOrNull()?.seconds == 120L
+            it.updatedAt != null && it.days.values.singleOrNull()?.seconds == 120L
         }
         assertNull(second.sync.error)
         database.readingDao().clearAll()
         repository.data.first { it.updatedAt == null }
         repository.refresh()
-        assertEquals(120L, repository.data.first { it.updatedAt != null }.events.single().seconds)
+        assertEquals(
+            120L,
+            repository.data.first {
+                it.updatedAt != null
+            }.days.values.single().seconds,
+        )
         config.disconnect()
-        assertTrue(repository.data.first { !it.configured }.events.isEmpty())
+        assertTrue(repository.data.first { !it.configured }.days.isEmpty())
     }
 
     fun close() {

@@ -2,14 +2,13 @@ package dev.twotechy.inknest.data.repository
 
 import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.local.reading.StatisticsDao
-import dev.twotechy.inknest.data.local.reading.StatisticsEventEntity
-import dev.twotechy.inknest.data.local.reading.StatisticsSourceEntity
 import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
-import dev.twotechy.inknest.model.ReadingEvent
 import dev.twotechy.inknest.model.ReadingStats
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
 import java.io.IOException
 import java.time.LocalDate
@@ -44,10 +43,11 @@ import kotlinx.coroutines.sync.withLock
 internal class KoreaderStatisticsRepository(
     private val config: ReadingSourceConfigRepository,
     private val dao: StatisticsDao,
-    private val read: suspend (String) -> List<ReadingEvent>,
+    source: StatisticsEventSource,
     private val scope: CoroutineScope,
-    private val transition: Mutex = Mutex(),
+    transition: Mutex = Mutex(),
 ) : StatisticsRepository {
+    private val importer = StatisticsImporter(config, dao, source, transition)
     private val requests = Mutex()
     private var request: Pair<String, Deferred<Unit>>? = null
     private val status =
@@ -60,15 +60,11 @@ internal class KoreaderStatisticsRepository(
             combine(
                 dao.observeSnapshot(selected).map { snapshot ->
                     StatisticsData(
-                        snapshot?.events.orEmpty().map {
-                            ReadingEvent(
-                                it.startedAt,
-                                it.seconds,
-                                it.bookId,
-                                it.page,
-                                it.totalPages,
-                            )
+                        days = snapshot?.days.orEmpty().associate {
+                            LocalDate.ofEpochDay(it.day) to StatisticsAmount(it.seconds, it.pages)
                         },
+                        generation = snapshot?.source?.generation,
+                        zone = snapshot?.source?.zone?.let(ZoneId::of),
                         configured = true,
                         updatedAt = snapshot?.source?.updatedAt,
                     )
@@ -82,9 +78,9 @@ internal class KoreaderStatisticsRepository(
         }
     }.stateIn(scope, SharingStarted.Eagerly, StatisticsData())
 
-    override val stats = combine(data, localStatisticsClock()) { data, (today, zone) ->
+    override val stats = combine(data, localStatisticsClock()) { data, (today, _) ->
         data.updatedAt?.let {
-            val (daily, weekly) = miniStatistics(data.events, today, zone)
+            val (daily, weekly) = miniStatistics(data.days, today)
             ReadingStats(daily, weekly)
         }
     }.flowOn(Dispatchers.Default)
@@ -97,6 +93,27 @@ internal class KoreaderStatisticsRepository(
                 }
                 if (selected != null) refreshAutomatically()
             }
+        }
+    }
+
+    init {
+        scope.launch {
+            combine(tree, data, localStatisticsClock()) { selected, cached, (_, zone) ->
+                Triple(selected, cached.zone, zone)
+            }.distinctUntilChanged()
+                .collectLatest { (selected, cachedZone, zone) ->
+                    if (selected != null && cachedZone != zone) rebin(selected, zone)
+                }
+        }
+    }
+
+    private suspend fun rebin(tree: String, zone: ZoneId) {
+        try {
+            importer.rebin(tree, zone)
+        } catch (_: CancellationException) {
+            currentCoroutineContext().ensureActive()
+        } catch (error: Exception) {
+            status.value = tree to ReadingSyncStatus(error = statisticsIssue(error), stale = true)
         }
     }
 
@@ -124,10 +141,10 @@ internal class KoreaderStatisticsRepository(
         val attempt = System.currentTimeMillis()
         status.value = tree to ReadingSyncStatus(lastAttemptAt = attempt, running = true)
         try {
-            val events = read(tree)
-            save(tree, events)
+            importer.refresh(tree)
             status.value = tree to ReadingSyncStatus(lastAttemptAt = attempt)
         } catch (cancelled: CancellationException) {
+            status.value = tree to ReadingSyncStatus(lastAttemptAt = attempt)
             throw cancelled
         } catch (error: Exception) {
             val issue = statisticsIssue(error)
@@ -137,25 +154,6 @@ internal class KoreaderStatisticsRepository(
                 stale = true,
             )
         }
-    }
-
-    private suspend fun save(tree: String, events: List<ReadingEvent>) = transition.withLock {
-        currentCoroutineContext().ensureActive()
-        if (config.config.first().koreaderTreeUri != tree) return@withLock
-        dao.replace(
-            StatisticsSourceEntity(tree, System.currentTimeMillis()),
-            events.mapIndexed { index, event ->
-                StatisticsEventEntity(
-                    tree,
-                    index,
-                    event.startedAt,
-                    event.seconds,
-                    event.bookId,
-                    event.page,
-                    event.totalPages,
-                )
-            },
-        )
     }
 }
 
@@ -167,7 +165,7 @@ private fun statisticsIssue(error: Exception): ReadingSyncIssue = when (error) {
     else -> throw error
 }
 
-// Collection stops with the visible screen. A clock tick only re-bins cached events, never reads SAF.
+// Date/zone changes use local summaries or re-bin Room rows; the clock never reads SAF.
 internal fun localStatisticsClock() = flow {
     while (true) {
         val zone = ZoneId.systemDefault()

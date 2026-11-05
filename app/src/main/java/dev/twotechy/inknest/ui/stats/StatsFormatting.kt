@@ -3,7 +3,7 @@ package dev.twotechy.inknest.ui.stats
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.StatisticsAmount
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import java.text.NumberFormat
 
