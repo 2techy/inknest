@@ -9,6 +9,7 @@ import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.data.source.cancellableQuery
 import dev.twotechy.inknest.data.source.epub.EpubProbe
+import dev.twotechy.inknest.data.source.safProviderOperation
 import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
@@ -87,8 +88,10 @@ class ReadingProbeTest {
     private class Documents(private val root: File) : SourceDocumentReader {
         var dbMetadataReads = 0
         var changeOnce = false
+        var providerFailures = 0
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
             val file = File(root, path.last())
+            checkWalMetadata(path)
             if (!file.exists()) throw MissingSourceFile()
             val modified = if (path.last() == "statistics.sqlite3") {
                 dbMetadataReads++
@@ -103,6 +106,13 @@ class ReadingProbeTest {
                 modified,
             )
         }
+        private fun checkWalMetadata(path: List<String>) {
+            if (path.last().endsWith("-wal") && providerFailures > 0) {
+                providerFailures--
+                safProviderOperation { throw IllegalArgumentException("provider document missing") }
+            }
+        }
+
         override suspend fun <T> read(
             tree: String,
             path: List<String>,
@@ -118,15 +128,8 @@ class ReadingProbeTest {
         val dir = workspace()
         val source = File(dir, "source").apply { mkdir() }
         val cache = File(dir, "snapshots").apply { mkdir() }
-        val db = SQLiteDatabase.openOrCreateDatabase(File(source, "statistics.sqlite3"), null)
+        val db = statisticsDatabase(source)
         try {
-            db.enableWriteAheadLogging()
-            db.execSQL("CREATE TABLE book(id INTEGER, title TEXT, authors TEXT)")
-            db.execSQL(
-                "CREATE TABLE page_stat_data(id_book INTEGER, start_time INTEGER, duration INTEGER, page INTEGER)",
-            )
-            db.execSQL("INSERT INTO book VALUES(1, 'Title', 'Author')")
-            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, 1)")
             val documents = Documents(source).apply { changeOnce = true }
             val result = StatisticsSnapshotProbe(documents, cache).read("tree")
             assertEquals(1L, result.books)
@@ -148,6 +151,38 @@ class ReadingProbeTest {
             assertEquals(2, events.count { it.page == 1L })
             assertEquals(2, events.count { it.page == null })
             assertEquals(1000L, events.first().startedAt)
+            assertTrue(cache.listFiles().orEmpty().isEmpty())
+        } finally {
+            db.close()
+            dir.deleteRecursively()
+        }
+    }
+
+    private fun statisticsDatabase(source: File): SQLiteDatabase {
+        val db = SQLiteDatabase.openOrCreateDatabase(File(source, "statistics.sqlite3"), null)
+        db.enableWriteAheadLogging()
+        db.execSQL("CREATE TABLE book(id INTEGER, title TEXT, authors TEXT)")
+        db.execSQL(
+            "CREATE TABLE page_stat_data(id_book INTEGER, start_time INTEGER, duration INTEGER, page INTEGER)",
+        )
+        db.execSQL("INSERT INTO book VALUES(1, 'Title', 'Author')")
+        db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, 1)")
+        return db
+    }
+
+    @Test fun disappearingWalProviderErrorRecoversOnThirdAttempt() = runBlocking {
+        val dir = workspace()
+        val source = File(dir, "source").apply { mkdir() }
+        val cache = File(dir, "snapshots").apply { mkdir() }
+        val db = statisticsDatabase(source)
+        try {
+            val documents = Documents(source).apply { providerFailures = 2 }
+            val result = StatisticsSnapshotProbe(documents, cache).read("tree")
+            assertEquals(1L, result.books)
+            assertEquals(1L, result.pageRows)
+            assertTrue(result.walPresent)
+            assertEquals(0, documents.providerFailures)
+            assertEquals(4, documents.dbMetadataReads)
             assertTrue(cache.listFiles().orEmpty().isEmpty())
         } finally {
             db.close()

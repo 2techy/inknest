@@ -42,7 +42,7 @@ internal class SafTreeReader(private val resolver: ContentResolver) : DirectSour
 
     private suspend fun <T> readUri(document: Uri, parse: suspend (InputStream) -> T): T {
         val input =
-            resolver.openInputStream(document)
+            safProviderOperation { resolver.openInputStream(document) }
                 ?: throw IOException("Provider returned no stream")
         return input.use {
             coroutineScope {
@@ -119,7 +119,9 @@ internal class SafTreeReader(private val resolver: ContentResolver) : DirectSour
             DocumentsContract.Document.COLUMN_LAST_MODIFIED,
         )
         return cancellableQuery { signal ->
-            val cursor = resolver.query(document, columns, null, null, null, signal)
+            val cursor = safProviderOperation {
+                resolver.query(document, columns, null, null, null, signal)
+            }
                 ?: throw IOException("No metadata")
             cursor.use {
                 if (!it.moveToFirst()) throw MissingSourceFile()
@@ -139,7 +141,9 @@ internal class SafTreeReader(private val resolver: ContentResolver) : DirectSour
             )
         val context = currentCoroutineContext()
         return cancellableQuery { signal ->
-            val cursor = resolver.query(uri, columns, null, null, null, signal)
+            val cursor = safProviderOperation {
+                resolver.query(uri, columns, null, null, null, signal)
+            }
                 ?: throw IOException("Provider returned no listing")
             cursor.use {
                 var count = 0

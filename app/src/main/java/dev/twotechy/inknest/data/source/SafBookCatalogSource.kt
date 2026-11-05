@@ -65,16 +65,11 @@ internal class SafBookCatalogSource(private val resolver: ContentResolver) : Boo
             DocumentsContract.Document.COLUMN_LAST_MODIFIED,
         )
         val context = currentCoroutineContext()
+        val uri = DocumentsContract.buildChildDocumentsUriUsingTree(tree, parent)
         return cancellableQuery { signal ->
-            val cursor =
-                resolver.query(
-                    DocumentsContract.buildChildDocumentsUriUsingTree(tree, parent),
-                    columns,
-                    null,
-                    null,
-                    null,
-                    signal,
-                ) ?: throw IOException("Cannot list Books folder")
+            val cursor = safProviderOperation {
+                resolver.query(uri, columns, null, null, null, signal)
+            } ?: throw IOException("Cannot list Books folder")
             cursor.use {
                 val children = mutableListOf<Child>()
                 while (it.moveToNext()) {

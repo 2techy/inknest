@@ -44,7 +44,8 @@ are rejected. Missing or revoked files are rechecked before any open intent.
 - Statistics reads `settings/statistics.sqlite3` and any observed WAL/SHM into a fresh private
   directory, at most 256 MiB total. A mutex covers copy/validate/read. Observable metadata before
   and after copy must match; SQLite quick_check and required book/page_stat_data columns must
-  pass. Transient transport/SQLite/change errors retry once with a new directory. Unsupported
+  pass. Transient transport/SQLite/change errors use up to three attempts with fresh directories
+  and cancellable 100ms/200ms backoff. Unsupported
   schema is a distinct outcome. Only the private copy is opened read-only. Streams, cursors,
   databases and temporary directories are closed/removed on completion, failure or cancellation.
 
@@ -90,3 +91,8 @@ expected-source-error classification and timestamps; cancellation and unexpected
 errors propagate. Exact book resolution and parsing stay in the source layer. SQLite snapshot
 copy, integrity validation, schema validation and querying are separate operations under the same
 mutex/retry/cleanup boundary. `BoundedXmlReader` owns one XML parser/stack/budget per entry.
+
+Provider query/open calls normalize OEM IllegalArgumentException into IOException while
+preserving the cause. Direct FileNotFoundException becomes MissingSourceFile. URI validation,
+parser exceptions, cancellation and permission failures retain their original behavior.
+This handles files disappearing between listing, metadata and opening without crashing Home.

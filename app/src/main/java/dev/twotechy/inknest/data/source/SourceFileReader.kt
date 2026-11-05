@@ -3,7 +3,8 @@ package dev.twotechy.inknest.data.source
 import java.io.IOException
 import java.io.InputStream
 
-internal class MissingSourceFile : IOException()
+internal class MissingSourceFile(cause: Throwable? = null) :
+    IOException("Source file is unavailable", cause)
 
 internal interface SourceFileReader {
     suspend fun <T> read(tree: String, path: List<String>, parse: suspend (InputStream) -> T): T

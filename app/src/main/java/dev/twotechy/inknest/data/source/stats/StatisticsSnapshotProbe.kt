@@ -10,6 +10,7 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -46,7 +47,8 @@ internal class StatisticsSnapshotProbe(
     ): T = withContext(Dispatchers.IO) {
         mutex.withLock {
             var last: Exception? = null
-            repeat(2) {
+            repeat(MAX_ATTEMPTS) { attempt ->
+                delay(100L * attempt)
                 currentCoroutineContext().ensureActive()
                 val dir = Files.createTempDirectory(cache.toPath(), "reader-stats-").toFile()
                 try {
@@ -81,6 +83,9 @@ internal class StatisticsSnapshotProbe(
             if (last is SQLiteException) throw InvalidStatisticsSnapshot()
             throw IOException("Snapshot transport failed", last)
         }
+    }
+    private companion object {
+        const val MAX_ATTEMPTS = 3
     }
 }
 
