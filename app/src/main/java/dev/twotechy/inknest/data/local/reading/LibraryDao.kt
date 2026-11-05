@@ -29,6 +29,14 @@ internal interface LibraryDao {
     @Query("DELETE FROM library_books WHERE sourceId=:source AND folderKey=:folder")
     suspend fun deleteBooks(source: String, folder: String)
 
+    @Query("DELETE FROM library_folders WHERE sourceId=:source AND folderKey=:folder")
+    suspend fun deleteFolder(source: String, folder: String)
+
+    @Transaction suspend fun removeFolder(source: String, folder: String) {
+        deleteBooks(source, folder)
+        deleteFolder(source, folder)
+    }
+
     @Transaction suspend fun replace(folder: LibraryFolderEntity, books: List<LibraryBookEntity>) {
         deleteBooks(folder.sourceId, folder.folderKey)
         putBooks(books)

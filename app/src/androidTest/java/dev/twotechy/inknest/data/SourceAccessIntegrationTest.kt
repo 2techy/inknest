@@ -41,16 +41,18 @@ class SourceAccessIntegrationTest {
         val container = container()
         val repository = checkNotNull(container.readingSourceConfigRepository)
         val before = repository.config.first()
-        assumeTrue(before.koreaderTreeUri != null && before.booksTreeUri != null)
-        assumeTrue(before.koreaderTreeUri != before.booksTreeUri)
+        assumeTrue(before.koreaderTreeUri != null && before.booksTreeUris.firstOrNull() != null)
+        assumeTrue(before.koreaderTreeUri != before.booksTreeUris.firstOrNull())
         val pins = container.userPreferencesRepository.pinnedComponentIds.first()
         val prefs = container.userPreferencesRepository.appPreferences.first()
         try {
             container.sourceSettingsRepository.connectTree(
-                SourceFolder.KOReader,
-                checkNotNull(before.booksTreeUri),
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
+                dev.twotechy.inknest.data.repository.SourceTreeSelection(
+                    SourceFolder.KOReader,
+                    checkNotNull(before.booksTreeUris.firstOrNull()),
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
+                ),
             )
             fail("Book library cannot replace the KOReader data directory")
         } catch (_: IOException) { }
@@ -65,17 +67,20 @@ class SourceAccessIntegrationTest {
         val repository = checkNotNull(container.readingSourceConfigRepository)
         val config = repository.config.first()
         val access = checkNotNull(container.safSourceAccess)
-        assumeTrue(config.booksTreeUri != null && config.koreaderTreeUri != null)
+        assumeTrue(config.booksTreeUris.firstOrNull() != null && config.koreaderTreeUri != null)
         val resolver = InstrumentationRegistry.getInstrumentation().targetContext.contentResolver
         val reading = container.readingRepository
         val cached = withTimeout(5_000) {
             reading.reading.first { it is ReadingState.Content }
         } as ReadingState.Content
         resolver.releasePersistableUriPermission(
-            Uri.parse(config.booksTreeUri),
+            Uri.parse(config.booksTreeUris.firstOrNull()),
             Intent.FLAG_GRANT_READ_URI_PERMISSION,
         )
-        assertEquals(SourceAccessState.PermissionLost, access.inspect(config.booksTreeUri))
+        assertEquals(
+            SourceAccessState.PermissionLost,
+            access.inspect(config.booksTreeUris.firstOrNull()),
+        )
         assertEquals(SourceAccessState.Granted, access.inspect(config.koreaderTreeUri))
         assertEquals(config, repository.config.first())
         resolver.releasePersistableUriPermission(

@@ -10,6 +10,9 @@ internal data class PrimaryTreePath(val segments: List<String>) {
         null
     }
 
+    fun overlaps(other: PrimaryTreePath): Boolean =
+        relativeTo(other) != null || other.relativeTo(this) != null
+
     companion object {
         fun parse(documentId: String): PrimaryTreePath? {
             if (!documentId.startsWith("primary:")) return null

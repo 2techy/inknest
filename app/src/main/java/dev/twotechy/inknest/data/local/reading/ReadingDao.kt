@@ -38,6 +38,44 @@ internal interface ReadingDao {
     suspend fun book(sourceId: String, snapshotKey: String, path: String): ReadingBookEntity?
 
     @Query(
+        """
+        SELECT b.* FROM reading_items b JOIN reading_sources s
+        ON b.sourceId=s.sourceId AND b.snapshotKey=s.snapshotKey
+        WHERE b.sourceId=:sourceId AND b.path=:path
+        ORDER BY s.lastSuccessAt DESC LIMIT 1
+    """,
+    )
+    suspend fun recentBook(sourceId: String, path: String): ReadingBookEntity?
+
+    @Query("SELECT * FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey")
+    suspend fun books(sourceId: String, snapshotKey: String): List<ReadingBookEntity>
+
+    @Transaction
+    suspend fun carryForward(previous: ReadingCacheKey, next: ReadingCacheKey, issue: String) {
+        val old = get(previous.sourceId, previous.snapshotKey) ?: run {
+            attempt(next.sourceId, next.snapshotKey, System.currentTimeMillis())
+            updateError(next.sourceId, next.snapshotKey, issue)
+            return
+        }
+        val rows = books(previous.sourceId, previous.snapshotKey).map {
+            it.copy(
+                sourceId = next.sourceId,
+                snapshotKey = next.snapshotKey,
+                availability = "Unresolved",
+            )
+        }
+        save(
+            old.source.copy(
+                sourceId = next.sourceId,
+                snapshotKey = next.snapshotKey,
+                error = issue,
+            ),
+            rows,
+            replaceHistory = true,
+        )
+    }
+
+    @Query(
         "SELECT coverUri FROM reading_items WHERE coverUri IS NOT NULL UNION SELECT coverUri FROM library_books WHERE coverUri IS NOT NULL",
     )
     suspend fun coverUris(): List<String>

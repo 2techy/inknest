@@ -21,7 +21,9 @@ class KoreaderCurrentSourceTest {
     private val config = ReadingSourceConfig(
         sourceId = "test",
         koreaderTreeUri = "content://com.android.externalstorage.documents/tree/primary%3Akoreader",
-        booksTreeUri = "content://com.android.externalstorage.documents/tree/primary%3ADownload",
+        booksTreeUris = setOf(
+            "content://com.android.externalstorage.documents/tree/primary%3ADownload",
+        ),
     )
 
     @Test fun lastfileTakesPriorityAndMissingBookRetainsItsIdentity() = runBlocking {

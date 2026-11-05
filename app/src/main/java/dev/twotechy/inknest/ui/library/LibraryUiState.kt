@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.library
 
+import dev.twotechy.inknest.data.repository.LibraryFolder
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
@@ -14,6 +15,7 @@ internal data class LibraryOptions(
     val filter: LibraryFilter = LibraryFilter.All,
     val sort: LibrarySort = LibrarySort.Recent,
     val viewMode: LibraryViewMode = LibraryViewMode.Grid,
+    val folderUri: String? = null,
 )
 
 internal data class LibraryUiState(
@@ -24,6 +26,7 @@ internal data class LibraryUiState(
     val notConfigured: Boolean = false,
     val error: ReadingSyncIssue? = null,
     val sync: ReadingSyncStatus = ReadingSyncStatus(),
+    val folders: List<LibraryFolder> = emptyList(),
 ) {
     val isRefreshing: Boolean get() = sync.running && !loading
 }
@@ -39,4 +42,5 @@ internal data class LibraryActions(
     val settings: () -> Unit,
     val open: (ReadingItem) -> Unit,
     val details: (ReadingItem) -> Unit = {},
+    val folder: (String?) -> Unit = {},
 )

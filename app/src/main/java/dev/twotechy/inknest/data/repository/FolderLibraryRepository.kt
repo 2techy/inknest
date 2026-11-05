@@ -1,30 +1,28 @@
 package dev.twotechy.inknest.data.repository
 
-import android.database.sqlite.SQLiteException
-import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
-import dev.twotechy.inknest.data.local.reading.LibraryDao
-import dev.twotechy.inknest.data.local.reading.LibraryFolderEntity
+import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
+import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
 import dev.twotechy.inknest.data.source.BookCatalogSource
-import dev.twotechy.inknest.data.source.CatalogBook
 import dev.twotechy.inknest.data.source.EnrichedReadingItem
 import dev.twotechy.inknest.data.source.ResolvedBook
 import dev.twotechy.inknest.model.ReadingItem
-import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig
-import dev.twotechy.inknest.model.ReadingStatus
-import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -34,10 +32,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class FolderLibraryRepository(
     private val config: ReadingSourceConfigRepository,
-    private val dao: LibraryDao,
+    private val inventoryStore: LibraryInventoryStore,
     private val source: BookCatalogSource,
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
@@ -47,226 +45,114 @@ internal class FolderLibraryRepository(
         ReadingItem,
     ) -> EnrichedReadingItem,
 ) : LibraryRepository {
-    private data class Key(val source: String, val tree: String)
-    private val key = config.config.map { it.key() }.distinctUntilChanged()
-    private val running = MutableStateFlow<Pair<Key, Any>?>(null)
-    private val errors = MutableStateFlow<Map<Key, ReadingSyncIssue>>(emptyMap())
-    private val observedFolders = mutableSetOf<Key>()
+    private data class Worker(val lifetime: Job, val repository: LibraryFolderRepository)
+    private val workers = MutableStateFlow<Map<LibraryFolderKey, Worker>>(emptyMap())
+    private val scanGate = Mutex()
     private val requests = Mutex()
-    private val writes = Mutex()
-    private var job: Pair<Key, Deferred<Unit>>? = null
-    private val inventory = key.flatMapLatest { selected ->
-        if (selected == null) {
-            flowOf(Triple(null, emptyList<LibraryBookEntity>(), null))
+    private var refreshJob: Deferred<Unit>? = null
+    private val selection =
+        combine(config.config, workers) { selected, active -> selected to active }
+    private val refreshing = MutableStateFlow(false)
+    private val inventory = selection.flatMapLatest { (selected, active) ->
+        val trees = selected.booksTreeUris.sorted()
+        if (trees.isEmpty()) {
+            flowOf(LibraryCatalog())
         } else {
-            combine(
-                dao.observe(selected.source, selected.tree),
-                dao.observeFolder(selected.source, selected.tree),
-            ) {
-                    books,
-                    folder,
-                ->
-                Triple(selected, books, folder)
+            val flows = trees.map { tree ->
+                active[LibraryFolderKey(selected.sourceId.orEmpty(), tree)]?.repository?.catalog
+                    ?: flowOf(LibraryCatalog(configured = true, loading = true))
             }
+            combine(flows) { catalogs -> mergeCatalogs(trees, catalogs.toList()) }
         }
     }
-    private val readingStates = combine(reading.trackedItems, reading.reading) { history, current ->
-        history + listOfNotNull((current as? ReadingState.Content)?.current)
+    override val catalog = combine(inventory, refreshing) { catalog, refreshing ->
+        catalog.copy(sync = catalog.sync.copy(running = catalog.sync.running || refreshing))
+    }.stateIn(scope, SharingStarted.Eagerly, LibraryCatalog(loading = true))
+
+    private fun matches(selected: ReadingSourceConfig, roots: Set<LibraryFolderKey>): Boolean =
+        roots.map { it.tree }.toSet() == selected.booksTreeUris &&
+            roots.all { it.source == selected.sourceId }
+
+    init {
+        scope.launch { config.config.collect { reconcile(it) } }
     }
-    override val catalog = combine(inventory, key, readingStates, running, errors) {
-            inventory,
-            active,
-            tracked,
-            running,
-            errors,
-        ->
-        if (active == null) {
-            LibraryCatalog()
-        } else {
-            val books = inventory.second.takeIf { inventory.first == active }.orEmpty()
-            val statuses = tracked.associateBy { it.id }
-            val items = books.map { book ->
-                val id = ReadingItemId(book.sourceId, book.path)
-                val status = statuses[id]
-                ReadingItem(
-                    id,
-                    book.title,
-                    book.author,
-                    status?.progress ?: book.progress,
-                    book.coverUri,
-                    status =
-                        status?.status
-                            ?: ReadingStatus.valueOf(book.status),
-                    lastReadAt = status?.lastReadAt,
-                )
-            }
-            val updated = inventory.third?.takeIf { inventory.first == active }?.updatedAt
-            LibraryCatalog(
-                items,
-                true,
-                updated == null && active !in errors,
-                ReadingSyncStatus(
-                    lastSuccessAt = updated,
-                    running = running?.first == active,
-                    error = errors[active],
-                    stale = errors[active] != null && updated != null,
+
+    private suspend fun reconcile(selected: ReadingSourceConfig) {
+        val keys = selected.sourceId?.let { id ->
+            selected.booksTreeUris.sorted().map { LibraryFolderKey(id, it) }.toSet()
+        }.orEmpty()
+        val current = workers.value
+        val retained = current.filterKeys { it in keys }.toMutableMap()
+        workers.value = retained.toMap()
+        for ((key, worker) in current.filterKeys { it !in keys }) {
+            worker.lifetime.cancelAndJoin()
+            inventoryStore.remove(key)
+        }
+        for (key in keys - retained.keys) {
+            val lifetime = SupervisorJob(scope.coroutineContext[Job])
+            val child = CoroutineScope(scope.coroutineContext + lifetime)
+            retained[key] = Worker(
+                lifetime,
+                LibraryFolderRepository(
+                    config,
+                    key.tree,
+                    scanGate,
+                    inventoryStore,
+                    source,
+                    child,
+                    reading,
+                    enrich,
                 ),
             )
         }
-    }.stateIn(scope, SharingStarted.Eagerly, LibraryCatalog(loading = true))
-
-    init {
-        observeSelection()
-        observeIncompleteFolders()
-    }
-
-    private fun observeSelection() = scope.launch {
-        key.collect { active ->
-            requests.withLock {
-                if (config.config.first().key() != active) return@withLock
-                if (job?.first != active) job?.second?.cancel()
-            }
-        }
-    }
-
-    private fun observeIncompleteFolders() = scope.launch {
-        key.flatMapLatest { active ->
-            if (active == null) {
-                flowOf(null to null)
-            } else {
-                dao.observeFolder(active.source, active.tree).map { active to it }
-            }
-        }.collect { (active, folder) -> resumeIncomplete(active, folder) }
-    }
-
-    private suspend fun resumeIncomplete(active: Key?, folder: LibraryFolderEntity?) {
-        if (active == null) return
-        val cleared = if (folder == null) {
-            observedFolders.remove(active)
-        } else {
-            observedFolders.add(active)
-            false
-        }
-        if (folder?.complete == true) return
-        if (running.value?.first == active) {
-            if (!cleared) return
-            // Clear cache invalidates an in-flight discovery, not just its saved rows.
-            requests.withLock { job?.takeIf { it.first == active }?.second?.cancel() }
-        }
-        scope.launch {
-            if (config.config.first().key() != active) return@launch
-            if (dao.observeFolder(active.source, active.tree).first()?.complete != true) refresh()
-        }
+        workers.value = retained.toMap()
     }
 
     override suspend fun refresh() {
-        try {
-            reading.refresh()
-        } catch (_: IOException) {
-            // A KOReader permission failure must not prevent browsing a granted Books folder.
-        }
-        val selected = config.config.first()
-        val active = selected.key() ?: return
         val request = requests.withLock {
-            job?.takeIf { it.first == active && it.second.isActive }?.second
-                ?: scope.async { scan(selected, active) }.also { job = active to it }
+            refreshJob?.takeIf { it.isActive } ?: scope.async {
+                refreshing.value = true
+                try {
+                    try {
+                        reading.refresh()
+                    } catch (_: CancellationException) {
+                        currentCoroutineContext().ensureActive()
+                    } catch (_: IOException) {
+                        // An unavailable KOReader source does not block independently granted roots.
+                    }
+                    val active = selection.map { (selected, roots) ->
+                        roots.takeIf { matches(selected, it.keys) }
+                    }.filterNotNull().first()
+                    active.values.forEach {
+                        try {
+                            it.repository.refresh()
+                        } catch (_: CancellationException) {
+                            currentCoroutineContext().ensureActive()
+                        }
+                    }
+                } finally {
+                    refreshing.value = false
+                }
+            }.also { refreshJob = it }
         }
         request.await()
     }
-
-    private suspend fun scan(selected: ReadingSourceConfig, active: Key) {
-        val token = Any()
-        running.value = active to token
-        try {
-            val found = source.scan(active.tree)
-            replaceInventory(active, found)
-            enrichBooks(selected, active, found)
-            commit(active) {
-                dao.putFolder(
-                    LibraryFolderEntity(
-                        active.source,
-                        active.tree,
-                        System.currentTimeMillis(),
-                        true,
-                    ),
-                )
-            }
-            errors.value = errors.value - active
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            val issue = error.libraryIssue() ?: throw error
-            errors.value = errors.value + (active to issue)
-        } finally {
-            if (running.value?.second === token) running.value = null
-        }
-    }
-
-    private suspend fun replaceInventory(active: Key, found: List<CatalogBook>) {
-        val old = dao.books(active.source, active.tree).associateBy { it.path }
-        val rows = found.map { file ->
-            old[file.path] ?: LibraryBookEntity(
-                active.source,
-                active.tree,
-                file.path,
-                file.relative.last().substringBeforeLast('.'),
-            )
-        }
-        commit(active) {
-            dao.replace(
-                LibraryFolderEntity(active.source, active.tree, System.currentTimeMillis()),
-                rows,
-            )
-        }
-    }
-
-    private suspend fun enrichBooks(
-        selected: ReadingSourceConfig,
-        active: Key,
-        found: List<CatalogBook>,
-    ) {
-        for (batch in found.chunked(4)) {
-            val rows = batch.map { file ->
-                val item = ReadingItem(
-                    ReadingItemId(active.source, file.path),
-                    file.relative.last().substringBeforeLast('.'),
-                    null,
-                    null,
-                )
-                val book = enrich(
-                    selected,
-                    ResolvedBook(file.path, active.tree, file.relative, file.document),
-                    item,
-                )
-                LibraryBookEntity(
-                    active.source, active.tree, file.path,
-                    book.item.title, book.item.author, book.item.coverUri,
-                    book.metadata?.fingerprint, book.item.progress, book.item.status.name,
-                )
-            }
-            commit(active) { dao.putBooks(rows) }
-        }
-    }
-
-    private suspend fun commit(active: Key, action: suspend () -> Unit) = writes.withLock {
-        currentCoroutineContext().ensureActive()
-        if (config.config.first().key() !=
-            active
-        ) {
-            throw CancellationException("Books folder changed")
-        }
-        action()
-    }
-    private fun ReadingSourceConfig.key(): Key? {
-        val source = sourceId ?: return null
-        val tree = booksTreeUri ?: return null
-        return Key(source, tree)
-    }
 }
 
-private fun Exception.libraryIssue(): ReadingSyncIssue? = when (this) {
-    is SecurityException -> ReadingSyncIssue.PermissionLost
-    is SQLiteException -> ReadingSyncIssue.Cache
-    is IOException -> ReadingSyncIssue.Provider
-    else -> null
+private fun mergeCatalogs(trees: List<String>, catalogs: List<LibraryCatalog>): LibraryCatalog {
+    val folders = trees.zip(catalogs).map { (uri, catalog) ->
+        LibraryFolder(uri, catalog.books.map { it.id }.toSet(), catalog.sync, catalog.loading)
+    }
+    return LibraryCatalog(
+        books = catalogs.flatMap { it.books }.distinctBy { it.id },
+        configured = folders.isNotEmpty(),
+        loading = catalogs.any { it.loading },
+        sync = ReadingSyncStatus(
+            running = catalogs.any { it.sync.running },
+            lastSuccessAt = catalogs.mapNotNull { it.sync.lastSuccessAt }.minOrNull(),
+            error = catalogs.firstNotNullOfOrNull { it.sync.error },
+            stale = catalogs.any { it.sync.stale },
+        ),
+        folders = folders,
+    )
 }

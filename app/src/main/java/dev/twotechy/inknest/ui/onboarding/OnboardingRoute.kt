@@ -1,17 +1,16 @@
 package dev.twotechy.inknest.ui.onboarding
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.ui.components.LauncherActions
 import dev.twotechy.inknest.ui.settings.SettingsError
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
+import dev.twotechy.inknest.ui.settings.SourceConnectionActions
 import dev.twotechy.inknest.ui.settings.SourceConnectionUiState
-import dev.twotechy.inknest.ui.settings.SourceFolderPicker
+import dev.twotechy.inknest.ui.settings.SourceFolderSelection
 
 @Composable
 internal fun OnboardingRoute(
@@ -25,22 +24,8 @@ internal fun OnboardingRoute(
     val saving by onboarding.saving.collectAsStateWithLifecycle()
     val error by onboarding.error.collectAsStateWithLifecycle()
     val preferences by settings.uiState.collectAsStateWithLifecycle()
-    val folder by settings.pendingFolder.collectAsStateWithLifecycle()
-    val activity = LocalActivity.current
-    DisposableEffect(settings, step, activity) {
-        onDispose {
-            if (activity?.isChangingConfigurations != true) settings.dismissFolder()
-        }
-    }
+    SourceFolderSelection(settings, step, enabled = step == 1)
     BackHandler { if (!saving && !preferences.saving) onboarding.back() }
-    SourceFolderPicker(
-        folder = if (step == 1) folder else null,
-        onSelect = { selected, uri, flags ->
-            settings.dismissFolder()
-            settings.connectTree(selected, uri, flags)
-        },
-        onDismiss = settings::dismissFolder,
-    )
     OnboardingScreen(
         state = OnboardingUiState(
             step = step,
@@ -55,6 +40,7 @@ internal fun OnboardingRoute(
                 saving || preferences.saving,
             ),
             sourceError = preferences.error == SettingsError.Source,
+            folderConflict = preferences.error == SettingsError.FolderConflict,
         ),
         actions = OnboardingActions(
             mode = settings::setDisplayMode,
@@ -62,8 +48,12 @@ internal fun OnboardingRoute(
             back = onboarding::back,
             finish = onboarding::finish,
             requestLauncher = launcher.request,
-            selectSourceApp = settings::selectSourceApp,
-            selectFolder = settings::requestFolder,
+            connection = SourceConnectionActions(
+                settings::selectSourceApp,
+                settings::requestFolder,
+                settings::replaceBookFolder,
+                settings::removeBookFolder,
+            ),
         ),
         contentPadding = padding,
     )

@@ -1,13 +1,13 @@
 # KOReader source integration
 
 InkNest uses one source implementation in debug and release. **Settings → Reading & data**
-selects the installed `org.koreader.launcher` package and two independent folders: KOReader data
-and Books. Each uses the system document-tree picker and persisted read permission. Changing
+selects the installed `org.koreader.launcher` package and a KOReader data folder
+plus one or more independent Books folders. Each uses the system document-tree picker and persisted read permission. Changing
 folders validates the new grant before committing configuration; invalid selection/cancellation
 preserves the old configuration. Obsolete grants are released. Disconnect removes source keys
 and their grants, preserving pins, display preferences and onboarding.
 
-Source identity, tree URIs and selected package share the existing preferences
+Source identity, the set of Books tree URIs, KOReader tree URI and selected package share the existing preferences
 DataStore. No second DataStore is created. Production refresh now populates the Room current-book
 cache shared by Home and Settings. Developer tools and their diagnostic repository have been removed
 from debug and release; debug StrictMode logging remains enabled.

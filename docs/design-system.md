@@ -183,6 +183,11 @@ extra tinted backgrounds are required to distinguish these sections.
   Launcher setup shows the current system role; role requests remain explicit button actions.
 - Save errors are announced politely. Saving disables navigation and completion controls.
 
+Books-folder controls are shared between Settings and onboarding: one row per root shows
+its name, full path and access issue, with a separate 48dp remove target and confirmation.
+Add book folder opens SAF; tapping a root replaces it. Library exposes a static folder menu
+in its toolbar so it remains reachable on empty/error screens; it does not add another tab row.
+
 ## Compact choice tabs
 
 Library filters and Stats units use the shared ChoiceTab component: labelMedium 12sp/16sp,

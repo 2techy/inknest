@@ -2,6 +2,7 @@ package dev.twotechy.inknest.ui.library
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
+import dev.twotechy.inknest.data.repository.LibraryFolder
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.model.BookAvailability
@@ -89,6 +90,7 @@ class LibraryViewModelTest {
                 first.uiState.collect()
             }
             runCurrent()
+            first.folder("A")
             first.searching(true)
             first.query("needle")
             first.filter(LibraryFilter.Reading)
@@ -112,6 +114,14 @@ class LibraryViewModelTest {
             runCurrent()
             assertEquals("", restored.uiState.value.options.query)
             assertEquals(1, restored.uiState.value.books.size)
+            assertEquals("A", restored.uiState.value.options.folderUri)
+            source.catalog.value = source.catalog.value.copy(
+                books = source.catalog.value.books.filter { it.id.path == "B" },
+                folders = source.catalog.value.folders.filter { it.uri == "B" },
+            )
+            runCurrent()
+            assertEquals(null, restored.uiState.value.options.folderUri)
+            assertEquals(listOf("B"), restored.uiState.value.books.map { it.id.path })
             assertEquals(0, source.refreshes)
         } finally {
             store.clear()
@@ -123,15 +133,23 @@ class LibraryViewModelTest {
     private class CachedBooks : dev.twotechy.inknest.data.repository.LibraryRepository {
         override val catalog = MutableStateFlow(
             dev.twotechy.inknest.data.repository.LibraryCatalog(
-                books = listOf(
+                books = listOf("A", "B").map { path ->
                     ReadingItem(
-                        ReadingItemId("source", "A"),
+                        ReadingItemId("source", path),
                         "Needle",
                         null,
                         30,
                         status = ReadingStatus.Reading,
-                    ),
-                ),
+                    )
+                },
+                folders = listOf("A", "B").map { uri ->
+                    LibraryFolder(
+                        uri,
+                        setOf(ReadingItemId("source", uri)),
+                        ReadingSyncStatus(error = ReadingSyncIssue.PermissionLost, stale = true),
+                        false,
+                    )
+                },
                 configured = true,
                 sync = ReadingSyncStatus(error = ReadingSyncIssue.PermissionLost, stale = true),
             ),

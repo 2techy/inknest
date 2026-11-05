@@ -8,6 +8,7 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.InkNestApplication
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
+import dev.twotechy.inknest.data.local.reading.RoomLibraryInventoryStore
 import dev.twotechy.inknest.data.repository.FolderLibraryRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
@@ -73,7 +74,7 @@ class FolderLibraryIntegrationTest {
                 val history = History()
                 fun repository() = FolderLibraryRepository(
                     config,
-                    database.libraryDao(),
+                    RoomLibraryInventoryStore(database.libraryDao()),
                     source,
                     scope,
                     history,
@@ -153,11 +154,7 @@ class FolderLibraryIntegrationTest {
                 )
                 config.activateTree(
                     previous,
-                    config.treeCandidate(
-                        previous,
-                        SourceFolder.Books,
-                        "content://test/other",
-                    ),
+                    previous.copy(booksTreeUris = setOf("content://test/other")),
                 )
                 val changed = reopened.catalog.first {
                     it.books.singleOrNull()?.id?.path == "primary:Other/C.epub" && !it.sync.running
@@ -181,7 +178,7 @@ class FolderLibraryIntegrationTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val container = (context.applicationContext as InkNestApplication).container
         val config = checkNotNull(container.readingSourceConfigRepository).config.first()
-        val tree = Uri.parse(checkNotNull(config.booksTreeUri))
+        val tree = Uri.parse(config.booksTreeUris.first())
         assumeTrue(DocumentsContract.getTreeDocumentId(tree) != "primary:")
         val outside = DocumentsContract.buildDocumentUriUsingTree(
             tree,

@@ -4,9 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.BookFolderConflict
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.SourceTreeSelection
 import dev.twotechy.inknest.data.repository.UnconnectedInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.model.AppPreferences
@@ -30,10 +32,22 @@ internal class SettingsViewModel(
 ) : ViewModel() {
     val pendingFolder = savedState.getStateFlow<SourceFolder?>("settingsPendingFolder", null)
     fun requestFolder(folder: SourceFolder) {
+        savedState["settingsReplacedBookTree"] = null
         savedState["settingsPendingFolder"] = folder
     }
+    fun replaceBookFolder(uri: String) {
+        savedState["settingsReplacedBookTree"] = uri
+        savedState["settingsPendingFolder"] = SourceFolder.Books
+    }
+    fun acceptFolder(folder: SourceFolder, uri: String, flags: Int) {
+        val previous = savedState.get<String>("settingsReplacedBookTree")
+        dismissFolder()
+        sourceAction { sources.connectTree(SourceTreeSelection(folder, uri, flags, previous)) }
+    }
+    fun removeBookFolder(uri: String) = sourceAction { sources.removeBookTree(uri) }
     fun dismissFolder() {
         savedState["settingsPendingFolder"] = null
+        savedState["settingsReplacedBookTree"] = null
     }
 
     private data class ActionState(val saving: Boolean = false, val error: SettingsError? = null)
@@ -90,8 +104,6 @@ internal class SettingsViewModel(
     fun showStats(show: Boolean) = save { preferences.setShowHomeStats(show) }
     fun showPins(show: Boolean) = save { preferences.setShowHomePinnedApps(show) }
     fun selectSourceApp(packageName: String) = sourceAction { sources.selectApp(packageName) }
-    fun connectTree(folder: SourceFolder, uri: String, flags: Int) =
-        sourceAction { sources.connectTree(folder, uri, flags) }
     fun disconnect() = sourceAction { sources.disconnect() }
     fun refresh() = sourceAction { sources.refresh() }
     fun clearCache() = sourceAction { sources.clearCache() }
@@ -112,8 +124,14 @@ internal class SettingsViewModel(
             } catch (cancelled: CancellationException) {
                 action.value = ActionState()
                 throw cancelled
-            } catch (_: Exception) {
-                action.value = ActionState(error = error)
+            } catch (failure: Exception) {
+                action.value = ActionState(
+                    error = if (failure is BookFolderConflict) {
+                        SettingsError.FolderConflict
+                    } else {
+                        error
+                    },
+                )
             }
         }
     }

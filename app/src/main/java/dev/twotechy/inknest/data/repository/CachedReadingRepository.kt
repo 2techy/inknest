@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.BookCoverCache
+import dev.twotechy.inknest.data.source.CurrentReadingSnapshot
 import dev.twotechy.inknest.data.source.CurrentReadingSource
 import dev.twotechy.inknest.data.source.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -174,17 +175,40 @@ internal class CachedReadingRepository(
             refresh()
             return
         }
-        val nextKey = candidate.readingCacheKey()
-        val snapshot = if (nextKey != null) source.read(candidate) else null
+        val staged = stageCandidate(before, candidate)
         transition.withLock {
             if (config.config.first() != before) throw IOException("Source selection changed")
-            if (snapshot != null) {
-                cache.save(checkNotNull(nextKey), snapshot, System.currentTimeMillis())
-            }
+            saveCandidate(before, staged)
             config.activateTree(before, candidate)
-            if (nextKey != null) writeErrors.update { it - nextKey }
+            staged.key?.let { next -> writeErrors.update { it - next } }
             covers?.prune(cache.coverUris())
         }
+    }
+
+    private data class StagedReading(
+        val key: ReadingCacheKey?,
+        val snapshot: CurrentReadingSnapshot? = null,
+        val issue: ReadingSyncIssue? = null,
+    )
+
+    private suspend fun stageCandidate(
+        before: ReadingSourceConfig,
+        candidate: ReadingSourceConfig,
+    ): StagedReading {
+        val key = candidate.readingCacheKey() ?: return StagedReading(null)
+        return try {
+            StagedReading(key, source.read(candidate))
+        } catch (failure: ReadingRefreshException) {
+            if (before.koreaderTreeUri != candidate.koreaderTreeUri) throw failure
+            StagedReading(key, issue = failure.issue)
+        }
+    }
+
+    private suspend fun saveCandidate(before: ReadingSourceConfig, staged: StagedReading) {
+        val next = staged.key ?: return
+        staged.snapshot?.let { cache.save(next, it, System.currentTimeMillis()) }
+        val previous = before.readingCacheKey() ?: return
+        staged.issue?.let { cache.carryForward(previous, next, it) }
     }
 
     suspend fun disconnect() = transition.withLock {
@@ -198,7 +222,7 @@ internal class CachedReadingRepository(
     suspend fun clearCache() {
         transition.withLock {
             val selected = config.config.first()
-            if (selected.koreaderTreeUri == null && selected.booksTreeUri == null) return
+            if (selected.koreaderTreeUri == null && selected.booksTreeUris.isEmpty()) return
             requests.withLock { jobs.values.forEach { it.cancel() } }
             cache.clearAll()
             covers?.clear()

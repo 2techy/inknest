@@ -13,7 +13,11 @@ internal data class ReadingCacheKey(val sourceId: String, val snapshotKey: Strin
 internal fun ReadingSourceConfig.readingCacheKey(): ReadingCacheKey? {
     val id = sourceId ?: return null
     val tree = koreaderTreeUri ?: return null
-    val bytes = (tree + "\n" + booksTreeUri.orEmpty()).toByteArray(Charsets.UTF_8)
+    val bytes = (
+        tree + "\n" + booksTreeUris.sorted().joinToString(
+            "\n",
+        )
+        ).toByteArray(Charsets.UTF_8)
     val fingerprint = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") {
         "%02x".format(it)
     }
@@ -23,6 +27,11 @@ internal fun ReadingSourceConfig.readingCacheKey(): ReadingCacheKey? {
 // Candidate tree assignments have their own partition, so staging never overwrites active cache.
 internal class ReadingCache(private val dao: ReadingDao) {
     suspend fun clearAll() = dao.clearAll()
+    suspend fun carryForward(
+        previous: ReadingCacheKey,
+        next: ReadingCacheKey,
+        issue: ReadingSyncIssue,
+    ) = dao.carryForward(previous, next, issue.name)
     fun observe(key: ReadingCacheKey) = dao.observe(key.sourceId, key.snapshotKey)
     suspend fun attempt(key: ReadingCacheKey, time: Long) =
         dao.attempt(key.sourceId, key.snapshotKey, time)
@@ -34,7 +43,9 @@ internal class ReadingCache(private val dao: ReadingDao) {
     suspend fun coverUris() = dao.coverUris().toSet()
     suspend fun metadata(config: ReadingSourceConfig, path: String): BookMetadata? {
         val key = config.readingCacheKey() ?: return null
-        return dao.book(key.sourceId, key.snapshotKey, path)?.let {
+        val saved =
+            dao.book(key.sourceId, key.snapshotKey, path) ?: dao.recentBook(key.sourceId, path)
+        return saved?.let {
             BookMetadata(
                 it.fingerprint,
                 it.title,

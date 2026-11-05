@@ -41,6 +41,7 @@ internal fun LibraryHeader(state: LibraryUiState, actions: LibraryActions) {
                 stringResource(if (grid) R.string.switch_to_list else R.string.switch_to_grid),
                 actions.toggleView,
             )
+            if (state.folders.size > 1) LibraryFolderMenu(state, actions.folder)
             LibrarySortMenu(state.options.sort, actions.sort, actions.refresh)
         }
     }

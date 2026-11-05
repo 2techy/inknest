@@ -1,8 +1,10 @@
 package dev.twotechy.inknest.data.repository
 
 import android.net.Uri
+import android.provider.DocumentsContract
 import dev.twotechy.inknest.data.source.BookCoverCache
 import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.PrimaryTreePath
 import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.model.SourceAccessState
@@ -70,19 +72,20 @@ internal class SafSourceSettingsRepository(
     }
         .mapLatest { (source, _, sync) ->
             val grant = access.inspect(source.koreaderTreeUri)
-            val booksGrant = access.inspect(source.booksTreeUri)
+            val bookFolders = source.booksTreeUris.sorted().map {
+                BookFolderState(it, access.inspect(it))
+            }
             SourceSettingsState(
                 available = true,
-                status = sourceStatus(listOf(grant, booksGrant)),
+                status = sourceStatus(listOf(grant) + bookFolders.map { it.access }),
                 koreaderFolder = source.koreaderTreeUri,
-                booksFolder = source.booksTreeUri,
+                booksFolders = bookFolders,
                 koreaderAccess = grant,
-                booksAccess = booksGrant,
                 sourcePackage = source.sourcePackage,
                 refreshing = sync.running,
                 lastUpdated = sync.lastSuccessAt,
                 cacheBytes = if (source.koreaderTreeUri == null &&
-                    source.booksTreeUri == null
+                    source.booksTreeUris.isEmpty()
                 ) {
                     null
                 } else {
@@ -108,30 +111,53 @@ internal class SafSourceSettingsRepository(
         config.setSourcePackage(packageName)
     }
 
-    override suspend fun connectTree(folder: SourceFolder, uri: String, flags: Int) =
-        mutex.withLock {
-            val before = config.config.first()
-            val retainedBefore = listOfNotNull(before.koreaderTreeUri, before.booksTreeUri).toSet()
-            try {
-                access.persist(Uri.parse(uri), flags)
-                if (folder == SourceFolder.KOReader) validateReaderTree(uri)
-                reading.replaceSource(before, config.treeCandidate(before, folder, uri))
-            } finally {
-                // DataStore may commit before the caller observes cancellation. Retain grants
-                // referenced by the actual configuration, including a newly activated candidate.
-                withContext(NonCancellable) {
-                    val saved = config.config.first()
-                    val retained = listOfNotNull(saved.koreaderTreeUri, saved.booksTreeUri).toSet()
-                    (retainedBefore + uri).forEach { access.releaseUnused(it, retained) }
-                }
-            }
-            refreshState.update { Refresh(generation = it.generation + 1) }
+    override suspend fun connectTree(selection: SourceTreeSelection) = mutex.withLock {
+        val (folder, uri, flags, replacedTree) = selection
+        val before = config.config.first()
+        if (folder == SourceFolder.Books) validateBookTree(before.booksTreeUris, selection)
+        try {
+            access.persist(Uri.parse(uri), flags)
+            if (folder == SourceFolder.KOReader) validateReaderTree(uri)
+            reading.replaceSource(before, config.treeCandidate(before, folder, uri, replacedTree))
+        } finally {
+            releaseUnused(before.grantedTrees + uri)
         }
+        refreshState.update { Refresh(generation = it.generation + 1) }
+    }
+
+    override suspend fun removeBookTree(uri: String) = mutex.withLock {
+        val before = config.config.first()
+        if (uri !in before.booksTreeUris) return@withLock
+        try {
+            reading.replaceSource(before, before.copy(booksTreeUris = before.booksTreeUris - uri))
+        } finally {
+            releaseUnused(before.grantedTrees)
+        }
+        refreshState.update { Refresh(generation = it.generation + 1) }
+    }
+
+    private suspend fun releaseUnused(candidates: Set<String>) = withContext(NonCancellable) {
+        val retained = config.config.first().grantedTrees
+        candidates.forEach { access.releaseUnused(it, retained) }
+    }
+
+    private fun validateBookTree(trees: Set<String>, selection: SourceTreeSelection) {
+        val uri = selection.uri
+        val previous = selection.replacedTree
+        if (previous != null) require(previous in trees)
+        val candidate = PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(Uri.parse(uri)))
+            ?: throw IOException("Unsupported books folder")
+        val existing = (trees - listOfNotNull(previous).toSet()).map {
+            PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(Uri.parse(it)))
+                ?: throw IOException("Unsupported saved folder")
+        }
+        if (existing.any { candidate.overlaps(it) }) throw BookFolderConflict()
+    }
 
     override suspend fun disconnect() = mutex.withLock {
         val before = config.config.first()
         reading.disconnect()
-        listOfNotNull(before.koreaderTreeUri, before.booksTreeUri).distinct().forEach {
+        before.grantedTrees.forEach {
             access.releaseUnused(it, emptySet())
         }
         refreshState.update { Refresh(generation = it.generation + 1) }
@@ -170,3 +196,5 @@ private fun sourceStatus(grants: List<SourceAccessState>): SourceStatus = when {
     grants.all { it == SourceAccessState.NotSelected } -> SourceStatus.NotConnected
     else -> SourceStatus.Error
 }
+
+internal class BookFolderConflict : IOException("Folder overlaps an existing book folder")

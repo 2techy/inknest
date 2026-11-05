@@ -20,4 +20,19 @@ class PrimaryTreePathTest {
             assertNull(PrimaryTreePath.parse(it))
         }
     }
+
+    @org.junit.Test fun overlapsUseSegmentsAndRetainCase() {
+        val books = checkNotNull(PrimaryTreePath.parse("primary:Books"))
+        org.junit.Assert.assertTrue(books.overlaps(books))
+        org.junit.Assert.assertTrue(
+            books.overlaps(checkNotNull(PrimaryTreePath.parse("primary:Books/Fiction"))),
+        )
+        org.junit.Assert.assertTrue(books.overlaps(checkNotNull(PrimaryTreePath.parse("primary:"))))
+        org.junit.Assert.assertFalse(
+            books.overlaps(checkNotNull(PrimaryTreePath.parse("primary:Bookshelf"))),
+        )
+        org.junit.Assert.assertFalse(
+            books.overlaps(checkNotNull(PrimaryTreePath.parse("primary:books"))),
+        )
+    }
 }

@@ -50,7 +50,7 @@ class BookIdentityProbeTest {
             "com.android.externalstorage.documents",
             "primary:Books",
         ).toString()
-        val config = ReadingSourceConfig(booksTreeUri = tree)
+        val config = ReadingSourceConfig(booksTreeUris = setOf(tree))
         val root = Environment.getExternalStorageDirectory().canonicalPath
         val a = probe.resolve(config, "$root/Books/A/Title.epub")
         val b = probe.resolve(config, "$root/Books/B/Title.epub")
@@ -71,7 +71,7 @@ class BookIdentityProbeTest {
             BookProbeDataSource(
                 files,
                 cache,
-            ).resolve(ReadingSourceConfig(booksTreeUri = tree), "$root/Books/A/Title.epub")
+            ).resolve(ReadingSourceConfig(booksTreeUris = setOf(tree)), "$root/Books/A/Title.epub")
             fail("Missing file must not resolve")
         } catch (_: MissingSourceFile) { }
     }

@@ -20,6 +20,7 @@ import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
 import dev.twotechy.inknest.ui.components.readingIssueMessage
+import dev.twotechy.inknest.ui.settings.sourceFolderLabel
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
@@ -78,11 +79,19 @@ private fun LibraryBody(state: LibraryUiState, actions: LibraryActions) {
     LibraryBooks(state, actions) {
         Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.md)) {
             LibraryFilters(state.options.filter, state.totalCount, actions.filter)
+            state.options.folderUri?.let {
+                Text(sourceFolderLabel(it), style = MaterialTheme.typography.bodySmall)
+            }
             if (!state.sync.running && state.sync.error != null) {
-                Text(
-                    stringResource(R.string.library_folder_error),
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                state.folders.filter { it.sync.error != null }.forEach { folder ->
+                    Text(
+                        stringResource(
+                            R.string.library_named_folder_error,
+                            sourceFolderLabel(folder.uri),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
             if (state.sync.skippedHistoryEntries > 0) {
                 Text(

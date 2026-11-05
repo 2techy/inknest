@@ -3,6 +3,7 @@ package dev.twotechy.inknest.di
 import android.content.Context
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
+import dev.twotechy.inknest.data.local.reading.RoomLibraryInventoryStore
 import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.repository.CachedReadingRepository
 import dev.twotechy.inknest.data.repository.FolderLibraryRepository
@@ -48,7 +49,7 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
     private val libraryMetadata = BookMetadataReader(books, covers, ::cachedMetadata)
     val library = FolderLibraryRepository(
         config,
-        libraryDao,
+        RoomLibraryInventoryStore(libraryDao),
         SafBookCatalogSource(appContext.contentResolver),
         scope,
         reading,
@@ -77,8 +78,9 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
 
     private suspend fun cachedMetadata(config: ReadingSourceConfig, path: String): BookMetadata? {
         val source = config.sourceId ?: return null
-        val tree = config.booksTreeUri ?: return cache.metadata(config, path)
-        val saved = libraryDao.book(source, tree, path)?.takeIf { it.fingerprint != null }
+        val saved = config.booksTreeUris.sorted().firstNotNullOfOrNull { tree ->
+            libraryDao.book(source, tree, path)?.takeIf { it.fingerprint != null }
+        }
         return saved?.let { BookMetadata(it.fingerprint, it.title, it.author, it.coverUri) }
             ?: cache.metadata(config, path)
     }

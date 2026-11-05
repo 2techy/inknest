@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.library
 
+import dev.twotechy.inknest.data.repository.LibraryCatalog
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingStatus
 import java.util.Locale
@@ -44,4 +45,32 @@ private fun bookOrder(sort: LibrarySort): Comparator<IndexedValue<ReadingItem>> 
             null
     }
         .thenByDescending { it.value.progress }
+}
+
+internal fun libraryUiState(catalog: LibraryCatalog, options: LibraryOptions): LibraryUiState {
+    val folder = catalog.folders.firstOrNull { it.uri == options.folderUri }
+    val membership = folder?.itemIds
+    val scoped = if (membership == null) {
+        catalog.books
+    } else {
+        catalog.books.filter {
+            it.id in membership
+        }
+    }
+    return LibraryUiState(
+        options = options,
+        books = selectLibraryBooks(scoped, options),
+        totalCount = scoped.size,
+        folders = catalog.folders,
+        loading = (folder?.loading ?: catalog.loading) && scoped.isEmpty(),
+        notConfigured = !catalog.configured && !catalog.loading,
+        error = if (folder == null) catalog.sync.error else folder.sync.error,
+        sync = if (folder == null) {
+            catalog.sync
+        } else {
+            folder.sync.copy(
+                running = catalog.sync.running,
+            )
+        },
+    )
 }

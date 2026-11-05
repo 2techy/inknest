@@ -92,7 +92,7 @@ class ReadingCacheIntegrationTest {
         withHarness { h ->
             h.repository.refresh()
             val before = h.config.config.first()
-            val bad = h.config.treeCandidate(before, SourceFolder.Books, "content://test/bad")
+            val bad = h.config.treeCandidate(before, SourceFolder.KOReader, "content://test/bad")
             h.load = { throw ReadingRefreshException(ReadingSyncIssue.InvalidData) }
             try {
                 h.repository.replaceSource(before, bad)
@@ -102,7 +102,7 @@ class ReadingCacheIntegrationTest {
             val started = CompletableDeferred<Unit>()
             val release = CompletableDeferred<Unit>()
             h.load = { config ->
-                if (config.booksTreeUri == before.booksTreeUri) {
+                if (config.booksTreeUris == before.booksTreeUris) {
                     withContext(NonCancellable) {
                         started.complete(Unit)
                         withTimeout(5_000) { release.await() }

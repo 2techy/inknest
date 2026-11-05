@@ -8,24 +8,33 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class SourceStatus { NotConnected, Connected, PermissionLost, Error }
 enum class SourceFolder { KOReader, Books }
 
+data class SourceTreeSelection(
+    val folder: SourceFolder,
+    val uri: String,
+    val flags: Int,
+    val replacedTree: String? = null,
+)
+
+data class BookFolderState(val uri: String, val access: SourceAccessState)
+
 data class SourceSettingsState(
     val available: Boolean = false,
     val status: SourceStatus = SourceStatus.NotConnected,
     val koreaderFolder: String? = null,
-    val booksFolder: String? = null,
+    val booksFolders: List<BookFolderState> = emptyList(),
     val refreshing: Boolean = false,
     val lastUpdated: Long? = null,
     val cacheBytes: Long? = null,
     val koreaderAccess: SourceAccessState? = null,
-    val booksAccess: SourceAccessState? = null,
     val sourcePackage: String? = null,
 )
 
 interface SourceSettingsRepository {
     val state: StateFlow<SourceSettingsState>
     suspend fun selectApp(packageName: String): Unit = error("Source app selection unavailable")
-    suspend fun connectTree(folder: SourceFolder, uri: String, flags: Int): Unit =
+    suspend fun connectTree(selection: SourceTreeSelection): Unit =
         error("Tree selection unavailable")
+    suspend fun removeBookTree(uri: String): Unit = error("Book folder removal unavailable")
     suspend fun disconnect()
     suspend fun refresh()
     suspend fun clearCache()

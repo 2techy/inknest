@@ -4,7 +4,7 @@ import dev.twotechy.inknest.data.repository.SourceSettingsState
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.AppPreferences
 
-internal enum class SettingsError { Read, Save, Source }
+internal enum class SettingsError { Read, Save, Source, FolderConflict }
 
 internal data class SettingsUiState(
     val preferences: AppPreferences? = null,

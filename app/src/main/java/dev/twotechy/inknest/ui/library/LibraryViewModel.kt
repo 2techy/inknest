@@ -38,19 +38,23 @@ internal class LibraryViewModel(
             LibraryViewMode.entries.find { it.name == view } ?: LibraryViewMode.Grid,
         )
     }
+        .combine(savedState.getStateFlow<String?>("libraryFolder", null)) { options, folder ->
+            options.copy(folderUri = folder)
+        }
     private val catalog = repository.catalog
     val uiState = combine(catalog, options) { catalog, options -> catalog to options }
         .mapLatest { (catalog, options) ->
+            val selected = options.folderUri?.takeIf { uri ->
+                catalog.folders.any { it.uri == uri }
+            }
+            if (selected != options.folderUri &&
+                !catalog.loading
+            ) {
+                savedState["libraryFolder"] = null
+            }
+            val effective = options.copy(folderUri = selected)
             withContext(queryDispatcher) {
-                LibraryUiState(
-                    options = options,
-                    books = selectLibraryBooks(catalog.books, options),
-                    totalCount = catalog.books.size,
-                    loading = catalog.loading && catalog.books.isEmpty(),
-                    notConfigured = !catalog.configured && !catalog.loading,
-                    error = catalog.sync.error,
-                    sync = catalog.sync,
-                )
+                libraryUiState(catalog, effective)
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryUiState())
 
@@ -77,7 +81,11 @@ internal class LibraryViewModel(
                 LibraryViewMode.List.name
             }
     }
+    fun folder(uri: String?) {
+        savedState["libraryFolder"] = uri
+    }
     fun clearFilters() {
+        folder(null)
         searching(false)
         filter(LibraryFilter.All)
     }

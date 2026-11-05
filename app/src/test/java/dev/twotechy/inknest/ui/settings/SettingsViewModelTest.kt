@@ -1,6 +1,10 @@
 package dev.twotechy.inknest.ui.settings
 
+import androidx.lifecycle.SavedStateHandle
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.repository.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.SourceTreeSelection
 import dev.twotechy.inknest.data.repository.TestUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
@@ -93,5 +97,33 @@ class SettingsViewModelTest {
         runCurrent()
         assertEquals(saved, vm.uiState.value.preferences)
         assertEquals(SettingsError.Read, vm.uiState.value.error)
+    }
+
+    @Test fun restoredReplacementPickerKeepsTargetUntilAcceptanceAndClearsOnDismiss() = runTest(
+        dispatcher,
+    ) {
+        val prefs = TestUserPreferencesRepository()
+        val handle = SavedStateHandle(
+            mapOf(
+                "settingsPendingFolder" to SourceFolder.Books,
+                "settingsReplacedBookTree" to "old",
+            ),
+        )
+        var replaced: String? = null
+        val sources = object : SourceSettingsRepository by UnconnectedSourceSettingsRepository() {
+            override suspend fun connectTree(selection: SourceTreeSelection) {
+                replaced = "${selection.replacedTree}:${selection.uri}:${selection.flags}"
+            }
+        }
+        val vm = SettingsViewModel(prefs, sources, AcknowledgementsRepository { "" }, handle)
+        vm.acceptFolder(SourceFolder.Books, "new", 3)
+        runCurrent()
+        assertEquals("old:new:3", replaced)
+        assertNull(vm.pendingFolder.value)
+        assertNull(handle.get<String>("settingsReplacedBookTree"))
+        vm.replaceBookFolder("new")
+        vm.dismissFolder()
+        assertNull(vm.pendingFolder.value)
+        assertNull(handle.get<String>("settingsReplacedBookTree"))
     }
 }

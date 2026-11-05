@@ -14,13 +14,17 @@ internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActi
     Column {
         SourceConnectionContent(
             SourceConnectionUiState(source, state.sourceApps, state.saving),
-            actions.sourceApp,
-            actions.connect,
+            SourceConnectionActions(
+                actions.sourceApp,
+                actions.connect,
+                actions.replaceBookFolder,
+                actions.removeBookFolder,
+            ),
         )
         SettingsCommand(
             stringResource(R.string.disconnect_source),
             source.available && !state.saving &&
-                (source.koreaderFolder != null || source.booksFolder != null),
+                (source.koreaderFolder != null || source.booksFolders.isNotEmpty()),
             actions.disconnect,
         )
     }

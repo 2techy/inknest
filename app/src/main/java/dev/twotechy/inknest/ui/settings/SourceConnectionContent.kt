@@ -22,11 +22,17 @@ internal data class SourceConnectionUiState(
     val saving: Boolean,
 )
 
+internal data class SourceConnectionActions(
+    val selectApp: (String) -> Unit,
+    val selectFolder: (SourceFolder) -> Unit,
+    val replaceBookFolder: (String) -> Unit,
+    val removeBookFolder: (String) -> Unit,
+)
+
 @Composable
 internal fun SourceConnectionContent(
     state: SourceConnectionUiState,
-    onSelectApp: (String) -> Unit,
-    onSelectFolder: (SourceFolder) -> Unit,
+    actions: SourceConnectionActions,
 ) {
     val source = state.source
     Column {
@@ -39,37 +45,25 @@ internal fun SourceConnectionContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        SourceAppChoices(state, onSelectApp)
-        SourceFolder.entries.forEach { folder ->
-            SourceFolderRow(state, folder, onSelectFolder)
-        }
+        SourceAppChoices(state, actions.selectApp)
+        SettingsRow(
+            stringResource(R.string.koreader_folder),
+            folderDescription(source.koreaderFolder, source.koreaderAccess),
+            enabled = source.available && !state.saving,
+            onClick = { actions.selectFolder(SourceFolder.KOReader) },
+        )
+        BookFoldersContent(state, actions)
     }
 }
 
 @Composable
-private fun SourceFolderRow(
-    state: SourceConnectionUiState,
-    folder: SourceFolder,
-    onSelectFolder: (SourceFolder) -> Unit,
-) {
-    val source = state.source
-    val isKOReader = folder == SourceFolder.KOReader
-    val path = if (isKOReader) source.koreaderFolder else source.booksFolder
-    val access = if (isKOReader) source.koreaderAccess else source.booksAccess
-    val label =
-        path?.let(::sourceFolderLabel) ?: stringResource(R.string.folder_not_selected)
+internal fun folderDescription(path: String?, access: SourceAccessState?): String {
+    val label = path?.let(::sourceFolderLabel) ?: stringResource(R.string.folder_not_selected)
     val detail = sourceAccessError(access)?.let { stringResource(it) }
-    SettingsRow(
-        title = stringResource(
-            if (isKOReader) R.string.koreader_folder else R.string.books_folder,
-        ),
-        description = if (detail == null) label else "$label · $detail",
-        enabled = source.available && !state.saving,
-        onClick = { onSelectFolder(folder) },
-    )
+    return if (detail == null) label else "$label · $detail"
 }
 
-private fun sourceFolderLabel(path: String): String = try {
+internal fun sourceFolderLabel(path: String): String = try {
     if (path.startsWith(
             "content://",
         )

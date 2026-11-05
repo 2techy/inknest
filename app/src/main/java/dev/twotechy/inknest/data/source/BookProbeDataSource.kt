@@ -29,19 +29,25 @@ internal class BookProbeDataSource(
     suspend fun resolve(config: ReadingSourceConfig, path: String): ResolvedBook =
         withContext(Dispatchers.IO) {
             val resolver = pathResolver()
-            for (tree in listOfNotNull(config.booksTreeUri, config.koreaderTreeUri).distinct()) {
+            var failure: Exception? = null
+            for (tree in config.booksTreeUris.sorted() + listOfNotNull(config.koreaderTreeUri)) {
                 val uri = Uri.parse(tree)
                 if (uri.authority != "com.android.externalstorage.documents") continue
                 val relative =
                     resolver.relative(path, DocumentsContract.getTreeDocumentId(uri)) ?: continue
-                val document = files.describe(tree, relative)
-                if (document.mime ==
-                    DocumentsContract.Document.MIME_TYPE_DIR
-                ) {
-                    throw UnresolvedBookPath()
+                try {
+                    val document = files.describe(tree, relative)
+                    if (document.mime == DocumentsContract.Document.MIME_TYPE_DIR) {
+                        throw UnresolvedBookPath()
+                    }
+                    return@withContext ResolvedBook(path, tree, relative, document)
+                } catch (error: SecurityException) {
+                    failure = error
+                } catch (error: IOException) {
+                    failure = error
                 }
-                return@withContext ResolvedBook(path, tree, relative, document)
             }
+            failure?.let { throw it }
             throw UnresolvedBookPath()
         }
 

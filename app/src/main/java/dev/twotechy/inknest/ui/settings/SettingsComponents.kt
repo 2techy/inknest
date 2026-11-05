@@ -221,6 +221,7 @@ internal fun SettingsErrorPanel(error: SettingsError, onRetry: () -> Unit, onDis
                     SettingsError.Read -> R.string.preferences_read_error
                     SettingsError.Save -> R.string.preferences_save_error
                     SettingsError.Source -> R.string.source_action_error
+                    SettingsError.FolderConflict -> R.string.book_folder_conflict
                 },
             ),
             style = MaterialTheme.typography.bodyMedium,

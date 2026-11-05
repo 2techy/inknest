@@ -41,6 +41,7 @@ internal fun LibraryRoute(
             viewModel::toggleView, viewModel::clearFilters, viewModel::refresh, onSettings,
             open = { open(it.id) },
             details = { selected = it },
+            folder = viewModel::folder,
         ),
         modifier,
         contentPadding,

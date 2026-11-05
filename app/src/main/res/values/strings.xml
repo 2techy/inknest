@@ -82,7 +82,7 @@
     <string name="setup_title">Welcome to InkNest</string>
     <string name="setup_welcome">A quiet Home for your books and apps. Choose a display mode to get started.</string>
     <string name="setup_source_title">Your reading space</string>
-    <string name="setup_source_description">Select your KOReader data folder and books folder to connect your reading. You can also set this up later in Settings.</string>
+    <string name="setup_source_description">Select your KOReader data folder and add your book folders to connect your reading. You can also set this up later in Settings.</string>
     <string name="setup_launcher_title">Make yourself at home</string>
     <string name="setup_launcher_description">You can use InkNest as your default launcher, or open it like any other app. This choice is optional.</string>
     <string name="setup_step">Step %1$d of 3</string>
@@ -217,4 +217,12 @@
     <string name="reading_open_unsupported">KOReader cannot handle this book format or document URI.</string>
     <string name="library_details">Book details</string>
     <string name="reading_open_refresh">Refresh</string>
+    <string name="book_folders">Book folders</string>
+    <string name="all_book_folders">All folders</string>
+    <string name="add_book_folder">Add book folder</string>
+    <string name="remove_book_folder">Remove folder</string>
+    <string name="remove_named_book_folder">Remove %1$s from InkNest</string>
+    <string name="remove_book_folder_description">Remove %1$s from InkNest? Books will no longer appear in Library. Book files and KOReader data will stay on your device.</string>
+    <string name="book_folder_conflict">This folder is already covered by another book folder. Choose a separate folder or remove the overlapping entry first.</string>
+    <string name="library_named_folder_error">Could not refresh %1$s. Cached books are kept.</string>
 </resources>

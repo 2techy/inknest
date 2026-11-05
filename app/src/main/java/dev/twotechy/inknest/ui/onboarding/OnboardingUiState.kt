@@ -1,8 +1,8 @@
 package dev.twotechy.inknest.ui.onboarding
 
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.model.DisplayMode
+import dev.twotechy.inknest.ui.settings.SourceConnectionActions
 import dev.twotechy.inknest.ui.settings.SourceConnectionUiState
 
 internal data class OnboardingUiState(
@@ -14,9 +14,11 @@ internal data class OnboardingUiState(
     val isDefaultLauncher: Boolean,
     val connection: SourceConnectionUiState,
     val sourceError: Boolean,
+    val folderConflict: Boolean,
 ) {
     val errorMessage: Int?
         get() = when {
+            folderConflict -> R.string.book_folder_conflict
             sourceError -> R.string.source_action_error
             saveError -> R.string.setup_save_error
             preferenceError -> R.string.preferences_save_error
@@ -30,6 +32,5 @@ internal data class OnboardingActions(
     val back: () -> Unit,
     val finish: () -> Unit,
     val requestLauncher: () -> Unit,
-    val selectSourceApp: (String) -> Unit,
-    val selectFolder: (SourceFolder) -> Unit,
+    val connection: SourceConnectionActions,
 )

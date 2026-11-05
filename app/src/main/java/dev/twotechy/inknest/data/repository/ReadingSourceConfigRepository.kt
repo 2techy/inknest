@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import java.io.IOException
 import java.util.UUID
@@ -21,7 +22,7 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
         ReadingSourceConfig(
             it[sourceId],
             it[koreader],
-            it[books],
+            it[books].orEmpty(),
             it[sourcePackage],
         )
     }.distinctUntilChanged()
@@ -30,10 +31,15 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
         before: ReadingSourceConfig,
         folder: SourceFolder,
         uri: String,
+        replacedTree: String? = null,
     ): ReadingSourceConfig {
         val updated = before.copy(
             koreaderTreeUri = if (folder == SourceFolder.KOReader) uri else before.koreaderTreeUri,
-            booksTreeUri = if (folder == SourceFolder.Books) uri else before.booksTreeUri,
+            booksTreeUris = if (folder == SourceFolder.Books) {
+                before.booksTreeUris - listOfNotNull(replacedTree).toSet() + uri
+            } else {
+                before.booksTreeUris
+            },
         )
         val identity = before.sourceId?.takeIf { before.koreaderTreeUri == updated.koreaderTreeUri }
         return updated.copy(sourceId = identity ?: UUID.randomUUID().toString())
@@ -43,11 +49,11 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
         store.edit { values ->
             check(
                 values[sourceId] == before.sourceId && values[koreader] == before.koreaderTreeUri &&
-                    values[books] == before.booksTreeUri,
+                    values[books].orEmpty() == before.booksTreeUris,
             )
             values[sourceId] = checkNotNull(candidate.sourceId)
             candidate.koreaderTreeUri?.let { values[koreader] = it }
-            candidate.booksTreeUri?.let { values[books] = it }
+            values[books] = candidate.booksTreeUris
         }
     }
 
@@ -69,7 +75,7 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
     private companion object {
         val sourceId = stringPreferencesKey("reading_source_id")
         val koreader = stringPreferencesKey("reading_koreader_tree")
-        val books = stringPreferencesKey("reading_books_tree")
+        val books = stringSetPreferencesKey("reading_books_trees")
         val sourcePackage = stringPreferencesKey("reading_source_package")
     }
 }

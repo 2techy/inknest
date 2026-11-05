@@ -8,8 +8,10 @@ Skip setup opens Home. You can revisit it from Settings → About → Review set
 1. Install KOReader separately and open a book once so its settings directory exists.
 2. In InkNest, open Settings → Reading & data. Select the KOReader app.
 3. Select the KOReader data folder containing `settings.reader.lua` or `history.lua`.
-4. Select Books independently. It must contain the books you want on the shelf; subfolders
-   are included. Android's picker grants read access only to the selected trees.
+4. Use Add book folder to select one or more Books folders; subfolders are included.
+   Tap an existing folder to replace it, or remove it from InkNest without deleting files.
+   Overlapping Books folders are rejected because a parent already includes its children.
+   Android grants read access only to each selected tree. These controls are also in setup.
 5. Refresh. Library includes supported files that have never been opened. Home's current
    book and reading status come from KOReader; Statistics requires its reading-statistics DB.
 
@@ -17,7 +19,13 @@ Paths differ by installation. Choose them through the system picker; InkNest doe
 a fixed `/koreader`, `/webdav` or Downloads path. Arbitrary SD/cloud document providers are
 not currently supported. Do not choose a broad storage root to work around missing data.
 
-If permission is lost, choose the folder again. A failed refresh preserves cached content.
+Library combines all Books folders by default. Its folder menu filters one root and combines
+with search, reading status and sorting. Refresh scans every configured root; an unavailable
+root keeps cached books while other roots continue. If permission is lost, choose that folder again.
+
+This development build uses a new Books-folder configuration key without migration. Reselect
+Books folders after updating; the KOReader data folder, pins and display preferences stay saved.
+A failed refresh preserves cached content.
 Clear reading cache rebuilds local reading data and covers without changing pins or appearance.
 Disconnect removes source configuration and local reading cache, not book files or KOReader data.
 

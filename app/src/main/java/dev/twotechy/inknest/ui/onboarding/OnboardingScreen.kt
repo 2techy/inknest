@@ -129,7 +129,7 @@ private fun SetupStepContent(state: OnboardingUiState, actions: OnboardingAction
         }
 
         1 -> SettingsSection(stringResource(R.string.reading_source_heading)) {
-            SourceConnectionContent(state.connection, actions.selectSourceApp, actions.selectFolder)
+            SourceConnectionContent(state.connection, actions.connection)
         }
 
         else -> SettingsSection(stringResource(R.string.default_home_app)) {

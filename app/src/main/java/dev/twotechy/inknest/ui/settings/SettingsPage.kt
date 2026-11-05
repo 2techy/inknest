@@ -11,6 +11,9 @@ internal enum class SettingsPage(val title: Int) {
     Launcher(R.string.launcher_title),
     About(R.string.about_title),
     Notices(R.string.notices_title),
+    ;
+
+    val parent: SettingsPage get() = if (this == Notices) About else Overview
 }
 
 internal data class SettingsActions(
@@ -21,6 +24,8 @@ internal data class SettingsActions(
     val showPins: (Boolean) -> Unit,
     val connect: (SourceFolder) -> Unit,
     val sourceApp: (String) -> Unit,
+    val replaceBookFolder: (String) -> Unit,
+    val removeBookFolder: (String) -> Unit,
     val disconnect: () -> Unit,
     val refresh: () -> Unit,
     val clearCache: () -> Unit,

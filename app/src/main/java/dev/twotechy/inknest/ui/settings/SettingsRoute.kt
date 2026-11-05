@@ -1,14 +1,13 @@
 package dev.twotechy.inknest.ui.settings
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -40,25 +39,11 @@ internal fun SettingsRoute(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmation by remember(page) { mutableStateOf<Confirmation?>(null) }
-    val folder by viewModel.pendingFolder.collectAsStateWithLifecycle()
-    val activity = LocalActivity.current
-    DisposableEffect(viewModel, page, activity) {
-        onDispose {
-            if (activity?.isChangingConfigurations != true) viewModel.dismissFolder()
-        }
-    }
+    SourceFolderSelection(viewModel, page)
     LaunchedEffect(page) {
         if (page == SettingsPage.Notices) viewModel.loadAcknowledgements()
     }
-    val back = {
-        openPage(
-            if (page == SettingsPage.Notices) {
-                SettingsPage.About
-            } else {
-                SettingsPage.Overview
-            },
-        )
-    }
+    val back = { openPage(page.parent) }
     BackHandler(page != SettingsPage.Overview, back)
     val actions = SettingsActions(
         openPage = openPage,
@@ -67,6 +52,8 @@ internal fun SettingsRoute(
         showStats = viewModel::showStats,
         showPins = viewModel::showPins,
         connect = viewModel::requestFolder,
+        replaceBookFolder = viewModel::replaceBookFolder,
+        removeBookFolder = viewModel::removeBookFolder,
         sourceApp = viewModel::selectSourceApp, disconnect = {
             confirmation =
                 Confirmation.Disconnect
@@ -75,28 +62,7 @@ internal fun SettingsRoute(
         requestLauncher = launcher.request, systemSettings = launcher.openSettings,
         reviewSetup = onReviewSetup,
         website = {
-            try {
-                context.startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://2techy.dev"),
-                    ),
-                )
-            } catch (
-                _: ActivityNotFoundException,
-            ) {
-                Toast.makeText(
-                    context,
-                    R.string.website_unavailable,
-                    Toast.LENGTH_SHORT,
-                ).show()
-            } catch (_: SecurityException) {
-                Toast.makeText(
-                    context,
-                    R.string.website_unavailable,
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
+            openDeveloperWebsite(context)
         }, retry = viewModel::retryRead, dismiss = viewModel::dismissError,
         retryAcknowledgements = viewModel::loadAcknowledgements,
     )
@@ -110,32 +76,48 @@ internal fun SettingsRoute(
             contentPadding = contentPadding,
         )
     }
-    SourceFolderPicker(
-        folder = folder,
-        onSelect = { selected, uri, flags ->
-            viewModel.dismissFolder()
-            viewModel.connectTree(selected, uri, flags)
-        },
-        onDismiss = viewModel::dismissFolder,
-    )
     confirmation?.let { selected ->
-        val disconnect = selected == Confirmation.Disconnect
-        val title = if (disconnect) R.string.disconnect_source else R.string.clear_reading_cache
-        val message = if (disconnect) {
-            R.string.disconnect_description
-        } else {
-            R.string.clear_cache_description
-        }
-        val confirm = if (disconnect) R.string.confirm_disconnect else R.string.confirm_clear_cache
-        ConfirmationDialog(
-            title = stringResource(title),
-            message = stringResource(message),
-            confirmLabel = stringResource(confirm),
-            onConfirm = {
-                confirmation = null
-                if (disconnect) viewModel.disconnect() else viewModel.clearCache()
-            },
-            onDismiss = { confirmation = null },
-        )
+        SettingsConfirmation(selected, onConfirm = {
+            confirmation = null
+            if (selected ==
+                Confirmation.Disconnect
+            ) {
+                viewModel.disconnect()
+            } else {
+                viewModel.clearCache()
+            }
+        }, onDismiss = { confirmation = null })
+    }
+}
+
+@Composable
+private fun SettingsConfirmation(
+    selected: Confirmation,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val disconnect = selected == Confirmation.Disconnect
+    ConfirmationDialog(
+        title = stringResource(
+            if (disconnect) R.string.disconnect_source else R.string.clear_reading_cache,
+        ),
+        message = stringResource(
+            if (disconnect) R.string.disconnect_description else R.string.clear_cache_description,
+        ),
+        confirmLabel = stringResource(
+            if (disconnect) R.string.confirm_disconnect else R.string.confirm_clear_cache,
+        ),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+    )
+}
+
+private fun openDeveloperWebsite(context: Context) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://2techy.dev")))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, R.string.website_unavailable, Toast.LENGTH_SHORT).show()
+    } catch (_: SecurityException) {
+        Toast.makeText(context, R.string.website_unavailable, Toast.LENGTH_SHORT).show()
     }
 }
