@@ -178,8 +178,9 @@ extra tinted backgrounds are required to distinguish these sections.
   progress semantics. It does not animate or accept navigation gestures.
 - Content scrolls independently of a fixed footer. The full-width primary action comes
   first; Skip setup is a separate text action with at least a 48dp touch target.
-- Reading setup explains the real Settings connection flow. Launcher setup is optional
-  and shows the current system role; role requests remain explicit button actions.
+- Reading setup shares the real Settings connection controls: KOReader app, data folder
+  and books folder, using persisted SAF read grants. Connection remains optional.
+  Launcher setup shows the current system role; role requests remain explicit button actions.
 - Save errors are announced politely. Saving disables navigation and completion controls.
 
 ## Compact choice tabs

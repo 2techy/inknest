@@ -1,6 +1,9 @@
 package dev.twotechy.inknest.ui.onboarding
 
+import dev.twotechy.inknest.R
+import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.model.DisplayMode
+import dev.twotechy.inknest.ui.settings.SourceConnectionUiState
 
 internal data class OnboardingUiState(
     val step: Int,
@@ -9,7 +12,17 @@ internal data class OnboardingUiState(
     val saveError: Boolean,
     val preferenceError: Boolean,
     val isDefaultLauncher: Boolean,
-)
+    val connection: SourceConnectionUiState,
+    val sourceError: Boolean,
+) {
+    val errorMessage: Int?
+        get() = when {
+            sourceError -> R.string.source_action_error
+            saveError -> R.string.setup_save_error
+            preferenceError -> R.string.preferences_save_error
+            else -> null
+        }
+}
 
 internal data class OnboardingActions(
     val mode: (DisplayMode) -> Unit,
@@ -17,4 +30,6 @@ internal data class OnboardingActions(
     val back: () -> Unit,
     val finish: () -> Unit,
     val requestLauncher: () -> Unit,
+    val selectSourceApp: (String) -> Unit,
+    val selectFolder: (SourceFolder) -> Unit,
 )

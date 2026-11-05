@@ -82,13 +82,9 @@
     <string name="setup_title">Welcome to InkNest</string>
     <string name="setup_welcome">A quiet Home for your books and apps. Choose a display mode to get started.</string>
     <string name="setup_source_title">Your reading space</string>
-    <string name="setup_source_description">Bring your books and reading progress into InkNest with KOReader. Connect it after setup, or start with your apps.</string>
+    <string name="setup_source_description">Select your KOReader data folder and books folder to connect your reading. You can also set this up later in Settings.</string>
     <string name="setup_launcher_title">Make yourself at home</string>
     <string name="setup_launcher_description">You can use InkNest as your default launcher, or open it like any other app. This choice is optional.</string>
-    <string name="setup_source_location">Later in Settings → Reading &amp; data</string>
-    <string name="setup_reader_instruction">Install KOReader and open a book once.</string>
-    <string name="setup_data_instruction">Select the KOReader app and its data folder.</string>
-    <string name="setup_books_instruction">Choose your books folder, then refresh.</string>
     <string name="setup_step">Step %1$d of 3</string>
     <string name="skip_setup">Skip setup</string>
     <string name="next">Next</string>

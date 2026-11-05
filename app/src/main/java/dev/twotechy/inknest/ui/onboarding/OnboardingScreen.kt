@@ -34,6 +34,7 @@ import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.settings.DisplayModeChoices
 import dev.twotechy.inknest.ui.settings.SettingsCommand
 import dev.twotechy.inknest.ui.settings.SettingsSection
+import dev.twotechy.inknest.ui.settings.SourceConnectionContent
 import dev.twotechy.inknest.ui.theme.InkButtonTokens
 import dev.twotechy.inknest.ui.theme.InkOnboardingTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
@@ -78,16 +79,10 @@ internal fun OnboardingScreen(
                 )
             }
             item { SetupStepContent(state, actions) }
-            if (state.saveError || state.preferenceError) {
+            state.errorMessage?.let { message ->
                 item {
                     Text(
-                        stringResource(
-                            if (state.saveError) {
-                                R.string.setup_save_error
-                            } else {
-                                R.string.preferences_save_error
-                            },
-                        ),
+                        stringResource(message),
                         Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -133,7 +128,9 @@ private fun SetupStepContent(state: OnboardingUiState, actions: OnboardingAction
             DisplayModeChoices(state.mode, !state.saving, actions.mode)
         }
 
-        1 -> ReadingSetupGuide()
+        1 -> SettingsSection(stringResource(R.string.reading_source_heading)) {
+            SourceConnectionContent(state.connection, actions.selectSourceApp, actions.selectFolder)
+        }
 
         else -> SettingsSection(stringResource(R.string.default_home_app)) {
             if (state.isDefaultLauncher) {
@@ -148,25 +145,6 @@ private fun SetupStepContent(state: OnboardingUiState, actions: OnboardingAction
                     !state.saving,
                     actions.requestLauncher,
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ReadingSetupGuide() {
-    SettingsSection(stringResource(R.string.setup_source_location)) {
-        listOf(
-            R.string.setup_reader_instruction,
-            R.string.setup_data_instruction,
-            R.string.setup_books_instruction,
-        ).forEachIndexed { index, instruction ->
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = InkSpacing.md),
-                horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
-            ) {
-                Text("${index + 1}.", style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(instruction), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

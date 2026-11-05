@@ -21,7 +21,6 @@ import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
-import dev.twotechy.inknest.ui.settings.SettingsError
 import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.settings.SettingsRoute
 import dev.twotechy.inknest.ui.settings.SettingsUiState
@@ -75,10 +74,7 @@ private fun InkNestContent(
         if (setupVisible && settingsState.preferences != null) {
             OnboardingRoute(
                 onboarding = onboarding,
-                displayMode = settingsState.preferences.displayMode,
-                preferencesSaving = settingsState.saving,
-                preferencesSaveError = settingsState.error == SettingsError.Save,
-                onDisplayMode = settings::setDisplayMode,
+                settings = settings,
                 isDefault = isDefaultLauncher,
                 launcher = launcher,
                 padding = padding,
