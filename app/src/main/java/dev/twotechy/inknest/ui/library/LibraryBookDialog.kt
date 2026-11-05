@@ -17,12 +17,7 @@ import dev.twotechy.inknest.ui.components.BlockContentGestures
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
-internal fun LibraryBookDialog(
-    book: ReadingItem,
-    direct: Boolean,
-    onDismiss: () -> Unit,
-    onOpen: () -> Unit,
-) {
+internal fun LibraryBookDialog(book: ReadingItem, onDismiss: () -> Unit, onOpen: () -> Unit) {
     BlockContentGestures()
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -38,15 +33,12 @@ internal fun LibraryBookDialog(
                     style = MaterialTheme.typography.bodySmall,
                 )
                 book.progress?.let { Text(stringResource(R.string.reading_progress_percent, it)) }
-                if (!direct) Text(stringResource(R.string.library_choose_in_reader))
             }
         },
         confirmButton = {
             TextButton(onClick = onOpen) {
                 Text(
-                    stringResource(
-                        if (direct) R.string.reading_continue else R.string.reading_open_koreader,
-                    ),
+                    stringResource(R.string.reading_open_book),
                 )
             }
         },

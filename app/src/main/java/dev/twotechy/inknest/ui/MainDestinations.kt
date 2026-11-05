@@ -41,7 +41,6 @@ internal fun HomeDestination(
     HomeRoute(
         viewModel = home,
         readingItemOpener = container.readingItemOpener,
-        sourceConfig = container.readingSourceConfigRepository,
         appLauncher = container.appLauncher,
         appIconLoader = container.appIconLoader,
         modifier = Modifier.fillMaxSize(),
@@ -73,7 +72,6 @@ internal fun LibraryDestination(
     LibraryRoute(
         viewModel = library,
         opener = container.readingItemOpener,
-        source = container.readingSourceConfigRepository,
         onSettings = {
             navigation.select(TopLevelDestination.Settings)
             navigation.openSettingsPage(SettingsPage.ReadingData.name)

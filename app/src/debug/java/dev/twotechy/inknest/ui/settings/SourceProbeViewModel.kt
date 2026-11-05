@@ -8,7 +8,6 @@ import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
 import dev.twotechy.inknest.data.source.SafSourceAccess
-import dev.twotechy.inknest.model.ReadingOpenMode
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -116,8 +115,6 @@ internal class SourceProbeViewModel(
     fun selectPackage(packageName: String) = accessAction {
         repository.setSourcePackage(packageName)
     }
-    fun recordOpenMode(mode: ReadingOpenMode, version: String) =
-        accessAction { repository.recordOpenMode(mode, version) }
 
     private fun accessAction(block: suspend () -> Unit) {
         if (current.value.busy) return

@@ -60,7 +60,7 @@ internal fun LibraryBooks(
                     header()
                 }
                 items(state.books, key = ReadingItem::libraryKey, contentType = { "book" }) {
-                    LibraryGridBook(it) { actions.open(it) }
+                    LibraryGridBook(it, { actions.open(it) }, { actions.details(it) })
                 }
             }
         } else {
@@ -71,7 +71,7 @@ internal fun LibraryBooks(
             ) {
                 item(key = "controls", contentType = "controls") { header() }
                 items(state.books, key = ReadingItem::libraryKey, contentType = { "book" }) {
-                    LibraryListBook(it) { actions.open(it) }
+                    LibraryListBook(it, { actions.open(it) }, { actions.details(it) })
                 }
             }
         }

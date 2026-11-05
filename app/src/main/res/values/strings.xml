@@ -176,11 +176,9 @@
     <string name="library_permission_lost">Folder access lost</string>
     <string name="library_unresolved">Folder not accessible</string>
     <string name="library_app_hint">Open KOReader to choose a book.</string>
-    <string name="library_direct_hint">Tap a book to continue in KOReader.</string>
     <string name="library_skipped">History entries skipped: %1$d</string>
     <string name="library_all_count">All (%1$d)</string>
     <string name="library_folder_error">Could not update the book folder. Your saved library is still available.</string>
-    <string name="library_choose_in_reader">Choose this book in KOReader after opening the reader.</string>
     <string name="library_refresh">Refresh library</string>
     <string name="stats_title">Statistics</string>
     <string name="stats_no_data">No reading statistics yet</string>
@@ -215,4 +213,8 @@
     <string name="gesture_release_refresh">Release to refresh</string>
     <string name="home_apps_refresh_error">Unable to refresh apps</string>
     <string name="home_apps_refresh_retry">Your existing apps are still available. Tap to retry.</string>
+    <string name="reading_open_book">Open in KOReader</string>
+    <string name="reading_open_unsupported">KOReader cannot handle this book format or document URI.</string>
+    <string name="library_details">Book details</string>
+    <string name="reading_open_refresh">Refresh</string>
 </resources>

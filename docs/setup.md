@@ -23,9 +23,11 @@ Disconnect removes source configuration and local reading cache, not book files 
 
 ## Reading and launcher behavior
 
-When direct opening is unverified, Open KOReader opens the reader normally; select the book
-there. Dispatching an Android intent is not proof that the reader opened the correct book.
-Direct opening requires a version-specific cold/warm confirmation in debug diagnostics.
+Tap a book in Library to open it directly in the selected KOReader app; long-press for details.
+Home uses the same original-document opening flow. No Developer tools confirmation is required.
+If a file, permission or handler is unavailable, InkNest reports the error instead of opening
+KOReader without the selected book. Dispatching an Android intent is not proof that the reader
+opened the correct book; reading state is refreshed from KOReader when returning.
 
 Default launcher is optional in Settings → Launcher. To switch back, use Android Settings →
 Apps → Default apps → Home app and choose the previous launcher. Names vary by firmware.

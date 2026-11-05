@@ -43,16 +43,7 @@ Checked: %2$s</string>
     <string name="probe_open_book">Try opening book %1$s</string>
     <string name="probe_open_failed">Reader could not open this request.</string>
     <string name="probe_open_warning">Verify A → B → A in the reader, including saved position. Sending an intent alone does not verify direct-open.</string>
-    <string name="probe_confirm_a">Book A and saved position verified</string>
-    <string name="probe_confirm_b">Book B and saved position verified</string>
-    <string name="probe_save_direct">Record verified direct-open</string>
-    <string name="probe_save_fallback">Use source-app-only fallback</string>
-    <string name="probe_open_mode">Verified open mode</string>
     <string name="probe_invalid_metadata">Invalid book metadata</string>
-    <string name="probe_cold_warm">Cold and warm starts checked</string>
-    <string name="probe_mode_unverified">Unverified</string>
-    <string name="probe_mode_app_only">Source app only</string>
-    <string name="probe_mode_direct">Direct-open confirmed</string>
     <string name="probe_invalid_snapshot">Statistics snapshot is corrupt or unreadable</string>
     <string name="probe_source_changed">Source changed while taking the snapshot; retry later</string>
 </resources>

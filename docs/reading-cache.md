@@ -56,15 +56,16 @@ cover cache along with reading rows. No bitmap is stored in ViewModels or saved 
 
 ## Opening the reader
 
-`ReadingItemOpener` is a main-safe platform boundary shared by reading routes. Source-app fallback
-opens only the selected installed package and is labelled **Open KOReader**. Direct mode is used
-only for an explicitly confirmed package version, re-resolves the original file and passes its
-content URI/MIME through ACTION_VIEW with read permission and ClipData. A changed version falls
-back to ordinary app launch. Missing app/file/grant and a changed source return typed results with
-Settings recovery; sending an intent never mutates reading progress or history.
+`ReadingItemOpener` is a main-safe platform boundary shared by Home and Library. Each action
+re-resolves the original document, validates the selected source again, then dispatches ACTION_VIEW
+with its content URI/MIME, ClipData and temporary read permission to the configured reader.
+Package/intent resolution runs off the main thread. Opening does not parse or copy the EPUB.
 
-The virtual KOReader remains configured as SourceAppOnly because cold direct-open was unreliable.
-No additional direct-open compatibility claim is made by the production integration.
+There is no persisted confirmation/version gate or app-only fallback. Missing app/file/grant,
+unsupported handler and changed-source outcomes are explicit. File errors offer refresh; access
+or configuration errors offer Settings. `Dispatched` means Android accepted the intent, not that
+KOReader confirmed opening the file. Progress/history/current-book cache remain source-driven.
+Old open-mode/version preference keys are ignored; no preference migration or second store is added.
 
 ## Refresh and failures
 
@@ -95,7 +96,7 @@ Debug/release builds, lint and Spotless passed. Optimized release was installed 
 real KOReader data: current cache, refresh, clear/reload and restart worked; pins remained intact.
 Home was inspected at the existing virtual 862×1648/density320 setup and font scale 150%, then the
 original font scale and debug build were restored. These results do not establish Tango hardware
-compatibility or production direct-open support.
+compatibility. Production direct-open now follows the URI dispatch contract above.
 
 Versions were checked against the official [Room releases](https://developer.android.com/jetpack/androidx/releases/room3),
 [SQLite releases](https://developer.android.com/jetpack/androidx/releases/sqlite) and

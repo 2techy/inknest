@@ -1,7 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import dev.twotechy.inknest.model.ReadingOpenMode
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -59,10 +58,7 @@ class ReadingSourceConfigRepositoryTest {
             ).sourceId,
         )
         source.setSourcePackage("org.koreader.launcher")
-        source.recordOpenMode(ReadingOpenMode.SourceAppOnly, "1")
-        assertEquals(ReadingOpenMode.SourceAppOnly, source.config.first().openMode)
         source.setSourcePackage("different.reader")
-        assertEquals(ReadingOpenMode.Unverified, source.config.first().openMode)
         source.disconnect()
         assertEquals(ReadingSourceConfig(), source.config.first())
         assertEquals(listOf("reader/Activity"), user.pinnedComponentIds.first())

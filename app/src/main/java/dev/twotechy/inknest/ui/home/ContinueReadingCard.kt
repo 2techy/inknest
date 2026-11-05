@@ -94,11 +94,7 @@ private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier)
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ProgressLabel(book.progress)
-        val action = if (book.canContinue) {
-            R.string.reading_continue
-        } else {
-            R.string.reading_open_koreader
-        }
+        val action = R.string.reading_continue
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 stringResource(action),

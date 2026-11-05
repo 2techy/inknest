@@ -38,4 +38,5 @@ internal data class LibraryActions(
     val refresh: () -> Unit,
     val settings: () -> Unit,
     val open: (ReadingItem) -> Unit,
+    val details: (ReadingItem) -> Unit = {},
 )

@@ -5,8 +5,6 @@ data class ReadingSourceConfig(
     val koreaderTreeUri: String? = null,
     val booksTreeUri: String? = null,
     val sourcePackage: String? = null,
-    val openMode: ReadingOpenMode = ReadingOpenMode.Unverified,
-    val verifiedAppVersion: String? = null,
 )
 
 enum class SourceAccessState {
@@ -17,5 +15,3 @@ enum class SourceAccessState {
     Unsupported,
     ProviderError,
 }
-
-enum class ReadingOpenMode { Unverified, SourceAppOnly, DirectConfirmed }

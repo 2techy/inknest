@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.library
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,21 +17,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingStatus
-import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkLibraryTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
-internal fun LibraryGridBook(book: ReadingItem, onClick: () -> Unit) {
+internal fun LibraryGridBook(book: ReadingItem, onClick: () -> Unit, onDetails: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.quietClick(onClick),
+        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
+        }.bookActions(onClick, onDetails),
         verticalArrangement = Arrangement.spacedBy(InkSpacing.sm),
     ) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -46,10 +48,11 @@ internal fun LibraryGridBook(book: ReadingItem, onClick: () -> Unit) {
 }
 
 @Composable
-internal fun LibraryListBook(book: ReadingItem, onClick: () -> Unit) {
+internal fun LibraryListBook(book: ReadingItem, onClick: () -> Unit, onDetails: () -> Unit) {
     Column {
         Row(
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.quietClick(onClick)
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
+            }.bookActions(onClick, onDetails)
                 .padding(vertical = InkSpacing.sm),
             horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
@@ -124,3 +127,14 @@ private fun BookAvailability.label(): Int? = when (this) {
     BookAvailability.PermissionLost -> R.string.library_permission_lost
     BookAvailability.Unresolved -> R.string.library_unresolved
 }
+
+@Composable
+private fun Modifier.bookActions(onClick: () -> Unit, onDetails: () -> Unit): Modifier =
+    combinedClickable(
+        interactionSource = null,
+        indication = null,
+        role = Role.Button,
+        onLongClickLabel = stringResource(R.string.library_details),
+        onLongClick = onDetails,
+        onClick = onClick,
+    )

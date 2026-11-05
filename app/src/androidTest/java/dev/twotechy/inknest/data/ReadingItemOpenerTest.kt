@@ -1,5 +1,8 @@
 package dev.twotechy.inknest.data
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
@@ -9,7 +12,7 @@ import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.model.ReadingItemId
-import dev.twotechy.inknest.model.ReadingOpenMode
+import dev.twotechy.inknest.platform.BookIntentLauncher
 import dev.twotechy.inknest.platform.OpenResult
 import dev.twotechy.inknest.platform.ReadingItemOpener
 import java.io.File
@@ -22,68 +25,123 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReadingItemOpenerTest {
-    @Test fun unavailableSourceAndDirectFileFailuresNeverDispatchAnIntent() = runBlocking {
+    @Test fun originalDocumentsDispatchWithoutConfirmationForEverySelection() = runBlocking {
+        val fixture = Fixture()
+        try {
+            fixture.configure()
+            val intents = mutableListOf<Intent>()
+            val opener = fixture.recordingOpener(intents)
+            for (name in listOf("A book.epub", "B book.epub", "A book.epub")) {
+                assertEquals(OpenResult.Dispatched, opener.open(fixture.id(name)))
+                val intent = intents.last()
+                assertEquals(Intent.ACTION_VIEW, intent.action)
+                assertEquals("org.koreader.launcher", intent.`package`)
+                assertEquals("application/epub+zip", intent.type)
+                assertEquals(
+                    "primary:Download/$name",
+                    DocumentsContract.getDocumentId(intent.data!!),
+                )
+                assertEquals(intent.data, intent.clipData!!.getItemAt(0).uri)
+                assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+                assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+            }
+            assertEquals(3, intents.size)
+            assertEquals(0, fixture.documents.reads)
+        } finally {
+            fixture.close()
+        }
+    }
+
+    @Test fun sourceFilePermissionAndReaderErrorsNeverFallBackToLaunchingTheApp() = runBlocking {
+        val fixture = Fixture()
+        try {
+            fixture.configure()
+            val intents = mutableListOf<Intent>()
+            val opener = fixture.recordingOpener(intents)
+            val id = fixture.id("A.epub")
+            assertEquals(OpenResult.SourceChanged, opener.open(id.copy(sourceId = "old")))
+            fixture.documents.missing = true
+            assertEquals(OpenResult.MissingFile, opener.open(id))
+            fixture.documents.missing = false
+            fixture.documents.denied = true
+            assertEquals(OpenResult.PermissionLost, opener.open(id))
+            fixture.documents.denied = false
+            fixture.config.setSourcePackage("dev.twotechy.missing.reader")
+            assertEquals(OpenResult.MissingApp, fixture.realOpener.open(id))
+            fixture.config.setSourcePackage(fixture.context.packageName)
+            assertEquals(OpenResult.Unsupported, fixture.realOpener.open(id))
+            fixture.documents.resolving = { fixture.config.setSourcePackage("changed.reader") }
+            assertEquals(OpenResult.SourceChanged, opener.open(id))
+            assertTrue(intents.isEmpty())
+            assertEquals(0, fixture.documents.reads)
+        } finally {
+            fixture.close()
+        }
+    }
+
+    private class Fixture {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val directory = Files.createTempDirectory(
+        private val directory = Files.createTempDirectory(
             context.cacheDir.toPath(),
-            "opener-test-",
+            "opener-",
         ).toFile()
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val store = PreferenceDataStoreFactory.create(scope = scope) {
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private val store = PreferenceDataStoreFactory.create(scope = scope) {
             File(directory, "settings.preferences_pb")
         }
-        try {
-            val config = ReadingSourceConfigRepository(store)
+        val config = ReadingSourceConfigRepository(store)
+        val documents = Documents()
+        private val books = BookProbeDataSource(documents, directory)
+        val realOpener = ReadingItemOpener(context, config, books)
+        suspend fun configure() {
             val before = config.config.first()
-            config.activateTree(
-                before,
-                config.treeCandidate(
-                    before,
-                    SourceFolder.KOReader,
-                    "content://com.android.externalstorage.documents/tree/primary%3ADownload",
-                ),
-            )
-            val documents = Documents()
-            val opener =
-                ReadingItemOpener(context, config, BookProbeDataSource(documents, directory))
-            val id = ReadingItemId(
-                checkNotNull(config.config.first().sourceId),
-                "primary:Download/A.epub",
-            )
-            assertEquals(OpenResult.SourceChanged, opener.open(id.copy(sourceId = "old")))
-            config.setSourcePackage("dev.twotechy.missing.reader")
-            assertEquals(OpenResult.MissingApp, opener.open(id))
-            config.setSourcePackage(context.packageName)
-            val info = context.packageManager.getPackageInfo(context.packageName, 0)
-            val version = checkNotNull(info.versionName)
-            config.recordOpenMode(ReadingOpenMode.DirectConfirmed, "older-version")
-            assertFalse(opener.isDirect(config.config.first()))
-            config.recordOpenMode(ReadingOpenMode.DirectConfirmed, version)
-            assertTrue(opener.isDirect(config.config.first()))
-            assertEquals(OpenResult.MissingFile, opener.open(id))
-            documents.denied = true
-            assertEquals(OpenResult.PermissionLost, opener.open(id))
-        } finally {
+            config.activateTree(before, config.treeCandidate(before, SourceFolder.KOReader, TREE))
+            config.setSourcePackage("org.koreader.launcher")
+        }
+        suspend fun id(name: String) =
+            ReadingItemId(checkNotNull(config.config.first().sourceId), "primary:Download/$name")
+        fun recordingOpener(intents: MutableList<Intent>) = ReadingItemOpener(
+            context,
+            config,
+            books,
+            BookIntentLauncher {
+                intents.add(it)
+                OpenResult.Dispatched
+            },
+        )
+        fun close() {
             scope.cancel()
             directory.deleteRecursively()
         }
     }
 
     private class Documents : SourceDocumentReader {
+        var missing = false
         var denied = false
+        var reads = 0
+        var resolving: suspend () -> Unit = {}
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
+            resolving()
             if (denied) throw SecurityException()
-            throw MissingSourceFile()
+            if (missing) throw MissingSourceFile()
+            val id = "primary:Download/" + path.joinToString("/")
+            val uri = DocumentsContract.buildDocumentUriUsingTree(Uri.parse(tree), id)
+            return SourceDocument(uri.toString(), "application/epub+zip", 1L, 1L)
         }
         override suspend fun <T> read(
             tree: String,
             path: List<String>,
             parse: suspend (InputStream) -> T,
-        ): T = error("Opening must not extract or copy the book")
+        ): T {
+            reads++
+            error("Opening must not copy or extract the book")
+        }
+    }
+    private companion object {
+        const val TREE = "content://com.android.externalstorage.documents/tree/primary%3ADownload"
     }
 }

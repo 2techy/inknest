@@ -3,10 +3,8 @@ package dev.twotechy.inknest.ui.settings
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.R
@@ -14,7 +12,6 @@ import dev.twotechy.inknest.data.repository.ProbeRead
 import dev.twotechy.inknest.data.repository.ReaderProbeResult
 import dev.twotechy.inknest.data.source.ResolvedBook
 import dev.twotechy.inknest.di.AppContainer
-import dev.twotechy.inknest.model.ReadingOpenMode
 import kotlinx.coroutines.launch
 
 @Composable
@@ -33,17 +30,11 @@ internal fun SourceAppProbeRoute(
     val context = LocalContext.current
     val launcher = remember(context, container) {
         SourceProbeLauncher(
-            context,
             container.appLauncher,
-            checkNotNull(container.readerProbeRepository),
+            checkNotNull(container.readingItemOpener),
         )
     }
-    val version =
-        remember(selected?.componentId, selected?.iconVersion) { launcher.version(selected) }
     val targets = state.reader.openTargets()
-    val keys = targets.map { it.document.uri }
-    var confirmedA by remember(keys, state.config.sourcePackage, version) { mutableStateOf(false) }
-    var confirmedB by remember(keys, state.config.sourcePackage, version) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val reportFailure = {
         Toast.makeText(context, R.string.probe_open_failed, Toast.LENGTH_SHORT).show()
@@ -54,14 +45,6 @@ internal fun SourceAppProbeRoute(
             selectedComponent = selected?.componentId,
             targets = targets.size,
             enabled = !state.busy && !state.probing,
-            versionAvailable = version != null,
-            confirmedA = confirmedA,
-            confirmedB = confirmedB,
-            mode = if (version != null && state.config.verifiedAppVersion == version) {
-                state.config.openMode
-            } else {
-                ReadingOpenMode.Unverified
-            },
         ),
         select = model::selectPackage,
         launchApp = { if (!launcher.launchApp(selected)) reportFailure() },
@@ -72,9 +55,6 @@ internal fun SourceAppProbeRoute(
                 }
             }
         },
-        confirmA = { confirmedA = it },
-        confirmB = { confirmedB = it },
-        record = { mode -> version?.let { model.recordOpenMode(mode, it) } },
     )
 }
 

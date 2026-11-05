@@ -45,8 +45,9 @@ Default order is last-read descending, with title A–Z and progress descending 
 Unknown values follow known values and ties retain stable folder order/identity. Status filters use
 explicit KOReader status; 100% alone does not imply Finished.
 
-With version-confirmed direct opening, tapping a book opens that book. Otherwise tapping shows its
-book information and folder path with an explicit Open KOReader action; the dialog explains that
-the reader must be used to choose the book. This keeps source-app fallback honest without placing
-integration details across the whole shelf. Background/HOME dismisses the dialog and pending launch.
+Tapping a book opens that original document in the selected KOReader package through
+`ReadingItemOpener`. Long-press opens its details and path; that dialog can also open the book.
+Grid and list share these actions. Background/HOME dismisses details and a pending UI launch;
+query, filters and scroll position are retained. No debug confirmation or version-specific
+unlock is required, and an unsupported request never silently falls back to app-only launch.
 No opening action fabricates reading history or progress.

@@ -11,7 +11,6 @@ data class BookUiModel(
     val author: String?,
     val progress: Int?,
     val coverUri: String? = null,
-    val canContinue: Boolean = false,
     val availability: BookAvailability = BookAvailability.Available,
 )
 
