@@ -50,7 +50,7 @@ use weight 600.
 | xxxl | 32 |
 | huge | 40 |
 
-- Header to content: 16dp.
+- Header to content: 8dp.
 - Between content sections: 24dp; section heading to content: 12dp.
 - Card padding: 16dp; compact cards: 12dp.
 - App grid gaps: 12dp horizontal, 16dp vertical.
@@ -71,8 +71,8 @@ page gutters. `ScreenScaffold` owns the page header, scrollable body and optiona
 Feature routes must not apply the page padding a second time.
 
 - Page gutters: 12dp below 360dp content width; 16dp below 600dp; 32dp above that.
-- Content width is capped at 800dp. Page top padding is 8dp, bottom padding is 16dp.
-- Main and detail headers have minimum height 56dp. Titles are left-aligned and vertically
+- Content width is capped at 800dp. Page top padding is 4dp, bottom padding is 16dp.
+- Main and detail headers have minimum height 48dp. Titles are left-aligned and vertically
   centered; main headers have no Back action.
 - Header icons are 24dp in a real 48x48dp touch region. Back occupies that full layout slot;
   do not use a narrower slot with an overflowing touch region.
@@ -137,7 +137,7 @@ layout and touch geometry only.
 
 Home uses the same header, section typography and app icon dimensions as Apps:
 
-- Shared 56dp page header and 22/28sp title. Section headings use 16/22sp semibold.
+- Shared 48dp page header and 22/28sp title. Section headings use 16/22sp semibold.
 - The 44/52sp sans-serif clock leads the overview. Reading values use 18/24sp semibold
   directly above 12/16sp captions. If the measured clock and stats cannot fit beside one
   another, stats move below the clock/date. Hidden stats leave no reserved column.
