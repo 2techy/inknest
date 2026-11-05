@@ -95,8 +95,13 @@ internal class BookProbeDataSource(
         val dir = Files.createTempDirectory(cache.toPath(), "reader-epub-").toFile()
         try {
             val file = File(dir, "source.epub")
-            files.read(book.tree, book.relative) { input ->
+            val copy: suspend (java.io.InputStream) -> Unit = { input ->
                 file.outputStream().use { copyBounded(input, it, 256L * 1024 * 1024) }
+            }
+            if (files is DirectSourceDocumentReader) {
+                files.readDocument(book.document, copy)
+            } else {
+                files.read(book.tree, book.relative, copy)
             }
             try {
                 EpubProbe().read(file, onCover)

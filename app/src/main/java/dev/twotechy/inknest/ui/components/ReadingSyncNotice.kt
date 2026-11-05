@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.ui.home
+package dev.twotechy.inknest.ui.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

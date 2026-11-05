@@ -84,6 +84,12 @@ private fun InkNestContent(
         } else {
             saveableStateHolder.SaveableStateProvider(tab.name) {
                 when (tab) {
+                    TopLevelDestination.Library -> LibraryDestination(
+                        container,
+                        navigation,
+                        padding,
+                    )
+
                     TopLevelDestination.Home -> HomeDestination(container, navigation, padding)
 
                     TopLevelDestination.Apps -> AppsDestination(container, padding)

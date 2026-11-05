@@ -37,7 +37,9 @@ internal interface ReadingDao {
     )
     suspend fun book(sourceId: String, snapshotKey: String, path: String): ReadingBookEntity?
 
-    @Query("SELECT coverUri FROM reading_items WHERE coverUri IS NOT NULL")
+    @Query(
+        "SELECT coverUri FROM reading_items WHERE coverUri IS NOT NULL UNION SELECT coverUri FROM library_books WHERE coverUri IS NOT NULL",
+    )
     suspend fun coverUris(): List<String>
 
     @Query(
@@ -115,7 +117,15 @@ internal interface ReadingDao {
     @Query("DELETE FROM reading_sources")
     suspend fun clearSources()
 
+    @Query("DELETE FROM library_books")
+    suspend fun clearLibraryBooks()
+
+    @Query("DELETE FROM library_folders")
+    suspend fun clearLibraryFolders()
+
     @Transaction suspend fun clearAll() {
+        clearLibraryBooks()
+        clearLibraryFolders()
         clearBooks()
         clearSources()
     }

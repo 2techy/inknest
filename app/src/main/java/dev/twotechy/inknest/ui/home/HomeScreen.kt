@@ -11,6 +11,7 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.clock.rememberMinuteClock
 import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.ReadingSyncNotice
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens

@@ -12,3 +12,7 @@ internal interface SourceFileReader {
 internal interface SourceDocumentReader : SourceFileReader {
     suspend fun describe(tree: String, path: List<String>): SourceDocument
 }
+
+internal interface DirectSourceDocumentReader : SourceDocumentReader {
+    suspend fun <T> readDocument(document: SourceDocument, parse: suspend (InputStream) -> T): T
+}

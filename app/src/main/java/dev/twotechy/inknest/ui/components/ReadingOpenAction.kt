@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.ui.home
+package dev.twotechy.inknest.ui.components
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -13,6 +13,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.model.BookAvailability
+import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.platform.OpenResult
 import dev.twotechy.inknest.platform.ReadingItemOpener
 import kotlinx.coroutines.Job
@@ -20,10 +22,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 internal fun rememberReadingOpenAction(
-    state: HomeUiState,
     opener: ReadingItemOpener?,
     onSettings: () -> Unit,
-): () -> Unit {
+): (ReadingItemId, BookAvailability) -> Unit {
     val scope = rememberCoroutineScope()
     var error by remember { mutableStateOf<OpenResult?>(null) }
     var opening by remember { mutableStateOf(false) }
@@ -58,16 +59,24 @@ internal fun rememberReadingOpenAction(
             },
         )
     }
-    return {
-        val loaded = state as? HomeUiState.Loaded
-        val current = (loaded?.reading as? ReadingSectionState.Content)?.current
-        if (opener == null || current == null) {
+    return { id, availability ->
+        val unavailable = when (availability) {
+            BookAvailability.Missing -> OpenResult.MissingFile
+
+            BookAvailability.PermissionLost, BookAvailability.Unresolved ->
+                OpenResult.PermissionLost
+
+            BookAvailability.Available -> null
+        }
+        if (unavailable != null) {
+            error = unavailable
+        } else if (opener == null) {
             onSettings()
         } else if (!opening) {
             request = scope.launch {
                 opening = true
                 try {
-                    val result = opener.open(current.id)
+                    val result = opener.open(id)
                     if (result != OpenResult.Success) error = result
                 } finally {
                     opening = false

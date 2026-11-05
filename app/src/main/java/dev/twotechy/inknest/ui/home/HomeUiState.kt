@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.home
 
+import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
@@ -11,6 +12,7 @@ data class BookUiModel(
     val progress: Int?,
     val coverUri: String? = null,
     val canContinue: Boolean = false,
+    val availability: BookAvailability = BookAvailability.Available,
 )
 
 data class HomePinUiModel(val componentId: String, val label: String, val iconVersion: Long = 0)

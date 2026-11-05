@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.ui.components.readingIssueMessage
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkTextStyles
 

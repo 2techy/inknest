@@ -86,6 +86,10 @@ internal class BookCoverCache(private val directory: File) {
         }
     }
 
+    suspend fun sizeBytes(): Long = withContext(Dispatchers.IO) {
+        directory.listFiles()?.sumOf { it.length() } ?: 0L
+    }
+
     suspend fun clear() = withContext(Dispatchers.IO) {
         writes.withLock {
             generation.incrementAndGet()

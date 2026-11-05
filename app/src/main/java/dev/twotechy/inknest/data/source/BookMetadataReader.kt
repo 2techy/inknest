@@ -40,6 +40,22 @@ internal class BookMetadataReader(
         )
     }
 
+    suspend fun readBook(
+        config: ReadingSourceConfig,
+        book: ResolvedBook,
+        item: ReadingItem,
+    ): EnrichedReadingItem {
+        val metadata = metadata(config, book, item)
+        return EnrichedReadingItem(
+            item.copy(
+                title = metadata.title,
+                author = metadata.author,
+                coverUri = metadata.coverUri,
+            ),
+            metadata,
+        )
+    }
+
     private suspend fun metadata(
         config: ReadingSourceConfig,
         book: ResolvedBook,

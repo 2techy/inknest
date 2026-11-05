@@ -77,7 +77,8 @@ private fun ReadingState.toReadingSectionState(): ReadingSectionState = when (th
             current.title,
             current.author,
             current.progress,
-            current.coverUri,
+            coverUri = current.coverUri,
+            availability = current.availability,
         ),
     )
 }

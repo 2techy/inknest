@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.LibraryRepository
 import dev.twotechy.inknest.data.repository.ReaderProbeRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
@@ -19,12 +20,14 @@ import dev.twotechy.inknest.platform.LauncherModeController
 import dev.twotechy.inknest.platform.ReadingItemOpener
 import dev.twotechy.inknest.ui.apps.AppsViewModel
 import dev.twotechy.inknest.ui.home.HomeViewModel
+import dev.twotechy.inknest.ui.library.LibraryViewModel
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
 
 // Application-scoped dependencies; build-specific wiring lives in debug/release.
 internal class AppContainer(
     val readingRepository: ReadingRepository,
+    val libraryRepository: LibraryRepository,
     val installedAppsRepository: InstalledAppsRepository,
     val readingStatsRepository: ReadingStatsRepository,
     val userPreferencesRepository: UserPreferencesRepository,
@@ -61,6 +64,10 @@ internal class AppContainer(
                 readingStatsRepository,
             )
         }
+    }
+
+    val libraryViewModelFactory = viewModelFactory {
+        initializer { LibraryViewModel(libraryRepository, createSavedStateHandle()) }
     }
 
     val appsViewModelFactory = viewModelFactory {

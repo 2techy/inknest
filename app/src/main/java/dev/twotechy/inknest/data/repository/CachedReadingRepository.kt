@@ -197,7 +197,8 @@ internal class CachedReadingRepository(
 
     suspend fun clearCache() {
         transition.withLock {
-            if (config.config.first().readingCacheKey() == null) return
+            val selected = config.config.first()
+            if (selected.koreaderTreeUri == null && selected.booksTreeUri == null) return
             requests.withLock { jobs.values.forEach { it.cancel() } }
             cache.clearAll()
             covers?.clear()

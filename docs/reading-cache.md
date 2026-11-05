@@ -15,7 +15,7 @@ Missing both sources or corrupt data cannot masquerade as a successfully empty s
 file missing/outside grants retains its identity and filename with an availability warning.
 No current-book choice is inferred from statistics or basename/title matches.
 
-Room schema v2 is exported in `app/schemas`. During development, schema changes do not carry
+Room schema v3 is exported in `app/schemas`. During development, schema changes do not carry
 migration code: increment the Room version when changing the schema, and allow Room to recreate
 the disposable reading database when no migration exists. Preferences, pins and SAF configuration
 live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
@@ -39,7 +39,8 @@ warning/count. A structurally broken history document retains the previous track
 fallback selection cannot publish a false empty state. A successful replacement, its current
 pointer and history order are committed in one Room transaction. Missing/unresolved books remain
 tracked with their availability. `ReadingRepository.trackedItems` exposes the active partition for
-the upcoming Library screen; Home does not add a Recent section.
+reading-status enrichment. Library membership comes from the separate Books-folder inventory;
+Home does not add a Recent section.
 
 Sidecars are reread on refresh, so a lower `percent_finished` replaces a higher previous value.
 Only finite values in [0, 1] are accepted. Explicit `reading`, `complete` and `abandoned` statuses
@@ -77,7 +78,8 @@ keeps the cached card and shows a compact stale/error notice. Source identity an
 are checked together, preventing previous-source rows/status from appearing under a new config.
 Expected cache write failures are surfaced even if persisting their error record fails.
 Disconnect clears reading rows/source keys/grants but preserves pins/preferences. Clear cache
-removes reading rows, then reloads the configured source. Switching tabs/clock ticks never starts
+removes reading rows, the Books inventory and covers, then reloads the configured sources.
+Books-only configurations can also clear/rebuild their inventory; cache size includes thumbnails. Switching tabs/clock ticks never starts
 source parsing.
 
 ## Verification

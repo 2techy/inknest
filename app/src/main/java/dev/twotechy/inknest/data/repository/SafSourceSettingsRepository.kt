@@ -1,6 +1,7 @@
 package dev.twotechy.inknest.data.repository
 
 import android.net.Uri
+import dev.twotechy.inknest.data.source.BookCoverCache
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.data.source.SourceDocumentReader
@@ -14,7 +15,9 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -30,36 +33,52 @@ internal class SafSourceSettingsRepository(
     private val cacheFile: File,
     private val files: SourceDocumentReader,
     scope: CoroutineScope,
+    private val library: LibraryRepository,
+    private val covers: BookCoverCache,
 ) : SourceSettingsRepository {
     private data class Refresh(val generation: Long = 0)
     private val refreshState = MutableStateFlow(Refresh())
     private val mutex = Mutex()
-    override val state = combine(config.config, refreshState, reading.sync) {
+    override val state = combine(
+        config.config,
+        refreshState,
+        reading.sync,
+        library.catalog.map {
+            it.sync
+        }.distinctUntilChanged(),
+    ) {
             source,
             refresh,
             sync,
+            catalogSync,
         ->
-        Triple(source, refresh, sync)
+        Triple(
+            source,
+            refresh,
+            sync.copy(
+                running = sync.running || catalogSync.running,
+                lastSuccessAt = listOfNotNull(
+                    sync.lastSuccessAt,
+                    catalogSync.lastSuccessAt,
+                ).maxOrNull(),
+            ),
+        )
     }
         .mapLatest { (source, _, sync) ->
             val grant = access.inspect(source.koreaderTreeUri)
+            val booksGrant = access.inspect(source.booksTreeUri)
             SourceSettingsState(
                 available = true,
-                status = when (grant) {
-                    SourceAccessState.NotSelected -> SourceStatus.NotConnected
-                    SourceAccessState.Granted -> SourceStatus.Connected
-                    SourceAccessState.PermissionLost -> SourceStatus.PermissionLost
-                    else -> SourceStatus.Error
-                },
+                status = sourceStatus(listOf(grant, booksGrant)),
                 koreaderFolder = source.koreaderTreeUri,
                 booksFolder = source.booksTreeUri,
                 koreaderAccess = grant,
-                booksAccess = access.inspect(source.booksTreeUri),
+                booksAccess = booksGrant,
                 sourcePackage = source.sourcePackage,
                 refreshing = sync.running,
                 lastUpdated = sync.lastSuccessAt,
-                cacheBytes = if (source.koreaderTreeUri ==
-                    null
+                cacheBytes = if (source.koreaderTreeUri == null &&
+                    source.booksTreeUri == null
                 ) {
                     null
                 } else {
@@ -116,7 +135,7 @@ internal class SafSourceSettingsRepository(
 
     override suspend fun refresh() {
         try {
-            reading.refresh()
+            library.refresh()
         } finally {
             refreshState.update { Refresh(generation = it.generation + 1) }
         }
@@ -132,4 +151,11 @@ internal class SafSourceSettingsRepository(
     }
 
     override suspend fun clearCache() = mutex.withLock { reading.clearCache() }
+}
+
+private fun sourceStatus(grants: List<SourceAccessState>): SourceStatus = when {
+    SourceAccessState.Granted in grants -> SourceStatus.Connected
+    SourceAccessState.PermissionLost in grants -> SourceStatus.PermissionLost
+    grants.all { it == SourceAccessState.NotSelected } -> SourceStatus.NotConnected
+    else -> SourceStatus.Error
 }

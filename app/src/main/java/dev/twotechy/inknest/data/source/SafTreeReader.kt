@@ -14,17 +14,37 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class SafTreeReader(private val resolver: ContentResolver) : SourceDocumentReader {
+internal class SafTreeReader(private val resolver: ContentResolver) : DirectSourceDocumentReader {
     override suspend fun <T> read(
         tree: String,
         path: List<String>,
         parse: suspend (InputStream) -> T,
     ): T = withContext(Dispatchers.IO) {
         val document = Uri.parse(describe(tree, path).uri)
+        readUri(document, parse)
+    }
+
+    override suspend fun <T> readDocument(
+        document: SourceDocument,
+        parse: suspend (InputStream) -> T,
+    ): T = withContext(Dispatchers.IO) {
+        val uri = Uri.parse(document.uri)
+        val tree = DocumentsContract.buildTreeDocumentUri(
+            uri.authority,
+            DocumentsContract.getTreeDocumentId(uri),
+        )
+        checkedTreeUri(tree.toString())
+        val root = requireNotNull(PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(uri)))
+        val child = PrimaryTreePath.parse(DocumentsContract.getDocumentId(uri))
+        if (child?.relativeTo(root) == null) throw IOException("Outside tree")
+        readUri(uri, parse)
+    }
+
+    private suspend fun <T> readUri(document: Uri, parse: suspend (InputStream) -> T): T {
         val input =
             resolver.openInputStream(document)
                 ?: throw IOException("Provider returned no stream")
-        input.use {
+        return input.use {
             coroutineScope {
                 val closer = launch(start = CoroutineStart.UNDISPATCHED) {
                     try {
