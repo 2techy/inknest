@@ -19,7 +19,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 // Private, immutable thumbnails: source identity and file fingerprint determine the filename.
-internal class BookCoverCache(private val directory: File) {
+internal class BookCoverCache(private val directory: File, private val onClear: () -> Unit = {}) {
     private val writes = Mutex()
     private val generation = AtomicLong()
     fun key(config: ReadingSourceConfig, path: String, fingerprint: String?): String {
@@ -94,6 +94,7 @@ internal class BookCoverCache(private val directory: File) {
         writes.withLock {
             generation.incrementAndGet()
             directory.listFiles()?.forEach { it.delete() }
+            onClear()
         }
     }
 

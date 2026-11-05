@@ -20,6 +20,8 @@ import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.data.source.SafTreeReader
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
 import dev.twotechy.inknest.model.ReadingSourceConfig
+import dev.twotechy.inknest.platform.AndroidBookCoverSource
+import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.ReadingItemOpener
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +36,9 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
     private val books = BookProbeDataSource(files, appContext.cacheDir)
     private val database = ReadingDatabase.create(appContext)
     private val cache = ReadingCache(database.readingDao())
-    private val covers = BookCoverCache(File(appContext.filesDir, "reading-covers"))
+    private val coverDirectory = File(appContext.filesDir, "reading-covers")
+    val coverLoader = BookCoverLoader(AndroidBookCoverSource(coverDirectory))
+    private val covers = BookCoverCache(coverDirectory, coverLoader::clear)
     private val metadata = BookMetadataReader(books, covers, cache::metadata)
     private val transition = Mutex()
     val reading = CachedReadingRepository(

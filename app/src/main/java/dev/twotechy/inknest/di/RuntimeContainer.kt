@@ -6,6 +6,7 @@ import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
 import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
+import dev.twotechy.inknest.platform.AndroidAppIconSource
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.LauncherModeController
@@ -27,7 +28,7 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
             scope,
         )
     val readerData = ReadingDataContainer(appContext, scope)
-    val icons = AppIconLoader(appContext)
+    val icons = AppIconLoader(AndroidAppIconSource(appContext))
     PackageChangeReceiver(apps, scope, icons::clear).register(appContext)
     return AppContainer(
         readingRepository = readerData.reading,
@@ -39,6 +40,7 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
         userPreferencesRepository = preferences,
         appLauncher = AppLauncher(appContext),
         appIconLoader = icons,
+        bookCoverLoader = readerData.coverLoader,
         launcherModeController = LauncherModeController(appContext),
         sourceSettingsRepository = readerData.settings,
         readingSourceConfigRepository = readerData.config,

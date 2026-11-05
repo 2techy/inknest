@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.ui.components.AppScaffold
+import dev.twotechy.inknest.ui.components.LocalBookCoverLoader
 import dev.twotechy.inknest.ui.components.LocalContentGestureSession
 import dev.twotechy.inknest.ui.components.rememberDefaultLauncher
 import dev.twotechy.inknest.ui.components.rememberLauncherActions
@@ -42,7 +43,10 @@ internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewMo
             onboarding.acknowledgeCompletion()
         }
     }
-    CompositionLocalProvider(LocalContentGestureSession provides navigation.gestureSession) {
+    CompositionLocalProvider(
+        LocalContentGestureSession provides navigation.gestureSession,
+        LocalBookCoverLoader provides container.bookCoverLoader,
+    ) {
         InkNestTheme(state.preferences ?: AppPreferences()) {
             InkNestContent(container, navigation, settings, onboarding, state)
         }

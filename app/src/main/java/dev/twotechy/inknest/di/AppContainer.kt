@@ -16,6 +16,7 @@ import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
+import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.LauncherModeController
 import dev.twotechy.inknest.platform.ReadingItemOpener
 import dev.twotechy.inknest.ui.apps.AppsViewModel
@@ -34,6 +35,7 @@ internal class AppContainer(
     val userPreferencesRepository: UserPreferencesRepository,
     val appLauncher: AppLauncher,
     val appIconLoader: AppIconLoader,
+    val bookCoverLoader: BookCoverLoader,
     val launcherModeController: LauncherModeController,
     val acknowledgementsRepository: AcknowledgementsRepository,
     val statisticsRepository: StatisticsRepository,

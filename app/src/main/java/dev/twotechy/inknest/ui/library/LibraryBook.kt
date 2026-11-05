@@ -24,6 +24,7 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingStatus
+import dev.twotechy.inknest.ui.components.BookCover
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkLibraryTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
@@ -36,8 +37,8 @@ internal fun LibraryGridBook(book: ReadingItem, onClick: () -> Unit, onDetails: 
         verticalArrangement = Arrangement.spacedBy(InkSpacing.sm),
     ) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            LibraryCover(
-                book,
+            BookCover(
+                book.coverUri,
                 Modifier.widthIn(
                     max = InkLibraryTokens.maxCoverWidth,
                 ).fillMaxWidth().aspectRatio(0.7f),
@@ -57,8 +58,8 @@ internal fun LibraryListBook(book: ReadingItem, onClick: () -> Unit, onDetails: 
             horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LibraryCover(
-                book,
+            BookCover(
+                book.coverUri,
                 Modifier.width(InkLibraryTokens.listCoverWidth).aspectRatio(0.7f),
             )
             LibraryBookDetails(book, Modifier.weight(1f), compact = false)

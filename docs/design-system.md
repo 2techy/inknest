@@ -222,3 +222,18 @@ screens without configured sources disable pull refresh; refresh never starts on
 Refresh progress is shown only by the shared pull indicator. Feature content keeps cache/error
 notices after refresh completes, without a second running label. The indicator reuses the
 shared `refreshing` string resource.
+
+## Image loading
+
+App icons initialize directly from the shared RAM cache, keyed by component/version and
+locale/density. A cache miss loads on IO and uses a fixed-size initial-letter fallback.
+The cache retains the existing 100 icons at 128px; no extra icon cache is introduced.
+
+Home and Library share a static book-shaped cover placeholder for pending, missing or
+unreadable thumbnails. Placeholder and image use the same frame and dimensions, with
+no crossfade or shimmer. Thumbnail decoding stays on IO. A shared 4 MiB LRU caches decoded covers by immutable URI
+and display-size bucket (64px increments, capped at the existing 480px thumbnail bound).
+This budget counts retained bitmap allocations, excluding active UI references and temporary
+decode buffers. Decodes are serialized and duplicate requests reuse the completed result.
+Cache hits initialize the first frame directly; clear reading cache/disconnect also clears
+cover RAM cache and prevents older in-flight work from repopulating it.
