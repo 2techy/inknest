@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.theme.InkBorder
@@ -66,12 +68,14 @@ internal fun SettingsRow(
             }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(title, style = MaterialTheme.typography.titleMedium)
             if (description != null) {
                 Text(
                     description,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -93,26 +97,12 @@ internal fun SettingsChoice(
     enabled: Boolean = true,
     description: String? = null,
     onClick: () -> Unit,
-) {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.choiceMinHeight).selectable(
-            selected,
-            enabled = enabled,
-            role = Role.RadioButton,
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-            onClick = onClick,
-        ).padding(vertical = InkSettingsTokens.rowPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
-    ) {
-        SelectionMark(selected, radio = true, enabled = enabled)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            description?.let { SettingsDescription(it) }
-        }
-    }
-}
+) = SettingsSelectionRow(
+    title,
+    description,
+    SelectionState(selected, enabled, Role.RadioButton),
+    onClick,
+)
 
 @Composable
 internal fun SettingsToggle(
@@ -121,30 +111,57 @@ internal fun SettingsToggle(
     checked: Boolean,
     enabled: Boolean,
     onChange: (Boolean) -> Unit,
+) = SettingsSelectionRow(title, description, SelectionState(checked, enabled, Role.Checkbox)) {
+    onChange(!checked)
+}
+
+private data class SelectionState(val selected: Boolean, val enabled: Boolean, val role: Role)
+
+@Composable
+private fun SettingsSelectionRow(
+    title: String,
+    description: String?,
+    state: SelectionState,
+    onClick: () -> Unit,
 ) {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.toggleMinHeight).toggleable(
-            checked,
-            enabled = enabled,
-            role = Role.Checkbox,
-            interactionSource = remember { MutableInteractionSource() },
+    val interaction = remember { MutableInteractionSource() }
+    val radio = state.role == Role.RadioButton
+    val interactionModifier = if (radio) {
+        Modifier.selectable(
+            state.selected,
+            enabled = state.enabled,
+            role = state.role,
+            interactionSource = interaction,
             indication = null,
-            onValueChange = onChange,
-        ).padding(vertical = InkSettingsTokens.rowPadding),
+            onClick = onClick,
+        )
+    } else {
+        Modifier.toggleable(
+            state.selected,
+            enabled = state.enabled,
+            role = state.role,
+            interactionSource = interaction,
+            indication = null,
+            onValueChange = { onClick() },
+        )
+    }
+    Row(
+        Modifier.fillMaxWidth().heightIn(
+            min = if (radio) {
+                InkSettingsTokens.choiceMinHeight
+            } else {
+                InkSettingsTokens.toggleMinHeight
+            },
+        ).then(interactionModifier).padding(vertical = InkSettingsTokens.rowPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(InkSpacing.lg),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            description?.let { SettingsDescription(it) }
         }
-        SelectionMark(checked, radio = false, enabled = enabled)
+        SelectionMark(state.selected, radio, state.enabled)
     }
-    HorizontalDivider(thickness = InkBorder.thin, color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
@@ -216,43 +233,37 @@ internal fun SettingsErrorPanel(error: SettingsError, onRetry: () -> Unit, onDis
     }
 }
 
-// Values and immediate commands share the row rhythm, but do not imply another screen.
+// Read-only metadata has no chevron or button outline.
 @Composable
 internal fun SettingsValue(title: String, value: String) {
-    Column(
-        Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.choiceMinHeight)
-            .padding(vertical = InkSettingsTokens.rowPadding),
-        verticalArrangement = Arrangement.spacedBy(InkSpacing.xs),
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = InkSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+        verticalAlignment = Alignment.Top,
     ) {
-        Text(title, style = MaterialTheme.typography.bodyLarge)
-        SettingsDescription(value)
+        Text(
+            title,
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            value,
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.End,
+        )
     }
-    HorizontalDivider(thickness = InkBorder.thin, color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
 internal fun SettingsCommand(title: String, enabled: Boolean = true, onClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val ink = if (enabled) colors.onSurface else colors.outline
-    Box(
-        Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.choiceMinHeight)
-            .clickable(
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            )
-            .padding(vertical = InkSettingsTokens.rowPadding),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.labelLarge,
-            color = ink,
-        )
-    }
-    HorizontalDivider(thickness = InkBorder.thin, color = MaterialTheme.colorScheme.outlineVariant)
+    ActionButton(
+        title,
+        modifier = Modifier.fillMaxWidth().padding(vertical = InkSpacing.xs),
+        enabled = enabled,
+        onClick = onClick,
+    )
 }
 
 @Composable
@@ -267,7 +278,17 @@ private fun SettingsDescription(text: String) {
 @Composable
 internal fun SettingsSection(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
-        Text(title, style = MaterialTheme.typography.labelLarge)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
+        ) {
+            Text(title, style = MaterialTheme.typography.labelLarge)
+            HorizontalDivider(
+                Modifier.weight(1f),
+                thickness = InkBorder.default,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
         Column { content() }
     }
 }

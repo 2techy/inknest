@@ -29,9 +29,9 @@
     <string name="appearance_title">Appearance</string>
     <string name="appearance_summary">Display mode and Home sections</string>
     <string name="launcher_title">Launcher</string>
-    <string name="launcher_summary">Default Home app and system settings</string>
+    <string name="launcher_summary">Choose your default Home app</string>
     <string name="about_title">About</string>
-    <string name="about_summary">App details, setup and acknowledgements</string>
+    <string name="about_summary">Version, setup and licenses</string>
     <string name="back">Back</string>
     <string name="integration_unavailable">Reading integration is not available yet. Apps and launcher features remain ready to use.</string>
     <string name="source_not_connected">Not connected</string>
@@ -120,7 +120,7 @@
     <string name="refresh_ready">Ready to refresh</string>
     <string name="refresh_unavailable">Connect a source to refresh</string>
     <string name="reading_data_title">Reading &amp; data</string>
-    <string name="reading_data_summary">KOReader folders, refresh and reading cache</string>
+    <string name="reading_data_summary">Connect KOReader and manage reading data</string>
     <string name="reading_source_heading">Reading source</string>
     <string name="reading_cache_heading">Refresh &amp; cache</string>
     <string name="home_options_heading">Home sections</string>

@@ -96,7 +96,7 @@ Never branch on a device model or physical screen diagonal.
 | --- | --- |
 | Action button | min 112x48dp; padding horizontal 16, vertical 12 |
 | Settings row | min 64dp; vertical padding 12dp |
-| Settings leading slot / icon / chevron | 40 / 24 / 20dp |
+| Settings leading slot / icon / chevron | 32 / 24 / 20dp |
 | Radio row | min 56dp |
 | Toggle row | min 64dp |
 | Checkbox/radio mark | 24dp; static vector drawing |
@@ -156,20 +156,20 @@ extra tinted backgrounds are required to distinguish these sections.
 
 ## Settings hierarchy
 
-- A page has one header. Rows use 16/24sp regular titles and 12/16sp secondary text;
-  section title styles are reserved for real groups, not repeated on every value.
+- A page has one header. Navigation rows use 16/22sp semibold titles and 14/20sp
+  secondary text. Section headings use 14/20sp medium text with a horizontal rule.
 - Navigation/folder selection uses a row and chevron. The folder name and current path
   form one touch target rather than a heading, a value and a separate Choose/Change button.
-- Read-only values use the same row spacing without a chevron. Immediate commands use
-  a text row without a navigation arrow; disabled commands retain disabled semantics.
+- Read-only metadata uses compact 14/20sp label/value rows without dividers or chevrons.
+  Immediate commands use outlined buttons; disabled commands retain disabled semantics.
+  Radio and checkbox controls align on the trailing edge of each row.
 - Settings has four categories: Reading & data, Appearance, Launcher and About.
   Reading & data contains source/folders and refresh/cache sections on one page with one
   connection summary. Appearance contains display mode and Home visibility options.
   These groups do not add another level of navigation.
 - Display mode descriptions belong to the radio choices, avoiding a repeated explanatory
   paragraph. The same choices are used in onboarding.
-- About groups icon/name/version/author into one identity row. Debug-only tools are
-  collapsed by default and remain separate from production app details.
+- About groups icon/name/version/author into one identity row. Developer tools have been removed.
 
 ## Compact choice tabs
 

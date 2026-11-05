@@ -30,22 +30,7 @@ internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActi
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Text(stringResource(R.string.source_app_title), style = MaterialTheme.typography.labelLarge)
-        if (state.sourceApps.isEmpty()) {
-            Text(
-                stringResource(R.string.source_app_missing),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-        state.sourceApps.forEach { app ->
-            val packageName = app.componentId.substringBefore('/')
-            SettingsChoice(
-                app.label,
-                source.sourcePackage == packageName,
-                !state.saving,
-                description = packageName,
-            ) { actions.sourceApp(packageName) }
-        }
+        SourceAppChoices(state, actions)
         SourceFolder.entries.forEach { folder ->
             val isKOReader = folder == SourceFolder.KOReader
             val path = if (isKOReader) source.koreaderFolder else source.booksFolder
@@ -76,16 +61,6 @@ internal fun DataSettingsContent(state: SettingsUiState, actions: SettingsAction
     val source = state.source
     Column {
         SettingsValue(
-            stringResource(R.string.refresh_status),
-            stringResource(
-                when {
-                    source.refreshing -> R.string.refreshing
-                    source.status == SourceStatus.Connected -> R.string.refresh_ready
-                    else -> R.string.refresh_unavailable
-                },
-            ),
-        )
-        SettingsValue(
             stringResource(R.string.last_updated),
             source.lastUpdated?.let {
                 DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it))
@@ -98,7 +73,7 @@ internal fun DataSettingsContent(state: SettingsUiState, actions: SettingsAction
             } ?: stringResource(R.string.unknown_value),
         )
         SettingsCommand(
-            stringResource(R.string.refresh_source),
+            stringResource(if (source.refreshing) R.string.refreshing else R.string.refresh_source),
             source.available && source.status == SourceStatus.Connected && !source.refreshing &&
                 !state.saving,
             actions.refresh,
@@ -134,4 +109,27 @@ private fun sourceAccessError(access: SourceAccessState?): Int? = when (access) 
     -> R.string.source_error
 
     else -> null
+}
+
+@Composable
+private fun SourceAppChoices(state: SettingsUiState, actions: SettingsActions) {
+    val onlyApp = state.sourceApps.singleOrNull()
+    if (onlyApp != null && state.source.sourcePackage == onlyApp.componentId.substringBefore('/')) {
+        SettingsValue(stringResource(R.string.source_app_title), onlyApp.label)
+    } else if (state.sourceApps.isEmpty()) {
+        Text(
+            stringResource(R.string.source_app_missing),
+            modifier = Modifier.padding(vertical = InkSpacing.sm),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    } else {
+        state.sourceApps.forEach { app ->
+            val packageName = app.componentId.substringBefore('/')
+            SettingsChoice(
+                app.label,
+                state.source.sourcePackage == packageName,
+                !state.saving,
+            ) { actions.sourceApp(packageName) }
+        }
+    }
 }
