@@ -11,7 +11,6 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.clock.rememberMinuteClock
 import dev.twotechy.inknest.ui.components.HeaderIconButton
-import dev.twotechy.inknest.ui.components.ReadingSyncNotice
 import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
@@ -54,9 +53,6 @@ internal fun HomeScreen(
             if (loaded == null) {
                 item { HomeReadingSection(ReadingSectionState.Loading, actions) }
             } else {
-                if (loaded.sync.stale && !loaded.sync.running) {
-                    item { ReadingSyncNotice(loaded.sync) }
-                }
                 if (loaded.appsRefreshFailed) {
                     item {
                         HomeReadingNotice(
