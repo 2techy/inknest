@@ -6,7 +6,7 @@ import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.repository.CachedReadingRepository
 import dev.twotechy.inknest.data.repository.FolderLibraryRepository
-import dev.twotechy.inknest.data.repository.ReaderProbeRepository
+import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
 import dev.twotechy.inknest.data.source.BookCoverCache
@@ -22,6 +22,7 @@ import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.platform.ReadingItemOpener
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.sync.Mutex
 
 // One application-scoped graph for reading data; shares the existing DataStore and Room instance.
 internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
@@ -34,12 +35,14 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
     private val cache = ReadingCache(database.readingDao())
     private val covers = BookCoverCache(File(appContext.filesDir, "reading-covers"))
     private val metadata = BookMetadataReader(books, covers, cache::metadata)
+    private val transition = Mutex()
     val reading = CachedReadingRepository(
         config,
         cache,
         KoreaderCurrentSource(files, books, access = access, metadataReader = metadata),
         scope,
         covers,
+        transition,
     )
     private val libraryDao = database.libraryDao()
     private val libraryMetadata = BookMetadataReader(books, covers, ::cachedMetadata)
@@ -51,6 +54,14 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
         reading,
         libraryMetadata::readBook,
     )
+    private val statisticsSnapshot = StatisticsSnapshotProbe(files, appContext.cacheDir)
+    val statistics = KoreaderStatisticsRepository(
+        config,
+        database.statisticsDao(),
+        statisticsSnapshot::events,
+        scope,
+        transition,
+    )
     val settings = SafSourceSettingsRepository(
         config,
         access,
@@ -60,12 +71,9 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
         scope,
         library,
         covers,
+        statistics,
     )
-    val probe = ReaderProbeRepository(
-        files,
-        books = books,
-        stats = StatisticsSnapshotProbe(files, appContext.cacheDir),
-    )
+    val probe = createReaderDiagnostics(files, books, appContext.cacheDir)
     val opener = ReadingItemOpener(appContext, config, books)
 
     private suspend fun cachedMetadata(config: ReadingSourceConfig, path: String): BookMetadata? {

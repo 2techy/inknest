@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 internal class HomeViewModel(
     private val readingRepository: ReadingRepository,
     private val installedAppsRepository: InstalledAppsRepository,
-    readingStatsRepository: ReadingStatsRepository,
+    private val readingStatsRepository: ReadingStatsRepository,
 ) : ViewModel() {
     val uiState: StateFlow<HomeUiState> = combine(
         readingRepository.reading,
@@ -57,6 +57,8 @@ internal class HomeViewModel(
                 readingRepository.refresh()
             } catch (_: IOException) {
                 // Shared repository sync state contains the error; cached content stays visible.
+            } finally {
+                readingStatsRepository.refresh()
             }
         }
     }

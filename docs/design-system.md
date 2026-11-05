@@ -170,3 +170,16 @@ extra tinted backgrounds are required to distinguish these sections.
   paragraph. The same choices are used in onboarding.
 - About groups icon/name/version/author into one identity row. Debug-only tools are
   collapsed by default and remain separate from production app details.
+
+## Compact choice tabs
+
+Library filters and Stats units use the shared ChoiceTab component: labelMedium 12sp/16sp,
+32dp minimum visible background, 12dp horizontal/8dp vertical padding, 4dp corner radius.
+The enclosing interactive area remains at least 48x48dp. Text and visible height grow at
+larger system font sizes. Stats chart-range labels use the same typography and 2dp selected
+underline. These tokens belong to content controls; the five-tab app navigation is separate.
+
+Heatmap adapts16–52 week columns to the full content width with square cells up to10dp,
+roughly3dp horizontal/2dp vertical gaps, and a48dp weekday gutter that grows with font scale. Only empty cells
+have a light0.75dp outline; active cells use the shared grayscale palette and2dp corners.
+Month/weekday axes remain; week-count and Less/More captions are omitted.

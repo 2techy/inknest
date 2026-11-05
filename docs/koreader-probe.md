@@ -78,7 +78,7 @@ No raw Lua, book contents or personal document URIs are recorded in this documen
 | Same virtual | Real adjacent EPUB sidecar, OPF and raster cover; real statistics database | Valid progress/status, title/author/cover, readable book/page counts | Passed. Counts are observations and may change after native reading. Actual WAL behavior additionally covered by Android tests. |
 | Same virtual | Native A/B/A through original URIs | Warm runs reached correct books and saved positions (419/12794 and 1/7) | Warm pass; first cold VIEW unreliable. **Use SourceAppOnly**, not DirectConfirmed. Normal cold source-app launch passed. |
 | Same virtual | Actual system picker/process recreation | Invalid reader folder preserves config; lost Books grant independent of KOReader; kill while picker open, then select or HOME | Passed. Original grants restored after permission test. |
-| Same virtual, optimized release | Production source selection and diagnostic refresh | Same real source layer; no debug tools/mock fixtures | Source selection, successful refresh timestamp and absence of debug tools verified at runtime. Home reading-cache integration remains deferred. |
+| Same virtual, optimized release | Production source selection and diagnostic refresh | Same real source layer; no debug tools/mock fixtures | Source selection, successful refresh timestamp and absence of debug tools verified at runtime. Production Home/current cache is integrated; see the reading-cache guide. |
 
 ## Verification scope
 
@@ -92,8 +92,7 @@ device grants. Both configured grants were restored through Settings after the o
 Debug/release builds, lint and Spotless passed. Optimized release was verified with actual
 KOReader data for current cache, manual refresh, clear/reload and restart. No broad launcher/device
 matrix was repeated. See [Reading cache](reading-cache.md) for the current architecture and gate.
-Virtual results do not establish Tango hardware compatibility or direct-open support. Tracked
-Library, metadata/progress/cover enrichment and statistics remain separate work.
+Virtual results do not establish Tango hardware compatibility or direct-open support. Full-folder Library, metadata and statistics now use this source layer; see their dedicated guides.
 
 ## Maintainability boundaries
 

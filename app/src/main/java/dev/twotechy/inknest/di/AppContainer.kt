@@ -11,6 +11,7 @@ import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.StatisticsRepository
 import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.data.source.SafSourceAccess
@@ -23,6 +24,7 @@ import dev.twotechy.inknest.ui.home.HomeViewModel
 import dev.twotechy.inknest.ui.library.LibraryViewModel
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
+import dev.twotechy.inknest.ui.stats.StatsViewModel
 
 // Application-scoped dependencies; build-specific wiring lives in debug/release.
 internal class AppContainer(
@@ -35,12 +37,16 @@ internal class AppContainer(
     val appIconLoader: AppIconLoader,
     val launcherModeController: LauncherModeController,
     val acknowledgementsRepository: AcknowledgementsRepository,
+    val statisticsRepository: StatisticsRepository,
     val sourceSettingsRepository: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
     val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
     val safSourceAccess: SafSourceAccess? = null,
     val readerProbeRepository: ReaderProbeRepository? = null,
     val readingItemOpener: ReadingItemOpener? = null,
 ) {
+    val statsViewModelFactory = viewModelFactory {
+        initializer { StatsViewModel(statisticsRepository, createSavedStateHandle()) }
+    }
     val settingsViewModelFactory = viewModelFactory {
         initializer {
             SettingsViewModel(

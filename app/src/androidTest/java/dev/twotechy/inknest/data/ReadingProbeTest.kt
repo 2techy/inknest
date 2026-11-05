@@ -134,47 +134,56 @@ class ReadingProbeTest {
             assertTrue(result.walPresent)
             assertTrue(documents.dbMetadataReads >= 4)
             assertTrue(cache.listFiles().orEmpty().isEmpty())
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 120, 1)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, NULL, 2)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, -60, 3)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 'invalid', 4)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 0.5, 5)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1e30, 60, 6)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, NULL)")
+            db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, 'invalid')")
+            val events = StatisticsSnapshotProbe(documents, cache).events("tree")
+            assertEquals(4, events.size)
+            assertEquals(300L, events.sumOf { it.seconds })
+            assertEquals(2, events.count { it.page == 1L })
+            assertEquals(2, events.count { it.page == null })
+            assertEquals(1000L, events.first().startedAt)
+            assertTrue(cache.listFiles().orEmpty().isEmpty())
         } finally {
             db.close()
             dir.deleteRecursively()
         }
     }
 
-    @Test fun unsupportedSchemaDoesNotLeaveSnapshotFiles() = runBlocking {
-        val dir = workspace()
-        val source = File(dir, "source").apply { mkdir() }
-        val cache = File(dir, "snapshots").apply { mkdir() }
-        try {
-            SQLiteDatabase.openOrCreateDatabase(File(source, "statistics.sqlite3"), null).use {
-                it.execSQL("CREATE TABLE unrelated(id INTEGER)")
+    @Test fun invalidSnapshotsAreRejectedAndCleanedUp() = runBlocking {
+        for (corrupt in listOf(false, true)) {
+            val dir = workspace()
+            val source = File(dir, "source").apply { mkdir() }
+            val cache = File(dir, "snapshots").apply { mkdir() }
+            try {
+                val file = File(source, "statistics.sqlite3")
+                val expected = if (corrupt) {
+                    file.writeText("not a database")
+                    InvalidStatisticsSnapshot::class.java
+                } else {
+                    SQLiteDatabase.openOrCreateDatabase(file, null).use {
+                        it.execSQL("CREATE TABLE unrelated(id INTEGER)")
+                    }
+                    UnsupportedStatisticsSchema::class.java
+                }
+                try {
+                    StatisticsSnapshotProbe(Documents(source), cache).read("tree")
+                    fail("Invalid snapshot accepted")
+                } catch (error: java.io.IOException) {
+                    assertTrue(
+                        "Expected ${expected.simpleName}, got $error",
+                        expected.isInstance(error),
+                    )
+                }
+                assertTrue(cache.listFiles().orEmpty().isEmpty())
+            } finally {
+                dir.deleteRecursively()
             }
-            try {
-                StatisticsSnapshotProbe(Documents(source), cache).read("tree")
-                fail("Expected schema rejection")
-            } catch (
-                _: UnsupportedStatisticsSchema,
-            ) { }
-            assertTrue(cache.listFiles().orEmpty().isEmpty())
-        } finally {
-            dir.deleteRecursively()
-        }
-    }
-
-    @Test fun corruptSnapshotIsRejectedAndCleanedUp() = runBlocking {
-        val dir = workspace()
-        val source = File(dir, "source").apply { mkdir() }
-        val cache = File(dir, "snapshots").apply { mkdir() }
-        try {
-            File(source, "statistics.sqlite3").writeText("not a database")
-            try {
-                StatisticsSnapshotProbe(Documents(source), cache).read("tree")
-                fail("Corrupt snapshot accepted")
-            } catch (
-                _: InvalidStatisticsSnapshot,
-            ) { }
-            assertTrue(cache.listFiles().orEmpty().isEmpty())
-        } finally {
-            dir.deleteRecursively()
         }
     }
 

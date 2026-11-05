@@ -6,27 +6,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
+import dev.twotechy.inknest.ui.components.ChoiceTab
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
-import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.components.readingIssueMessage
-import dev.twotechy.inknest.ui.theme.InkHeaderTokens
-import dev.twotechy.inknest.ui.theme.InkRadius
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
@@ -112,32 +104,17 @@ private fun LibraryEmptyState(filtered: Boolean, actions: LibraryActions) {
 
 @Composable
 private fun LibraryFilters(selected: LibraryFilter, total: Int, onFilter: (LibraryFilter) -> Unit) {
-    val colors = MaterialTheme.colorScheme
     Row(
         Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(InkSpacing.sm),
     ) {
         LibraryFilter.entries.forEach { filter ->
-            val active = selected == filter
-            Surface(
-                modifier = Modifier.heightIn(min = InkHeaderTokens.touchTarget)
-                    .semantics { this.selected = active }.quietClick { onFilter(filter) },
-                shape = RoundedCornerShape(InkRadius.medium),
-                color = if (active) colors.onSurface else colors.surface,
-                contentColor = if (active) colors.surface else colors.onSurface,
-            ) {
-                val label = if (filter == LibraryFilter.All) {
-                    stringResource(R.string.library_all_count, total)
-                } else {
-                    stringResource(filter.label())
-                }
-                Text(
-                    label,
-                    Modifier.padding(horizontal = InkSpacing.md, vertical = InkSpacing.sm),
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                )
+            val label = if (filter == LibraryFilter.All) {
+                stringResource(R.string.library_all_count, total)
+            } else {
+                stringResource(filter.label())
             }
+            ChoiceTab(label, selected == filter, { onFilter(filter) })
         }
     }
 }

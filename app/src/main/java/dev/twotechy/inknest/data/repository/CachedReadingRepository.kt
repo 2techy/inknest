@@ -40,8 +40,8 @@ internal class CachedReadingRepository(
     private val source: CurrentReadingSource,
     private val scope: CoroutineScope,
     private val covers: BookCoverCache? = null,
+    private val transition: Mutex = Mutex(),
 ) : ReadingRepository {
-    private val transition = Mutex()
     private val requests = Mutex()
     private val jobs = mutableMapOf<ReadingCacheKey, Deferred<Unit>>()
     private val running = MutableStateFlow<Map<ReadingCacheKey, Any>>(emptyMap())

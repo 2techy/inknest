@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface ReadingStatsRepository {
     val stats: Flow<ReadingStats?>
+    suspend fun refresh() = Unit
 }

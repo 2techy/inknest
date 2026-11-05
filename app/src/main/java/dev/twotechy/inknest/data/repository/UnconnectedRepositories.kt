@@ -2,7 +2,6 @@ package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
-import dev.twotechy.inknest.model.ReadingStats
 import kotlinx.coroutines.flow.flowOf
 
 // Production defaults until M2/M4/M8/M11 connect real sources. Never emit sample data.
@@ -20,8 +19,4 @@ internal class UnconnectedInstalledAppsRepository : InstalledAppsRepository {
     override suspend fun pin(componentId: String) = Unit
     override suspend fun unpin(componentId: String) = Unit
     override suspend fun movePin(componentId: String, offset: Int) = Unit
-}
-
-internal class UnconnectedReadingStatsRepository : ReadingStatsRepository {
-    override val stats = flowOf<ReadingStats?>(null)
 }

@@ -19,7 +19,6 @@ import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
-import dev.twotechy.inknest.ui.placeholder.PlaceholderScreen
 import dev.twotechy.inknest.ui.settings.DeveloperSettingsRoute
 import dev.twotechy.inknest.ui.settings.SettingsError
 import dev.twotechy.inknest.ui.settings.SettingsPage
@@ -113,7 +112,7 @@ private fun InkNestContent(
                         contentPadding = padding,
                     )
 
-                    else -> PlaceholderScreen(tab, Modifier.fillMaxSize(), padding)
+                    TopLevelDestination.Stats -> StatsDestination(container, navigation, padding)
                 }
             }
         }

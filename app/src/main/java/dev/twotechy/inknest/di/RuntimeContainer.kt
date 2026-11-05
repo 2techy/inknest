@@ -5,7 +5,6 @@ import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
-import dev.twotechy.inknest.data.repository.UnconnectedReadingStatsRepository
 import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
@@ -18,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 // Created once by InkNestApplication; both build types use the same runtime data sources.
 internal fun createRuntimeContainer(context: Context): AppContainer {
     val appContext = context.applicationContext
+    cleanReadingTemporaryFiles(appContext)
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val preferences = DataStoreUserPreferencesRepository(appContext.userPreferencesDataStore)
     val apps =
@@ -34,7 +34,8 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
         libraryRepository = readerData.library,
         readingItemOpener = readerData.opener,
         installedAppsRepository = apps,
-        readingStatsRepository = UnconnectedReadingStatsRepository(),
+        readingStatsRepository = readerData.statistics,
+        statisticsRepository = readerData.statistics,
         userPreferencesRepository = preferences,
         appLauncher = AppLauncher(appContext),
         appIconLoader = icons,

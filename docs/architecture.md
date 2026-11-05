@@ -9,8 +9,9 @@ with lifecycle awareness and connect actions; screens render state and callbacks
 - `data/repository`: data contracts and implementations. DataStore owns saved preferences;
   source settings have a separate contract. Asset acknowledgements are loaded by a
   main-safe repository with an injectable IO dispatcher, never read inside a screen/route.
-- `di`: application-scoped dependencies and ViewModel factories. Runtime wiring chooses
-  real platform dependencies; debug/release source sets choose preview implementations.
+- `di`: application-scoped dependencies and ViewModel factories. Runtime wiring uses
+  real platform dependencies in both build types. ReadingDataContainer shares the existing
+  DataStore and Room instance. Graph initialization and interrupted temp-file cleanup run off main.
 - `ui/settings`: `SettingsViewModel` owns one public `SettingsUiState`, including initial
   preference read failures, source actions and acknowledgements loading/retry. Internal
   cached preference state retains the last snapshot across temporary collection stops.
@@ -20,9 +21,8 @@ with lifecycle awareness and connect actions; screens render state and callbacks
   state/callbacks; they do not access repositories or perform IO.
 - `ui/onboarding`: the route owns wizard collection and Back handling. The app supplies
   display preference state/actions; the route does not depend on another feature's ViewModel.
-- Debug preview has its own route in `src/debug`. Production Settings accepts a composable
-  slot and does not depend on HomeViewModel or the source preview controller. The release
-  slot is empty, without preview collection or controls.
+- Debug diagnostics have their own routes in `src/debug`; release has no probe controls.
+  Runtime mock/preview sources are absent. StrictMode policies exist only in debug.
 - `ui/InkNestApp`: composition root for theme, top-level navigation and feature routes.
   `ui/components` and `ui/theme` own shared UI behavior and design tokens.
 
@@ -42,3 +42,11 @@ Reference inspected locally: `C:/Users/thanh/Downloads/nowinandroid`, especially
 `docs/ArchitectureLearningJourney.md`, `feature/settings/impl/.../SettingsViewModel.kt`
 and `feature/foryou/impl/.../ForYouViewModel.kt`. Follow those separation/state principles
 without copying the sample's scale or unrelated infrastructure.
+
+## Reading data
+
+Room owns current/history, full-folder inventory and statistics snapshots. DataStore owns
+pins/preferences/source selection; no second store is created. Statistics is independent
+of current-book parsing and inventory membership. Routes do not scan files or aggregate
+statistics. See [Library](library.md), [Statistics](statistics.md) and
+[Reading cache](reading-cache.md) for refresh/cancellation and source boundaries.

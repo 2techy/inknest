@@ -35,6 +35,7 @@ internal class SafSourceSettingsRepository(
     scope: CoroutineScope,
     private val library: LibraryRepository,
     private val covers: BookCoverCache,
+    private val statistics: StatisticsRepository,
 ) : SourceSettingsRepository {
     private data class Refresh(val generation: Long = 0)
     private val refreshState = MutableStateFlow(Refresh())
@@ -46,20 +47,23 @@ internal class SafSourceSettingsRepository(
         library.catalog.map {
             it.sync
         }.distinctUntilChanged(),
+        statistics.data.map { it.sync to it.updatedAt }.distinctUntilChanged(),
     ) {
             source,
             refresh,
             sync,
             catalogSync,
+            stats,
         ->
         Triple(
             source,
             refresh,
             sync.copy(
-                running = sync.running || catalogSync.running,
+                running = sync.running || catalogSync.running || stats.first.running,
                 lastSuccessAt = listOfNotNull(
                     sync.lastSuccessAt,
                     catalogSync.lastSuccessAt,
+                    stats.second,
                 ).maxOrNull(),
             ),
         )
@@ -89,7 +93,7 @@ internal class SafSourceSettingsRepository(
                             File(cacheFile.path + "-shm"),
                         ).sumOf {
                             it.length()
-                        }
+                        } + covers.sizeBytes()
                     }
                 },
             )
@@ -137,6 +141,7 @@ internal class SafSourceSettingsRepository(
         try {
             library.refresh()
         } finally {
+            statistics.refresh()
             refreshState.update { Refresh(generation = it.generation + 1) }
         }
     }
@@ -150,7 +155,13 @@ internal class SafSourceSettingsRepository(
         throw IOException("Selected directory has no KOReader settings or history")
     }
 
-    override suspend fun clearCache() = mutex.withLock { reading.clearCache() }
+    override suspend fun clearCache() = mutex.withLock {
+        try {
+            reading.clearCache()
+        } finally {
+            statistics.refresh()
+        }
+    }
 }
 
 private fun sourceStatus(grants: List<SourceAccessState>): SourceStatus = when {

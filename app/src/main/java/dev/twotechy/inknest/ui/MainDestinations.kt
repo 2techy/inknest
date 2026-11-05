@@ -15,6 +15,21 @@ import dev.twotechy.inknest.ui.library.LibraryViewModel
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.settings.SettingsPage
+import dev.twotechy.inknest.ui.stats.StatsRoute
+import dev.twotechy.inknest.ui.stats.StatsViewModel
+
+@Composable
+internal fun StatsDestination(
+    container: AppContainer,
+    navigation: AppNavigationViewModel,
+    padding: PaddingValues,
+) {
+    val stats: StatsViewModel = viewModel(factory = container.statsViewModelFactory)
+    StatsRoute(stats, {
+        navigation.select(TopLevelDestination.Settings)
+        navigation.openSettingsPage(SettingsPage.ReadingData.name)
+    }, Modifier.fillMaxSize(), padding)
+}
 
 @Composable
 internal fun HomeDestination(

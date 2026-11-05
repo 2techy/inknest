@@ -25,17 +25,22 @@ class MainActivity : ComponentActivity() {
             fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0,
         )
         enableEdgeToEdge()
-        val container = (application as InkNestApplication).container
-        setContent { InkNestApp(container, navigation) }
+        lifecycleScope.launch {
+            val container = (application as InkNestApplication).awaitContainer()
+            setContent { InkNestApp(container, navigation) }
+        }
     }
 
     override fun onStart() {
         super.onStart()
         lifecycleScope.launch {
+            val container = (application as InkNestApplication).awaitContainer()
             try {
-                (application as InkNestApplication).container.readingRepository.refresh()
+                container.readingRepository.refresh()
             } catch (_: IOException) {
                 // The repository exposes the persisted failure alongside the last cached book.
+            } finally {
+                container.statisticsRepository.refresh()
             }
         }
     }

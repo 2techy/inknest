@@ -87,3 +87,22 @@ internal object InkLibraryTokens {
     val maxCoverWidth = 144.dp
     val listCoverWidth = 48.dp
 }
+
+internal object InkStatsTokens {
+    val chartHeight = 112.dp
+    val chartAxisWidth = 48.dp
+    val maxBarWidth = 24.dp
+    val heatmapLabelWidth = 48.dp
+    val heatmapHorizontalGap = 3.dp
+    val heatmapVerticalGap = 2.dp
+    val heatmapCornerRadius = 2.dp
+    val heatmapEmptyStroke = 0.75.dp
+    val heatmapCellSize = 10.dp
+    val rangeMarker = 2.dp
+}
+
+internal object InkChoiceTokens {
+    val minHeight = 32.dp
+    val horizontalPadding = InkSpacing.md
+    val verticalPadding = InkSpacing.sm
+}

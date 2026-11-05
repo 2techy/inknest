@@ -20,7 +20,7 @@ batches, reusing known file fingerprints. A completed inventory survives restart
 one resumes. Initial setup, folder changes and cache reset trigger indexing. Manual Refresh library
 picks up added/deleted files; tab switches and clock ticks do not scan the folder.
 
-The library tables share the existing reading Room database, currently schema v3. Development uses
+The library tables share the existing reading Room database, currently schema v5. Development uses
 destructive version fallback without migration code. Preferences, pins and tree grants are separate.
 Clearing reading cache also clears the inventory/covers and lets the active folder rebuild. Source
 changes cancel obsolete scans; observations and writes are checked against the active folder.

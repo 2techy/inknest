@@ -15,7 +15,7 @@ Missing both sources or corrupt data cannot masquerade as a successfully empty s
 file missing/outside grants retains its identity and filename with an availability warning.
 No current-book choice is inferred from statistics or basename/title matches.
 
-Room schema v3 is exported in `app/schemas`. During development, schema changes do not carry
+Room schema v5 is exported in `app/schemas`. During development, schema changes do not carry
 migration code: increment the Room version when changing the schema, and allow Room to recreate
 the disposable reading database when no migration exists. Preferences, pins and SAF configuration
 live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
@@ -108,3 +108,7 @@ Existing cache persistence/candidate-cancellation tests also passed. Optimized r
 configured KOReader app cold and warm using real virtual-device data; actual metadata/covers were
 inspected at the existing viewport and 150% font scale. No full launcher regression or hardware
 E-Ink acceptance was repeated.
+
+Statistics snapshots share the reading database (schema 5), but retain their own source
+identity and repository. Cache clear/disconnect includes both events and snapshot timestamps.
+See [Statistics](statistics.md).

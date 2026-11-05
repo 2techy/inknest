@@ -11,13 +11,15 @@ import kotlinx.coroutines.Dispatchers
     entities = [
         ReadingBookEntity::class, ReadingSourceEntity::class,
         LibraryBookEntity::class, LibraryFolderEntity::class,
+        StatisticsEventEntity::class, StatisticsSourceEntity::class,
     ],
-    version = 3,
+    version = 5,
     exportSchema = true,
 )
 internal abstract class ReadingDatabase : RoomDatabase() {
     abstract fun readingDao(): ReadingDao
     abstract fun libraryDao(): LibraryDao
+    abstract fun statisticsDao(): StatisticsDao
 
     companion object {
         fun create(context: Context): ReadingDatabase = Room.databaseBuilder<ReadingDatabase>(

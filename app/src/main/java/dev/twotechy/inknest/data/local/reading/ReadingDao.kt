@@ -124,9 +124,17 @@ internal interface ReadingDao {
     suspend fun clearLibraryFolders()
 
     @Transaction suspend fun clearAll() {
+        clearStatisticsEvents()
+        clearStatisticsSources()
         clearLibraryBooks()
         clearLibraryFolders()
         clearBooks()
         clearSources()
     }
+
+    @Query("DELETE FROM statistics_events")
+    suspend fun clearStatisticsEvents()
+
+    @Query("DELETE FROM statistics_sources")
+    suspend fun clearStatisticsSources()
 }
