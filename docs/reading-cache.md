@@ -67,6 +67,19 @@ or configuration errors offer Settings. `Dispatched` means Android accepted the 
 KOReader confirmed opening the file. Progress/history/current-book cache remain source-driven.
 Old open-mode/version preference keys are ignored; no preference migration or second store is added.
 
+On some devices (confirmed on Tango 2), ExternalStorageProvider descriptors resolve inside
+KOReader to `/mnt/user/...`, which its Lua file checks cannot reopen. After validating the SAF
+source, primary-storage documents use KOReader's own `content://org.koreader.launcher.provider/external/`
+URI when that authority belongs to the selected reader. Its provider resolves the same file to
+`/storage/emulated/0/...`; no file is copied or imported. Data and ClipData stay consistent, and
+foreign URI-grant flags are removed because the receiving app owns that provider. If unavailable,
+other readers/providers retain the original SAF intent. No `file://` exposure bypass is used.
+
+The mapping rejects invalid/traversal IDs and other volumes. A focused regression covers encoded
+names, exact path/MIME preservation, absent/wrong provider ownership and grant handling. Debug
+book probes use the same opener, rather than a separate intent implementation.
+
+
 ## Refresh and failures
 
 Activity foreground (`onStart`), Home refresh and Settings refresh share application-owned jobs.

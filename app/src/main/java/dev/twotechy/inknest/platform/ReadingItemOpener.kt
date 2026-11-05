@@ -37,8 +37,9 @@ internal class ReadingItemOpener(
         val selected = config.config.first()
         if (selected.sourceId != item.sourceId) return OpenResult.SourceChanged
         return try {
-            val intent = withContext(Dispatchers.IO) { prepare(selected, item) }
+            val original = withContext(Dispatchers.IO) { prepare(selected, item) }
                 ?: return OpenResult.MissingApp
+            val intent = withContext(Dispatchers.IO) { launcher.prepare(original) }
             val unavailable = withContext(Dispatchers.IO) { launcher.unavailableReason(intent) }
             if (config.config.first() != selected) return OpenResult.SourceChanged
             unavailable ?: launcher.launch(intent)

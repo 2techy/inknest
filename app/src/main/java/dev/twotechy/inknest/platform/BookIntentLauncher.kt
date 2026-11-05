@@ -6,11 +6,16 @@ import android.content.pm.PackageManager
 
 internal fun interface BookIntentLauncher {
     fun launch(intent: Intent): OpenResult
+    fun prepare(intent: Intent): Intent = intent
     fun unavailableReason(intent: Intent): OpenResult? = null
 }
 
 // Dispatching a VIEW intent does not prove that the external reader opened the document.
 internal class AndroidBookIntentLauncher(private val context: Context) : BookIntentLauncher {
+    override fun prepare(intent: Intent): Intent = koreaderDocumentIntent(intent) { authority ->
+        context.packageManager.resolveContentProvider(authority, 0)?.packageName
+    }
+
     override fun unavailableReason(intent: Intent): OpenResult? {
         val packageName = checkNotNull(intent.`package`)
         val app = try {

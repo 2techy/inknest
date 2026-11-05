@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data
 
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -15,6 +16,7 @@ import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.platform.BookIntentLauncher
 import dev.twotechy.inknest.platform.OpenResult
 import dev.twotechy.inknest.platform.ReadingItemOpener
+import dev.twotechy.inknest.platform.koreaderDocumentIntent
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
@@ -81,6 +83,39 @@ class ReadingItemOpenerTest {
         } finally {
             fixture.close()
         }
+    }
+
+    @Test fun readerOwnedUriPreservesTheOriginalPathWithoutForeignGrants() {
+        val path = "webdav/folder/Book with spaces \u0111\u1eb9p.epub"
+        val document = DocumentsContract.buildDocumentUriUsingTree(Uri.parse(TREE), "primary:$path")
+        val original = Intent(Intent.ACTION_VIEW).apply {
+            setPackage("org.koreader.launcher")
+            setDataAndType(document, "application/epub+zip")
+            clipData = ClipData.newRawUri("Book", document)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+        val prepared = koreaderDocumentIntent(original) { "org.koreader.launcher" }
+        assertEquals("org.koreader.launcher.provider", prepared.data!!.authority)
+        assertEquals("/external/$path", prepared.data!!.path)
+        assertEquals(prepared.data, prepared.clipData!!.getItemAt(0).uri)
+        assertEquals("application/epub+zip", prepared.type)
+        assertEquals(Intent.FLAG_ACTIVITY_NEW_TASK, prepared.flags)
+        assertEquals(document, original.data)
+        assertTrue(koreaderDocumentIntent(original) { null } === original)
+        assertTrue(koreaderDocumentIntent(original) { "wrong.owner" } === original)
+        val unsafe = Intent(original).setDataAndType(
+            DocumentsContract.buildDocumentUriUsingTree(
+                Uri.parse(TREE),
+                "primary:webdav/../secret.epub",
+            ),
+            original.type,
+        )
+        assertTrue(koreaderDocumentIntent(unsafe) { "org.koreader.launcher" } === unsafe)
+        val secondary = Intent(original).setDataAndType(
+            DocumentsContract.buildDocumentUriUsingTree(Uri.parse(TREE), "volume:Book.epub"),
+            original.type,
+        )
+        assertTrue(koreaderDocumentIntent(secondary) { "org.koreader.launcher" } === secondary)
     }
 
     private class Fixture {

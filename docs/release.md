@@ -44,13 +44,16 @@ diagnostics must be absent from the optimized release. Third-party notices remai
 No project license is selected automatically.
 
 Before a public release, verify the signed artifact on the physical Tango 2: permissions,
-reading source, Home role, app launch, book-opening fallback, Library, Stats and recovery.
+reading source, Home role, app launch, direct book opening, Library, Stats and recovery.
 Check E-Ink contrast/ghosting on the panel; emulator screenshots cannot establish these.
 Keep the compatibility matrix and known limits with the release. Tag/publish only when requested.
 
 ## Known compatibility limits
 
-The virtual Android 14 Tango-sized device has KOReader 2026.07.1. A cold direct book intent was
-unreliable, so production uses the honest source-app fallback for this version. Physical Tango
-book/sidecar/statistics and firmware verification remains separate. SD/cloud providers, reader
-engine, write-back, OEM screen refresh and periodic background sync are outside current scope.
+Library uses direct document intents without a debug/version unlock. Tango 2 with KOReader
+v2026.07.1 needs its reader-owned FileProvider URI for primary-storage books: generic SAF
+URIs can resolve to an inaccessible `/mnt/user/...` alias and leave the previous book open.
+See [Reading cache](reading-cache.md) for the original-file URI adapter and recovery behavior.
+Verify a newly signed release on Tango; APKs must use the existing release key for in-place updates.
+SD/cloud providers, reader engine, write-back, OEM screen refresh and periodic background sync
+are outside current scope.
