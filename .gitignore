@@ -5,6 +5,11 @@
 **/build/
 /app/release/
 /local.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+/signing.properties
 /captures/
 .externalNativeBuild/
 .cxx/
