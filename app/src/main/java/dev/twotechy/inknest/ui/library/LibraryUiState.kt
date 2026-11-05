@@ -24,7 +24,9 @@ internal data class LibraryUiState(
     val notConfigured: Boolean = false,
     val error: ReadingSyncIssue? = null,
     val sync: ReadingSyncStatus = ReadingSyncStatus(),
-)
+) {
+    val isRefreshing: Boolean get() = sync.running && !loading
+}
 
 internal data class LibraryActions(
     val query: (String) -> Unit,

@@ -33,6 +33,7 @@ data class AppsUiState(
     val pinnedApps: List<AppItemUiModel> = emptyList(),
     val allApps: List<AppItemUiModel> = emptyList(),
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val error: String? = null,
     val canDismissError: Boolean = false,
 )
@@ -101,6 +102,7 @@ internal class AppsViewModel(
             allApps = apps,
             pinnedApps = data.pins.map { item(it.componentId, it.label, it.iconVersion) },
             isLoading = data.loading && data.apps.isEmpty(),
+            isRefreshing = data.loading && data.apps.isNotEmpty(),
             error = error ?: data.error,
             canDismissError = error != null,
         )
@@ -142,7 +144,7 @@ internal class AppsViewModel(
         actionError.value = null
     }
     fun refresh() {
-        if (reloadJob?.isActive == true) return
+        if (reloadJob?.isActive == true || uiState.value.isRefreshing) return
         reloadJob = viewModelScope.launch { installedAppsRepository.reload() }
     }
     private companion object {

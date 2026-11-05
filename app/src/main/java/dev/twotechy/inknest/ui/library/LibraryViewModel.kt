@@ -82,7 +82,7 @@ internal class LibraryViewModel(
         filter(LibraryFilter.All)
     }
     fun refresh() {
-        if (refreshJob?.isActive == true) return
+        if (refreshJob?.isActive == true || uiState.value.isRefreshing) return
         refreshJob = viewModelScope.launch {
             try {
                 repository.refresh()

@@ -35,5 +35,7 @@ sealed interface HomeUiState {
         val pinnedApps: List<HomePinUiModel>,
         val stats: HomeReadingStats? = null,
         val sync: ReadingSyncStatus = ReadingSyncStatus(),
+        val isRefreshing: Boolean = false,
+        val appsRefreshFailed: Boolean = false,
     ) : HomeUiState
 }

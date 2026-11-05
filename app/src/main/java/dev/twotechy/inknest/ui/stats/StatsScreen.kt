@@ -17,6 +17,7 @@ import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.components.ReadingSyncNotice
+import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
@@ -36,22 +37,33 @@ internal fun StatsScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    ScreenScaffold(modifier, contentPadding, header = {
-        ScreenHeader(stringResource(R.string.stats_title)) {
-            HeaderIconButton(
-                R.drawable.ic_settings_sync,
-                stringResource(R.string.refresh_reading),
-            ) {
-                if (!state.data.sync.running) actions.refresh()
+    ScreenScaffold(
+        modifier,
+        contentPadding,
+        refresh = RefreshAction(
+            state.data.configured,
+            state.isRefreshing,
+            actions.refresh,
+        ),
+        header = {
+            ScreenHeader(stringResource(R.string.stats_title)) {
+                HeaderIconButton(
+                    R.drawable.ic_settings_sync,
+                    stringResource(R.string.refresh_reading),
+                ) {
+                    if (!state.isRefreshing) actions.refresh()
+                }
             }
-        }
-    }) {
+        },
+    ) {
         Column(
             Modifier.verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
         ) {
             StatsUnits(state.options.unit, actions.unit)
-            if (state.data.sync.running || state.data.sync.stale) ReadingSyncNotice(state.data.sync)
+            if (state.data.sync.stale && !state.data.sync.running) {
+                ReadingSyncNotice(state.data.sync)
+            }
             val overview = state.overview
             if (overview == null) {
                 StatsEmpty(state.data.configured, actions)

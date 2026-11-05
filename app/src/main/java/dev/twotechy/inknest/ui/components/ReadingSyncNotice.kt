@@ -10,15 +10,13 @@ import dev.twotechy.inknest.model.ReadingSyncStatus
 
 @Composable
 internal fun ReadingSyncNotice(sync: ReadingSyncStatus) {
-    val text = when {
-        sync.running -> stringResource(R.string.reading_refreshing)
-
-        sync.error != null -> stringResource(
+    val text = if (sync.error != null) {
+        stringResource(
             R.string.reading_cached_warning,
             readingIssueMessage(sync.error),
         )
-
-        else -> stringResource(R.string.reading_cached)
+    } else {
+        stringResource(R.string.reading_cached)
     }
     Text(text, style = MaterialTheme.typography.bodySmall)
 }

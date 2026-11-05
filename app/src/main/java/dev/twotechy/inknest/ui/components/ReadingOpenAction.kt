@@ -40,6 +40,7 @@ internal fun rememberReadingOpenAction(
             OpenResult.PermissionLost -> R.string.reading_open_permission
             else -> R.string.reading_open_unavailable
         }
+        BlockContentGestures()
         AlertDialog(
             onDismissRequest = { error = null },
             title = { Text(stringResource(R.string.reading_open_error)) },

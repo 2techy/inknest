@@ -12,6 +12,7 @@ import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.clock.rememberMinuteClock
 import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.components.ReadingSyncNotice
+import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
@@ -29,13 +30,18 @@ internal fun HomeScreen(
     ScreenScaffold(
         modifier = modifier,
         contentPadding = PaddingValues(),
+        refresh = RefreshAction(
+            loaded != null && loaded.reading != ReadingSectionState.NotConfigured,
+            loaded?.isRefreshing == true,
+            actions.refresh,
+        ),
         header = {
             ScreenHeader(stringResource(R.string.brand_name)) {
                 HeaderIconButton(
                     R.drawable.ic_settings_sync,
                     stringResource(R.string.refresh_reading),
                 ) {
-                    if (loaded?.sync?.running != true) actions.refresh()
+                    if (loaded?.isRefreshing != true) actions.refresh()
                 }
             }
         },
@@ -48,8 +54,18 @@ internal fun HomeScreen(
             if (loaded == null) {
                 item { HomeReadingSection(ReadingSectionState.Loading, actions) }
             } else {
-                if (loaded.sync.running || loaded.sync.stale) {
+                if (loaded.sync.stale && !loaded.sync.running) {
                     item { ReadingSyncNotice(loaded.sync) }
+                }
+                if (loaded.appsRefreshFailed) {
+                    item {
+                        HomeReadingNotice(
+                            stringResource(R.string.home_apps_refresh_error),
+                            stringResource(R.string.home_apps_refresh_retry),
+                            icon = R.drawable.ic_settings_sync,
+                            onClick = actions.refresh,
+                        )
+                    }
                 }
                 item { HomeReadingSection(loaded.reading, actions) }
                 if (preferences.showHomePinnedApps) {

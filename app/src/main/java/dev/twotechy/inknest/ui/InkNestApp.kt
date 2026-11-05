@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
@@ -13,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.ui.components.AppScaffold
+import dev.twotechy.inknest.ui.components.LocalContentGestureSession
 import dev.twotechy.inknest.ui.components.rememberDefaultLauncher
 import dev.twotechy.inknest.ui.components.rememberLauncherActions
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
@@ -42,8 +44,10 @@ internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewMo
             onboarding.acknowledgeCompletion()
         }
     }
-    InkNestTheme(state.preferences ?: AppPreferences()) {
-        InkNestContent(container, navigation, settings, onboarding, state)
+    CompositionLocalProvider(LocalContentGestureSession provides navigation.gestureSession) {
+        InkNestTheme(state.preferences ?: AppPreferences()) {
+            InkNestContent(container, navigation, settings, onboarding, state)
+        }
     }
 }
 

@@ -32,6 +32,7 @@ import dev.twotechy.inknest.ui.theme.InkSpacing
 // Static popup: unlike Material DropdownMenu it has no scale/fade transition or shadow.
 @Composable
 internal fun ContextMenu(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    BlockContentGestures()
     Popup(
         popupPositionProvider = remember { ContextMenuPosition() },
         onDismissRequest = onDismiss,

@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.ui.components.ActionButton
+import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
 import dev.twotechy.inknest.ui.theme.InkAppGridTokens
@@ -45,6 +46,12 @@ internal fun AppsScreen(
     ScreenScaffold(
         modifier = modifier,
         contentPadding = contentPadding,
+        gesturesEnabled = !state.isSearchActive,
+        refresh = RefreshAction(
+            !state.isLoading && !state.isSearchActive,
+            state.isRefreshing,
+            onRetry,
+        ),
         header = {
             AppsTopBar(
                 state,

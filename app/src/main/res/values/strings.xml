@@ -127,7 +127,6 @@
     <string name="source_app_title">Source app</string>
     <string name="source_app_missing">KOReader is not installed. Existing source data can still be read.</string>
     <string name="refresh_reading">Refresh reading data</string>
-    <string name="reading_refreshing">Refreshing reading data…</string>
     <string name="reading_cached_warning">Showing saved reading data. %1$s</string>
     <string name="reading_cached">Showing saved reading data.</string>
     <string name="reading_permission_lost">Folder access was lost. Reconnect it in Settings.</string>
@@ -180,7 +179,6 @@
     <string name="library_direct_hint">Tap a book to continue in KOReader.</string>
     <string name="library_skipped">History entries skipped: %1$d</string>
     <string name="library_all_count">All (%1$d)</string>
-    <string name="library_indexing">Updating library…</string>
     <string name="library_folder_error">Could not update the book folder. Your saved library is still available.</string>
     <string name="library_choose_in_reader">Choose this book in KOReader after opening the reader.</string>
     <string name="library_refresh">Refresh library</string>
@@ -214,4 +212,7 @@
     <string name="stats_granularity_weeks">Weeks</string>
     <string name="stats_granularity_months">Months</string>
     <string name="stats_granularity_years">Years</string>
+    <string name="gesture_release_refresh">Release to refresh</string>
+    <string name="home_apps_refresh_error">Unable to refresh apps</string>
+    <string name="home_apps_refresh_retry">Your existing apps are still available. Tap to retry.</string>
 </resources>

@@ -5,11 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 internal class AppNavigationViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     val selected = savedState.getStateFlow("selectedDestination", TopLevelDestination.Home.name)
     val settingsPage = savedState.getStateFlow("settingsPage", "Overview")
     val onboardingVisible = savedState.getStateFlow("onboardingVisible", false)
+    private val session = MutableStateFlow(0L)
+    val gestureSession = session.asStateFlow()
     private var setupOffered = false
 
     fun openSettingsPage(page: String) {
@@ -38,6 +42,7 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
     }
 
     fun select(destination: TopLevelDestination) {
+        session.value++
         savedState["settingsPage"] = "Overview"
         savedState["onboardingVisible"] = false
         setupOffered = true

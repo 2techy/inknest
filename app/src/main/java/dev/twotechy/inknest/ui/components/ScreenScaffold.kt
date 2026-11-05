@@ -18,14 +18,17 @@ internal fun ScreenScaffold(
     contentPadding: PaddingValues,
     header: @Composable () -> Unit,
     footer: (@Composable () -> Unit)? = null,
+    refresh: RefreshAction? = null,
+    gesturesEnabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    BlockContentGestures(!gesturesEnabled)
     Column(
         modifier.fillMaxSize().padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.headerContentGap),
     ) {
         header()
-        Box(Modifier.weight(1f), content = content)
+        Box(Modifier.weight(1f)) { PullRefresh(refresh, content) }
         footer?.invoke()
     }
 }

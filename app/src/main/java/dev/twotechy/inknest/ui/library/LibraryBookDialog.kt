@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.ReadingItem
+import dev.twotechy.inknest.ui.components.BlockContentGestures
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
@@ -22,6 +23,7 @@ internal fun LibraryBookDialog(
     onDismiss: () -> Unit,
     onOpen: () -> Unit,
 ) {
+    BlockContentGestures()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(book.title, style = MaterialTheme.typography.titleLarge) },

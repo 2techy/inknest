@@ -22,6 +22,7 @@ internal fun ConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    BlockContentGestures()
     val shape = RoundedCornerShape(InkRadius.large)
     AlertDialog(
         onDismissRequest = onDismiss,

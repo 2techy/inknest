@@ -8,6 +8,9 @@ import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.IOException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -20,12 +23,23 @@ internal class HomeViewModel(
     private val installedAppsRepository: InstalledAppsRepository,
     private val readingStatsRepository: ReadingStatsRepository,
 ) : ViewModel() {
+    private val refreshing = MutableStateFlow(false)
+    private var refreshJob: Job? = null
+
+    private data class RefreshState(val running: Boolean, val appsFailed: Boolean)
+    private val refreshState = combine(
+        refreshing,
+        installedAppsRepository.isLoading,
+        installedAppsRepository.error,
+    ) { running, loading, error -> RefreshState(running || loading, error != null) }
+
     val uiState: StateFlow<HomeUiState> = combine(
         readingRepository.reading,
         installedAppsRepository.pinnedApps,
         readingStatsRepository.stats,
         readingRepository.sync,
-    ) { reading, apps, stats, sync ->
+        refreshState,
+    ) { reading, apps, stats, sync, refresh ->
         val readingSection = reading.toReadingSectionState()
         val homePins = apps.map { HomePinUiModel(it.componentId, it.label, it.iconVersion) }
         val homeStats = stats?.let { HomeReadingStats(it.todayMinutes, it.weekMinutes) }
@@ -34,6 +48,8 @@ internal class HomeViewModel(
             pinnedApps = homePins,
             stats = homeStats,
             sync = sync,
+            isRefreshing = refresh.running || sync.running,
+            appsRefreshFailed = refresh.appsFailed,
         )
     }.catch {
         emit(
@@ -52,14 +68,26 @@ internal class HomeViewModel(
     }
 
     fun refresh() {
-        viewModelScope.launch {
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
+            refreshing.value = true
             try {
-                readingRepository.refresh()
-            } catch (_: IOException) {
-                // Shared repository sync state contains the error; cached content stays visible.
+                coroutineScope {
+                    launch { refreshReading() }
+                    launch { readingStatsRepository.refresh() }
+                    launch { installedAppsRepository.reload() }
+                }
             } finally {
-                readingStatsRepository.refresh()
+                refreshing.value = false
             }
+        }
+    }
+
+    private suspend fun refreshReading() {
+        try {
+            readingRepository.refresh()
+        } catch (_: IOException) {
+            // Repository sync state retains cached data and carries the error.
         }
     }
 }

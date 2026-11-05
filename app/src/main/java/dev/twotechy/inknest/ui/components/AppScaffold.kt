@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.twotechy.inknest.ui.navigation.InkNestBottomBar
@@ -27,39 +29,46 @@ internal fun AppScaffold(
     showNavigation: Boolean = true,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val useRail = maxWidth >= InkLayoutTokens.railBreakpoint
-        Scaffold(
-            contentWindowInsets = WindowInsets.safeDrawing,
-            bottomBar = {
-                if (showNavigation && !useRail) InkNestBottomBar(selected, onSelect)
-            },
-        ) { insets ->
-            Row(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
-                if (showNavigation && useRail) InkNestNavigationRail(selected, onSelect)
-                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.TopCenter) {
-                    BoxWithConstraints(
-                        Modifier.widthIn(max = InkLayoutTokens.maxContentWidth).fillMaxSize(),
+    val gate = remember { ContentGestureGate() }
+    CompositionLocalProvider(LocalContentGestureGate provides gate) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val useRail = maxWidth >= InkLayoutTokens.railBreakpoint
+            Scaffold(
+                contentWindowInsets = WindowInsets.safeDrawing,
+                bottomBar = {
+                    if (showNavigation && !useRail) InkNestBottomBar(selected, onSelect)
+                },
+            ) { insets ->
+                Row(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
+                    if (showNavigation && useRail) InkNestNavigationRail(selected, onSelect)
+                    Box(
+                        Modifier.weight(1f).fillMaxHeight(),
+                        contentAlignment = Alignment.TopCenter,
                     ) {
-                        val gutter = when {
-                            maxWidth < InkLayoutTokens.narrowBreakpoint -> {
-                                InkLayoutTokens.narrowGutter
-                            }
+                        BoxWithConstraints(
+                            Modifier.widthIn(max = InkLayoutTokens.maxContentWidth).fillMaxSize()
+                                .tabSwipe(selected, showNavigation, onSelect),
+                        ) {
+                            val gutter = when {
+                                maxWidth < InkLayoutTokens.narrowBreakpoint -> {
+                                    InkLayoutTokens.narrowGutter
+                                }
 
-                            maxWidth < InkLayoutTokens.railBreakpoint -> {
-                                InkLayoutTokens.compactGutter
-                            }
+                                maxWidth < InkLayoutTokens.railBreakpoint -> {
+                                    InkLayoutTokens.compactGutter
+                                }
 
-                            else -> InkLayoutTokens.expandedGutter
+                                else -> InkLayoutTokens.expandedGutter
+                            }
+                            content(
+                                PaddingValues(
+                                    start = gutter,
+                                    end = gutter,
+                                    top = InkLayoutTokens.topPadding,
+                                    bottom = InkLayoutTokens.bottomPadding,
+                                ),
+                            )
                         }
-                        content(
-                            PaddingValues(
-                                start = gutter,
-                                end = gutter,
-                                top = InkLayoutTokens.topPadding,
-                                bottom = InkLayoutTokens.bottomPadding,
-                            ),
-                        )
                     }
                 }
             }

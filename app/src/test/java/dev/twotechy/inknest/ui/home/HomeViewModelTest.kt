@@ -40,6 +40,8 @@ class HomeViewModelTest {
     private val reading = TestReadingRepository()
     private val pins = MutableStateFlow<List<PinnedApp>>(emptyList())
     private val stats = MutableStateFlow<ReadingStats?>(null)
+    private var reloadApps: suspend () -> Unit = {}
+    private var reloadStats: suspend () -> Unit = {}
 
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
 
@@ -54,13 +56,14 @@ class HomeViewModelTest {
             override val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
             override val pinnedApps = pins
             override val isLoading = MutableStateFlow(false)
-            override suspend fun reload(retainPackages: Set<String>) = Unit
+            override suspend fun reload(retainPackages: Set<String>) = reloadApps()
             override suspend fun pin(componentId: String) = Unit
             override suspend fun unpin(componentId: String) = Unit
             override suspend fun movePin(componentId: String, offset: Int) = Unit
         },
         object : ReadingStatsRepository {
             override val stats = this@HomeViewModelTest.stats
+            override suspend fun refresh() = reloadStats()
         },
     ).also { store.put("home", it) }
 
@@ -88,6 +91,32 @@ class HomeViewModelTest {
         val emptyLoaded = vm.uiState.value as HomeUiState.Loaded
         assertEquals(ReadingSectionState.Empty, emptyLoaded.reading)
         assertEquals(1, emptyLoaded.pinnedApps.size)
+    }
+
+    @Test
+    fun `refresh waits for all sources and allows retry after failure`() = runTest(dispatcher) {
+        val appsDone = CompletableDeferred<Unit>()
+        val statsDone = CompletableDeferred<Unit>()
+        reloadApps = { appsDone.await() }
+        reloadStats = { statsDone.await() }
+        reading.refreshAction = { throw java.io.IOException("Unavailable") }
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        vm.refresh()
+        vm.refresh()
+        runCurrent()
+        assertEquals(1, reading.refreshCalls)
+        assertTrue((vm.uiState.value as HomeUiState.Loaded).isRefreshing)
+        appsDone.complete(Unit)
+        runCurrent()
+        assertTrue((vm.uiState.value as HomeUiState.Loaded).isRefreshing)
+        statsDone.complete(Unit)
+        runCurrent()
+        assertFalse((vm.uiState.value as HomeUiState.Loaded).isRefreshing)
+        vm.refresh()
+        runCurrent()
+        assertEquals(2, reading.refreshCalls)
+        assertFalse((vm.uiState.value as HomeUiState.Loaded).isRefreshing)
     }
 
     private class TestReadingRepository : ReadingRepository {

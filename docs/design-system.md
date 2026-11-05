@@ -183,3 +183,25 @@ Heatmap adapts16–52 week columns to the full content width with square cells u
 roughly3dp horizontal/2dp vertical gaps, and a48dp weekday gutter that grows with font scale. Only empty cells
 have a light0.75dp outline; active cells use the shared grayscale palette and2dp corners.
 Month/weekday axes remain; week-count and Less/More captions are omitted.
+
+## Content gestures
+
+`InkGestureTokens` owns the 64dp tab-swipe and 80dp pull-refresh thresholds. Direction
+locks after system touch slop when one axis exceeds the other by 1.5 times. Actions fire
+on release; cancelled and multi-touch gestures do not fire. System Back edge insets and
+child-consumed horizontal scrolls take priority.
+
+Tab swipes follow Library, Stats, Home, Apps, Settings without wrapping. Only top-level
+content receives them; navigation controls, Settings details, onboarding, search/IME and
+modal surfaces do not. Tab state is restored through the existing saveable state holder.
+HOME invalidates active gestures even when Home is already selected.
+
+`ScreenScaffold` accepts a `RefreshAction` for Home, Library, Stats and Apps. A shared
+nested-scroll surface requires the drag to start at the top, including short/empty content.
+The monochrome release/running indicator overlays content below the fixed header without
+moving it, spinning or animating. Existing refresh/retry buttons remain available. Reading
+screens without configured sources disable pull refresh; refresh never starts on tab change.
+
+Refresh progress is shown only by the shared pull indicator. Feature content keeps cache/error
+notices after refresh completes, without a second running label. The indicator reuses the
+shared `refreshing` string resource.

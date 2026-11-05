@@ -14,6 +14,7 @@ import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -41,7 +42,9 @@ internal data class StatsUiState(
     val options: StatsOptions = StatsOptions(),
     val data: StatisticsData = StatisticsData(),
     val overview: StatsOverview? = null,
-)
+) {
+    val isRefreshing: Boolean get() = data.sync.running
+}
 
 internal class StatsViewModel(
     private val repository: StatisticsRepository,
@@ -89,7 +92,10 @@ internal class StatsViewModel(
     fun unit(unit: StatisticsUnit) {
         saved["stats.unit"] = unit.name
     }
+    private var refreshJob: Job? = null
+
     fun refresh() {
-        viewModelScope.launch { repository.refresh() }
+        if (refreshJob?.isActive == true || uiState.value.isRefreshing) return
+        refreshJob = viewModelScope.launch { repository.refresh() }
     }
 }

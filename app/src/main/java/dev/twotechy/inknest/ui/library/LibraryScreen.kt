@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.components.ChoiceTab
+import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
 import dev.twotechy.inknest.ui.components.readingIssueMessage
@@ -28,7 +29,17 @@ internal fun LibraryScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    ScreenScaffold(modifier, contentPadding, header = { LibraryHeader(state, actions) }) {
+    ScreenScaffold(
+        modifier,
+        contentPadding,
+        gesturesEnabled = !state.options.searching,
+        refresh = RefreshAction(
+            !state.notConfigured && !state.loading && !state.options.searching,
+            state.isRefreshing,
+            actions.refresh,
+        ),
+        header = { LibraryHeader(state, actions) },
+    ) {
         when {
             state.notConfigured -> LibraryStatePanel(
                 R.string.library_connect,
@@ -67,12 +78,7 @@ private fun LibraryBody(state: LibraryUiState, actions: LibraryActions) {
     LibraryBooks(state, actions) {
         Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.md)) {
             LibraryFilters(state.options.filter, state.totalCount, actions.filter)
-            if (state.sync.running) {
-                Text(
-                    stringResource(R.string.library_indexing),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            } else if (state.sync.error != null) {
+            if (!state.sync.running && state.sync.error != null) {
                 Text(
                     stringResource(R.string.library_folder_error),
                     style = MaterialTheme.typography.bodySmall,
