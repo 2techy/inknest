@@ -73,7 +73,6 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
         covers,
         statistics,
     )
-    val probe = createReaderDiagnostics(files, books, appContext.cacheDir)
     val opener = ReadingItemOpener(appContext, config, books)
 
     private suspend fun cachedMetadata(config: ReadingSourceConfig, path: String): BookMetadata? {

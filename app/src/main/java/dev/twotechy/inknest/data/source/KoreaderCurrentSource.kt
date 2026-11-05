@@ -147,8 +147,6 @@ private fun ProbeRead<ResolvedBook>.availability(): BookAvailability = when (thi
     } else {
         BookAvailability.Unresolved
     }
-
-    ProbeRead.NotTested -> BookAvailability.Unresolved
 }
 
 private fun BookAvailability.warning(): ReadingSyncIssue? = when (this) {

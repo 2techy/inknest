@@ -42,7 +42,6 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
         launcherModeController = LauncherModeController(appContext),
         sourceSettingsRepository = readerData.settings,
         readingSourceConfigRepository = readerData.config,
-        readerProbeRepository = readerData.probe,
         safSourceAccess = readerData.access,
         acknowledgementsRepository = AssetAcknowledgementsRepository(appContext.assets),
     )

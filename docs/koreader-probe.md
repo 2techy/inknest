@@ -1,4 +1,4 @@
-# KOReader integration probe
+# KOReader source integration
 
 InkNest uses one source implementation in debug and release. **Settings → Reading & data**
 selects the installed `org.koreader.launcher` package and two independent folders: KOReader data
@@ -7,9 +7,10 @@ folders validates the new grant before committing configuration; invalid selecti
 preserves the old configuration. Obsolete grants are released. Disconnect removes source keys
 and their grants, preserving pins, display preferences and onboarding.
 
-Source identity, tree URIs, selected package and verified open mode share the existing preferences
+Source identity, tree URIs and selected package share the existing preferences
 DataStore. No second DataStore is created. Production refresh now populates the Room current-book
-cache shared by Home and Settings; debug capability diagnostics remain a separate read-only probe.
+cache shared by Home and Settings. Developer tools and their diagnostic repository have been removed
+from debug and release; debug StrictMode logging remains enabled.
 Reading cache architecture and current verification are described in [Reading cache](reading-cache.md).
 Debug and release contain no runtime sample-data mode.
 
@@ -51,22 +52,10 @@ are rejected. Missing or revoked files are rechecked before any open intent.
 missing or unchanged despite writes. KOReader may not have flushed current statistics. A passing
 snapshot is a validated observation, not a transactionally current reading total.
 
-## Debug diagnostics and open-mode decision
+## Historical source-integration verification
 
-**Settings → About → Developer tools → Reading source probe** exposes the shared source layer
-with independent, timestamped capability outcomes. Route owns platform dispatch; ViewModel
-owns jobs/saved pending picker state; Screen only renders state/callbacks. Re-run/source change,
-configuration recreation and HOME cancel/close diagnostics without stale results. Pending picker
-results survive process recreation; HOME clears the pending route without reopening overlays.
-Probe controls and Developer tools are absent from release. Runtime mock repositories and preview controls have been removed from debug as well.
-
-The probe opens the source app normally and can send original document URIs with MIME,
-ACTION_VIEW, read permission and ClipData. Its A/B confirmations require observed correct book
-and saved position in both cold and warm runs. Intent dispatch alone never confirms direct-open.
-Open mode is recorded for the selected package/version; version changes invalidate confirmation.
-`SourceAppOnly` is the accepted fallback. See the observed decision below.
-
-## Compatibility matrix
+The observations below record the original integration gate, including its former diagnostic
+UI and open-mode decisions. Current direct opening is described in [Set up InkNest](setup.md).
 
 InkNest: `0.1.0-dev` (versionCode 1), working changes based on `567783e`.
 No raw Lua, book contents or personal document URIs are recorded in this document.
@@ -96,12 +85,8 @@ Virtual results do not establish Tango hardware compatibility or direct-open sup
 
 ## Maintainability boundaries
 
-The probe repository coordinates independently observed capabilities. `ProbeCapabilities` owns
+Production repositories use shared capability results. `ProbeCapabilities` owns
 expected-source-error classification and timestamps; cancellation and unexpected programming
 errors propagate. Exact book resolution and parsing stay in the source layer. SQLite snapshot
 copy, integrity validation, schema validation and querying are separate operations under the same
 mutex/retry/cleanup boundary. `BoundedXmlReader` owns one XML parser/stack/budget per entry.
-
-Debug `SourceProbeRoute` owns visibility, lifecycle and picker/dialog wiring. `SourceAppProbeRoute`
-binds installed apps and A/B confirmations; `SourceProbeLauncher` handles Android package-version
-lookup, original-file re-resolution and intent dispatch. Screens remain state/callback renderers.

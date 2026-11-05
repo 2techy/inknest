@@ -24,7 +24,7 @@ Disconnect removes source configuration and local reading cache, not book files 
 ## Reading and launcher behavior
 
 Tap a book in Library to open it directly in the selected KOReader app; long-press for details.
-Home uses the same original-document opening flow. No Developer tools confirmation is required.
+Home uses the same original-document opening flow.
 If a file, permission or handler is unavailable, InkNest reports the error instead of opening
 KOReader without the selected book. Dispatching an Android intent is not proof that the reader
 opened the correct book; reading state is refreshed from KOReader when returning.

@@ -54,12 +54,4 @@ class ProbeCapabilitiesTest {
             }
         }
     }
-
-    @Test fun `unconfigured capability does not attempt a read`() = runTest {
-        val result =
-            readConfiguredCapability<Nothing>(null) { error("Must not read without a tree") }
-        assertEquals(ProbeRead.Unavailable(ProbeIssue.NotConfigured), result.result)
-        assertTrue(result.checkedAt > 0)
-        assertEquals(ProbeRead.NotTested, notTestedCapability().result)
-    }
 }

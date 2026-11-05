@@ -24,7 +24,6 @@ internal fun SettingsScreen(
     page: SettingsPage,
     isDefaultLauncher: Boolean,
     actions: SettingsActions,
-    developerTools: @Composable () -> Unit,
     modifier: Modifier,
     contentPadding: PaddingValues,
 ) {
@@ -109,7 +108,7 @@ internal fun SettingsScreen(
                         )
                     }
 
-                    SettingsPage.About -> item { AboutSettingsContent(actions, developerTools) }
+                    SettingsPage.About -> item { AboutSettingsContent(actions) }
 
                     SettingsPage.Notices -> item {
                         AcknowledgementsContent(

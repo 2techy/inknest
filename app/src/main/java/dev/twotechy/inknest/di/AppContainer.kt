@@ -6,7 +6,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.LibraryRepository
-import dev.twotechy.inknest.data.repository.ReaderProbeRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
@@ -41,7 +40,6 @@ internal class AppContainer(
     val sourceSettingsRepository: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
     val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
     val safSourceAccess: SafSourceAccess? = null,
-    val readerProbeRepository: ReaderProbeRepository? = null,
     val readingItemOpener: ReadingItemOpener? = null,
 ) {
     val statsViewModelFactory = viewModelFactory {

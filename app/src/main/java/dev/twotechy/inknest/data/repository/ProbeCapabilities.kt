@@ -14,18 +14,6 @@ import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParserException
 
-internal fun notTestedCapability(): CapabilityResult<Nothing> =
-    CapabilityResult(ProbeRead.NotTested, System.currentTimeMillis())
-
-internal suspend fun <T> readConfiguredCapability(
-    tree: String?,
-    read: suspend (String) -> T,
-): CapabilityResult<T> = if (tree == null) {
-    CapabilityResult(ProbeRead.Unavailable(ProbeIssue.NotConfigured), System.currentTimeMillis())
-} else {
-    readCapability { read(tree) }
-}
-
 internal suspend fun <T> readCapability(read: suspend () -> T): CapabilityResult<T> {
     val result = try {
         ProbeRead.Success(read())

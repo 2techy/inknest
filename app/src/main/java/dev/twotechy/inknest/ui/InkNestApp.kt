@@ -21,7 +21,6 @@ import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
-import dev.twotechy.inknest.ui.settings.DeveloperSettingsRoute
 import dev.twotechy.inknest.ui.settings.SettingsError
 import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.settings.SettingsRoute
@@ -103,11 +102,6 @@ private fun InkNestContent(
                         openPage = openPage,
                         launcher = launcher,
                         isDefaultLauncher = isDefaultLauncher,
-                        developerTools = {
-                            DeveloperSettingsRoute(
-                                container,
-                            )
-                        },
                         onReviewSetup = {
                             onboarding.restart()
                             navigation.reviewSetup()

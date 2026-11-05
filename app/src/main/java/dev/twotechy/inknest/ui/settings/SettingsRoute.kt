@@ -34,7 +34,6 @@ internal fun SettingsRoute(
     launcher: LauncherActions,
     isDefaultLauncher: Boolean,
     onReviewSetup: () -> Unit,
-    developerTools: @Composable () -> Unit,
     modifier: Modifier,
     contentPadding: PaddingValues,
 ) {
@@ -107,7 +106,6 @@ internal fun SettingsRoute(
             page = page,
             isDefaultLauncher = isDefaultLauncher,
             actions = actions,
-            developerTools = developerTools,
             modifier = modifier,
             contentPadding = contentPadding,
         )

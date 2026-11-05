@@ -20,10 +20,7 @@ import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
-internal fun AboutSettingsContent(
-    actions: SettingsActions,
-    developerTools: @Composable () -> Unit,
-) {
+internal fun AboutSettingsContent(actions: SettingsActions) {
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
         Row(
             Modifier.fillMaxWidth().padding(vertical = InkSpacing.sm),
@@ -51,6 +48,5 @@ internal fun AboutSettingsContent(
             })
             SettingsRow(stringResource(R.string.review_setup), onClick = actions.reviewSetup)
         }
-        developerTools()
     }
 }
