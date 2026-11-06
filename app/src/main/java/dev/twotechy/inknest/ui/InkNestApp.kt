@@ -33,15 +33,12 @@ internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewMo
     val settings: SettingsViewModel = viewModel(factory = container.settingsViewModelFactory)
     val onboarding: OnboardingViewModel = viewModel(factory = container.onboardingViewModelFactory)
     val state by settings.uiState.collectAsStateWithLifecycle()
-    val completion by onboarding.completion.collectAsStateWithLifecycle()
+    val setup by onboarding.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(state.preferences?.onboardingCompleted) {
         state.preferences?.let { navigation.offerSetup(it.onboardingCompleted) }
     }
-    LaunchedEffect(completion) {
-        if (completion > 0) {
-            navigation.goHome()
-            onboarding.acknowledgeCompletion()
-        }
+    LaunchedEffect(setup.finished) {
+        navigation.finishSetup(setup.finished)
     }
     CompositionLocalProvider(
         LocalContentGestureSession provides navigation.gestureSession,
@@ -78,7 +75,6 @@ private fun InkNestContent(
         if (setupVisible && settingsState.preferences != null) {
             OnboardingRoute(
                 onboarding = onboarding,
-                settings = settings,
                 isDefault = isDefaultLauncher,
                 launcher = launcher,
                 padding = padding,

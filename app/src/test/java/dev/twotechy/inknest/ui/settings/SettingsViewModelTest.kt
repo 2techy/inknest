@@ -105,8 +105,8 @@ class SettingsViewModelTest {
         val prefs = TestUserPreferencesRepository()
         val handle = SavedStateHandle(
             mapOf(
-                "settingsPendingFolder" to SourceFolder.Books,
-                "settingsReplacedBookTree" to "old",
+                "source.pendingFolder" to SourceFolder.Books,
+                "source.replacedTree" to "old",
             ),
         )
         var replaced: String? = null
@@ -119,11 +119,40 @@ class SettingsViewModelTest {
         vm.acceptFolder(SourceFolder.Books, "new", 3)
         runCurrent()
         assertEquals("old:new:3", replaced)
-        assertNull(vm.pendingFolder.value)
-        assertNull(handle.get<String>("settingsReplacedBookTree"))
+        assertNull(vm.uiState.value.pendingFolder)
+        assertNull(handle.get<String>("source.replacedTree"))
         vm.replaceBookFolder("new")
         vm.dismissFolder()
-        assertNull(vm.pendingFolder.value)
-        assertNull(handle.get<String>("settingsReplacedBookTree"))
+        assertNull(vm.uiState.value.pendingFolder)
+        assertNull(handle.get<String>("source.replacedTree"))
+    }
+
+    @Test fun onboardingAndSettingsKeepPickerAndErrorsIsolated() = runTest(dispatcher) {
+        val prefs = TestUserPreferencesRepository()
+        val sources = object : SourceSettingsRepository by UnconnectedSourceSettingsRepository() {
+            override suspend fun connectTree(selection: SourceTreeSelection): Unit =
+                throw IOException("unavailable")
+        }
+        val settings = SettingsViewModel(prefs, sources, AcknowledgementsRepository { "" })
+        val onboarding = dev.twotechy.inknest.ui.onboarding.OnboardingViewModel(
+            prefs,
+            SavedStateHandle(),
+            sources,
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            settings.uiState.collect()
+        }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            onboarding.uiState.collect()
+        }
+        runCurrent()
+        settings.requestFolder(SourceFolder.Books)
+        runCurrent()
+        assertEquals(SourceFolder.Books, settings.uiState.value.pendingFolder)
+        assertNull(onboarding.uiState.value.pendingFolder)
+        settings.acceptFolder(SourceFolder.Books, "tree", 1)
+        runCurrent()
+        assertEquals(SettingsError.Source, settings.uiState.value.error)
+        assertFalse(onboarding.uiState.value.sourceError)
     }
 }

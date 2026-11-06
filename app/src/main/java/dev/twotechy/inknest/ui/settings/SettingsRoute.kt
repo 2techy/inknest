@@ -39,7 +39,12 @@ internal fun SettingsRoute(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmation by remember(page) { mutableStateOf<Confirmation?>(null) }
-    SourceFolderSelection(viewModel, page)
+    SourceFolderSelection(
+        state.pendingFolder,
+        viewModel::acceptFolder,
+        viewModel::dismissFolder,
+        page,
+    )
     LaunchedEffect(page) {
         if (page == SettingsPage.Notices) viewModel.loadAcknowledgements()
     }

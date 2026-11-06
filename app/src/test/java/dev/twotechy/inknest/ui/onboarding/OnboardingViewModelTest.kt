@@ -5,7 +5,10 @@ import dev.twotechy.inknest.data.repository.TestUserPreferencesRepository
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -30,18 +33,20 @@ class OnboardingViewModelTest {
     ) {
         val prefs = TestUserPreferencesRepository()
         val vm = OnboardingViewModel(prefs, SavedStateHandle())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
         prefs.failure = IOException("disk unavailable")
         vm.back()
         runCurrent()
-        assertTrue(vm.error.value)
+        assertTrue(vm.uiState.value.saveError)
         assertFalse(prefs.appPreferences.value.onboardingCompleted)
-        assertEquals(0, vm.completion.value)
+        assertFalse(vm.uiState.value.finished)
         prefs.failure = null
         vm.finish()
         runCurrent()
-        assertFalse(vm.error.value)
+        assertFalse(vm.uiState.value.saveError)
         assertTrue(prefs.appPreferences.value.onboardingCompleted)
-        assertEquals(1, vm.completion.value)
+        assertTrue(vm.uiState.value.finished)
         assertEquals(listOf("reader/Activity"), prefs.pinnedComponentIds.value)
     }
 
@@ -49,13 +54,30 @@ class OnboardingViewModelTest {
         val prefs = TestUserPreferencesRepository()
         val handle = SavedStateHandle(mapOf("setupStep" to 2))
         val vm = OnboardingViewModel(prefs, handle)
-        assertEquals(2, vm.step.value)
-        assertEquals(0, vm.completion.value)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        assertEquals(2, vm.uiState.value.step)
+        assertFalse(vm.uiState.value.finished)
         vm.back()
-        assertEquals(1, vm.step.value)
+        runCurrent()
+        assertEquals(1, vm.uiState.value.step)
         prefs.completeOnboarding()
         vm.restart()
-        assertEquals(0, vm.step.value)
+        runCurrent()
+        assertEquals(0, vm.uiState.value.step)
         assertTrue(prefs.appPreferences.value.onboardingCompleted)
+    }
+
+    @Test fun restoredFinishedStateDoesNotNeedACompletionEvent() = runTest(dispatcher) {
+        val prefs = TestUserPreferencesRepository()
+        prefs.completeOnboarding()
+        val vm = OnboardingViewModel(prefs, SavedStateHandle(mapOf("setupFinished" to true)))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        assertTrue(vm.uiState.value.finished)
+        vm.restart()
+        runCurrent()
+        assertFalse(vm.uiState.value.finished)
+        assertTrue(vm.uiState.value.preferences!!.onboardingCompleted)
     }
 }

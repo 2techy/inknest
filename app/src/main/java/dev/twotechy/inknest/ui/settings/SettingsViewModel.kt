@@ -4,15 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
-import dev.twotechy.inknest.data.repository.BookFolderConflict
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
-import dev.twotechy.inknest.data.repository.SourceTreeSelection
 import dev.twotechy.inknest.data.repository.UnconnectedInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
+import dev.twotechy.inknest.ui.source.SourceSetupError
+import dev.twotechy.inknest.ui.source.SourceSetupStateHolder
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,30 +25,19 @@ import kotlinx.coroutines.launch
 
 internal class SettingsViewModel(
     private val preferences: UserPreferencesRepository,
-    private val sources: SourceSettingsRepository,
+    sources: SourceSettingsRepository,
     private val acknowledgementsRepository: AcknowledgementsRepository,
-    private val savedState: SavedStateHandle = SavedStateHandle(),
+    savedState: SavedStateHandle = SavedStateHandle(),
     installedApps: InstalledAppsRepository = UnconnectedInstalledAppsRepository(),
 ) : ViewModel() {
-    val pendingFolder = savedState.getStateFlow<SourceFolder?>("settingsPendingFolder", null)
-    fun requestFolder(folder: SourceFolder) {
-        savedState["settingsReplacedBookTree"] = null
-        savedState["settingsPendingFolder"] = folder
-    }
-    fun replaceBookFolder(uri: String) {
-        savedState["settingsReplacedBookTree"] = uri
-        savedState["settingsPendingFolder"] = SourceFolder.Books
-    }
-    fun acceptFolder(folder: SourceFolder, uri: String, flags: Int) {
-        val previous = savedState.get<String>("settingsReplacedBookTree")
-        dismissFolder()
-        sourceAction { sources.connectTree(SourceTreeSelection(folder, uri, flags, previous)) }
-    }
-    fun removeBookFolder(uri: String) = sourceAction { sources.removeBookTree(uri) }
-    fun dismissFolder() {
-        savedState["settingsPendingFolder"] = null
-        savedState["settingsReplacedBookTree"] = null
-    }
+    private val sourceSetup =
+        SourceSetupStateHolder(sources, installedApps, savedState, viewModelScope)
+    fun requestFolder(folder: SourceFolder) = sourceSetup.requestFolder(folder)
+    fun replaceBookFolder(uri: String) = sourceSetup.replaceBookFolder(uri)
+    fun acceptFolder(folder: SourceFolder, uri: String, flags: Int) =
+        sourceSetup.acceptFolder(folder, uri, flags)
+    fun removeBookFolder(uri: String) = sourceSetup.removeBookFolder(uri)
+    fun dismissFolder() = sourceSetup.dismissFolder()
 
     private data class ActionState(val saving: Boolean = false, val error: SettingsError? = null)
     private val action = MutableStateFlow(ActionState())
@@ -59,25 +48,23 @@ internal class SettingsViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     val uiState: StateFlow<SettingsUiState> = combine(
         loadedPreferences,
-        sources.state,
+        sourceSetup.state,
         preferences.readError,
         action,
         acknowledgements,
     ) { prefs, source, readError, operation, notices ->
         SettingsUiState(
             preferences = prefs,
-            source = source,
-            saving = operation.saving,
-            error = operation.error ?: if (readError != null) SettingsError.Read else null,
+            source = source.source,
+            sourceApps = source.apps,
+            pendingFolder = source.pendingFolder,
+            saving = operation.saving || source.saving,
+            error = operation.error ?: when (source.error) {
+                SourceSetupError.Source -> SettingsError.Source
+                SourceSetupError.FolderConflict -> SettingsError.FolderConflict
+                null -> if (readError != null) SettingsError.Read else null
+            },
             acknowledgements = notices,
-        )
-    }.combine(installedApps.installedApps) { state, apps ->
-        state.copy(
-            sourceApps = apps.filter {
-                it.componentId.substringBefore('/') ==
-                    "org.koreader.launcher"
-            }
-                .distinctBy { it.componentId.substringBefore('/') },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
@@ -103,17 +90,17 @@ internal class SettingsViewModel(
     fun setDisplayMode(mode: DisplayMode) = save { preferences.setDisplayMode(mode) }
     fun showStats(show: Boolean) = save { preferences.setShowHomeStats(show) }
     fun showPins(show: Boolean) = save { preferences.setShowHomePinnedApps(show) }
-    fun selectSourceApp(packageName: String) = sourceAction { sources.selectApp(packageName) }
-    fun disconnect() = sourceAction { sources.disconnect() }
-    fun refresh() = sourceAction { sources.refresh() }
-    fun clearCache() = sourceAction { sources.clearCache() }
+    fun selectSourceApp(packageName: String) = sourceSetup.selectApp(packageName)
+    fun disconnect() = sourceSetup.disconnect()
+    fun refresh() = sourceSetup.refresh()
+    fun clearCache() = sourceSetup.clearCache()
     fun retryRead() = preferences.retryRead()
     fun dismissError() {
         action.value = action.value.copy(error = null)
+        sourceSetup.dismissError()
     }
 
     private fun save(block: suspend () -> Unit) = perform(SettingsError.Save, block)
-    private fun sourceAction(block: suspend () -> Unit) = perform(SettingsError.Source, block)
     private fun perform(error: SettingsError, block: suspend () -> Unit) {
         if (action.value.saving) return
         action.value = ActionState(saving = true)
@@ -124,14 +111,8 @@ internal class SettingsViewModel(
             } catch (cancelled: CancellationException) {
                 action.value = ActionState()
                 throw cancelled
-            } catch (failure: Exception) {
-                action.value = ActionState(
-                    error = if (failure is BookFolderConflict) {
-                        SettingsError.FolderConflict
-                    } else {
-                        error
-                    },
-                )
+            } catch (_: Exception) {
+                action.value = ActionState(error = error)
             }
         }
     }

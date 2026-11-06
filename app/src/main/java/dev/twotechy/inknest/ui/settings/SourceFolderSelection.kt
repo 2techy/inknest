@@ -3,26 +3,25 @@ package dev.twotechy.inknest.ui.settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.twotechy.inknest.data.repository.SourceFolder
 
 // Keep platform picker lifetime rules identical in Settings and onboarding.
 @Composable
 internal fun SourceFolderSelection(
-    viewModel: SettingsViewModel,
+    pending: SourceFolder?,
+    onSelect: (SourceFolder, String, Int) -> Unit,
+    onDismiss: () -> Unit,
     screenKey: Any,
-    enabled: Boolean = true,
 ) {
-    val pending by viewModel.pendingFolder.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
-    DisposableEffect(viewModel, screenKey, activity) {
+    DisposableEffect(screenKey, activity) {
         onDispose {
-            if (activity?.isChangingConfigurations != true) viewModel.dismissFolder()
+            if (activity?.isChangingConfigurations != true) onDismiss()
         }
     }
     SourceFolderPicker(
-        folder = if (enabled) pending else null,
-        onSelect = viewModel::acceptFolder,
-        onDismiss = viewModel::dismissFolder,
+        folder = pending,
+        onSelect = onSelect,
+        onDismiss = onDismiss,
     )
 }

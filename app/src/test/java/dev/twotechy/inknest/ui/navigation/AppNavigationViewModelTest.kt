@@ -73,4 +73,34 @@ class AppNavigationViewModelTest {
         assertEquals("Home", model.selected.value)
         assertEquals("Overview", model.settingsPage.value)
     }
+
+    @Test fun restoredFirstRunClosesButReviewRemainsWhenPreferencesAreComplete() {
+        for (entry in SetupEntry.entries) {
+            val saved = SavedStateHandle(
+                mapOf(
+                    "onboardingVisible" to true,
+                    "setupEntry" to entry.name,
+                ),
+            )
+            val navigation = AppNavigationViewModel(saved)
+            navigation.offerSetup(true)
+            assertEquals(entry == SetupEntry.Review, navigation.onboardingVisible.value)
+        }
+        val navigation = AppNavigationViewModel(SavedStateHandle())
+        navigation.offerSetup(false)
+        navigation.offerSetup(true)
+        assertEquals(false, navigation.onboardingVisible.value)
+    }
+
+    @Test fun restoredFinishDoesNotOverrideNavigationAfterWizardClosed() {
+        val navigation = restoredApps()
+        navigation.finishSetup(true)
+        assertEquals(TopLevelDestination.Apps.name, navigation.selected.value)
+        navigation.reviewSetup()
+        navigation.finishSetup(false)
+        assertEquals(true, navigation.onboardingVisible.value)
+        navigation.finishSetup(true)
+        assertEquals(false, navigation.onboardingVisible.value)
+        assertEquals(TopLevelDestination.Home.name, navigation.selected.value)
+    }
 }

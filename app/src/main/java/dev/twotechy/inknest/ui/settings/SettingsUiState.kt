@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.settings
 
+import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceSettingsState
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.AppPreferences
@@ -8,6 +9,7 @@ internal enum class SettingsError { Read, Save, Source, FolderConflict }
 
 internal data class SettingsUiState(
     val preferences: AppPreferences? = null,
+    val pendingFolder: SourceFolder? = null,
     val source: SourceSettingsState = SourceSettingsState(),
     val sourceApps: List<AppInfo> = emptyList(),
     val saving: Boolean = false,

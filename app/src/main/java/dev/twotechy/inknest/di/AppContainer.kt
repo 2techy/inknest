@@ -59,7 +59,14 @@ internal class AppContainer(
         }
     }
     val onboardingViewModelFactory = viewModelFactory {
-        initializer { OnboardingViewModel(userPreferencesRepository, createSavedStateHandle()) }
+        initializer {
+            OnboardingViewModel(
+                userPreferencesRepository,
+                createSavedStateHandle(),
+                sourceSettingsRepository,
+                installedAppsRepository,
+            )
+        }
     }
 
     val homeViewModelFactory = viewModelFactory {
