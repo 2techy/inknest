@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import dev.twotechy.inknest.ui.InkNestApp
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
-import java.io.IOException
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -28,20 +27,6 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val container = (application as InkNestApplication).awaitContainer()
             setContent { InkNestApp(container, navigation) }
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        lifecycleScope.launch {
-            val container = (application as InkNestApplication).awaitContainer()
-            try {
-                container.readingRepository.refresh()
-            } catch (_: IOException) {
-                // The repository exposes the persisted failure alongside the last cached book.
-            } finally {
-                container.statisticsRepository.refresh()
-            }
         }
     }
 

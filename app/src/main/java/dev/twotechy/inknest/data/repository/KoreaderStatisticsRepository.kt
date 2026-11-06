@@ -28,12 +28,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -104,10 +106,11 @@ internal class KoreaderStatisticsRepository(
 
     init {
         scope.launch {
-            tree.collectLatest { selected ->
+            tree.onEach { selected ->
                 requests.withLock {
                     if (request?.first != selected) request?.second?.cancel()
                 }
+            }.drop(1).collectLatest { selected ->
                 if (selected != null) refreshAutomatically()
             }
         }

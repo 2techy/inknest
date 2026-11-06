@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
+import dev.twotechy.inknest.data.repository.ForegroundRefreshCoordinator
 import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
 import dev.twotechy.inknest.platform.AndroidAppIconSource
 import dev.twotechy.inknest.platform.AppIconLoader
@@ -32,6 +33,11 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
     PackageChangeReceiver(apps, scope, icons::clear).register(appContext)
     return AppContainer(
         readingRepository = readerData.reading,
+        foregroundRefreshCoordinator = ForegroundRefreshCoordinator(
+            readerData.reading,
+            readerData.statistics,
+            scope,
+        ),
         libraryRepository = readerData.library,
         readingItemOpener = readerData.opener,
         installedAppsRepository = apps,

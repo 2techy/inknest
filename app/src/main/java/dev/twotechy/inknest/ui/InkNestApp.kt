@@ -9,6 +9,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
@@ -30,6 +32,8 @@ import dev.twotechy.inknest.ui.theme.InkNestTheme
 
 @Composable
 internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewModel) {
+    val app: AppViewModel = viewModel(factory = container.appViewModelFactory)
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { app.onForeground() }
     val settings: SettingsViewModel = viewModel(factory = container.settingsViewModelFactory)
     val onboarding: OnboardingViewModel = viewModel(factory = container.onboardingViewModelFactory)
     val state by settings.uiState.collectAsStateWithLifecycle()

@@ -39,6 +39,7 @@ class StatisticsRepositoryTest {
             val fixture = StatisticsFixture()
             try {
                 fixture.select("first")
+                fixture.verifyForegroundOwnership()
                 fixture.repository.data.first { it.updatedAt != null && !it.sync.running }
                 fixture.verifyReplacementAndFailure()
                 fixture.verifySharedRefresh()
@@ -86,8 +87,16 @@ private class StatisticsFixture {
             )
         }
     }
-    val repository =
+    val repository by lazy {
         KoreaderStatisticsRepository(config, database.statisticsDao(), source, scope, transition)
+    }
+
+    suspend fun verifyForegroundOwnership() {
+        repository.data.first { it.configured }
+        assertEquals(0, calls.get())
+        repository.refresh()
+        assertEquals(1, calls.get())
+    }
 
     suspend fun select(tree: String) {
         val before = config.config.first()
