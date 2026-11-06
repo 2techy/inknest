@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -53,6 +54,8 @@ internal class LibraryFolderRepository(
     private val key = config.config.map { it.key() }.distinctUntilChanged()
     private val running = MutableStateFlow<Pair<LibraryFolderKey, Any>?>(null)
     private val errors = MutableStateFlow<Map<LibraryFolderKey, ReadingSyncIssue>>(emptyMap())
+    private val observationRetry = ObservationRetry()
+    private val readErrors = MutableStateFlow<Set<LibraryFolderKey>>(emptySet())
     private val observedFolders = mutableSetOf<LibraryFolderKey>()
     private val requests = Mutex()
     private val writes = Mutex()
@@ -69,13 +72,20 @@ internal class LibraryFolderRepository(
                     folder,
                 ->
                 Triple(selected, books, folder)
-            }
+            }.recoverObservation(
+                observationRetry,
+                onError = { readErrors.update { it + selected } },
+                onSuccess = { readErrors.update { it - selected } },
+            )
         }
+    }.stateIn(scope, SharingStarted.Eagerly, Triple(null, emptyList<LibraryBookEntity>(), null))
+    private val catalogErrors = combine(errors, readErrors) { writes, reads ->
+        reads.associateWith { ReadingSyncIssue.Cache } + writes
     }
     private val readingStates = combine(reading.trackedItems, reading.reading) { history, current ->
         history + listOfNotNull((current as? ReadingState.Content)?.current)
     }
-    override val catalog = combine(inventory, key, readingStates, running, errors) {
+    override val catalog = combine(inventory, key, readingStates, running, catalogErrors) {
             inventory,
             active,
             tracked,
@@ -132,13 +142,7 @@ internal class LibraryFolderRepository(
     }
 
     private fun observeIncompleteFolders() = scope.launch {
-        key.flatMapLatest { active ->
-            if (active == null) {
-                flowOf(null to null)
-            } else {
-                inventoryStore.observeFolder(active).map { active to it }
-            }
-        }.collect { (active, folder) -> resumeIncomplete(active, folder) }
+        inventory.collect { (active, _, folder) -> resumeIncomplete(active, folder) }
     }
 
     private suspend fun resumeIncomplete(active: LibraryFolderKey?, folder: LibraryFolderEntity?) {
@@ -157,11 +161,13 @@ internal class LibraryFolderRepository(
         }
         scope.launch {
             if (config.config.first().key() != active) return@launch
-            if (inventoryStore.observeFolder(active).first()?.complete != true) refresh()
+            if (inventory.first { it.first == active }.third?.complete != true) refresh()
         }
     }
 
     override suspend fun refresh() {
+        observationRetry.retry()
+        config.retryRead()
         val selected = config.config.first()
         val active = selected.key() ?: return
         val request = requests.withLock {

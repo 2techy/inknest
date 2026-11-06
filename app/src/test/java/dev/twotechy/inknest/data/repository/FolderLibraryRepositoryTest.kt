@@ -11,6 +11,7 @@ import dev.twotechy.inknest.data.source.EnrichedReadingItem
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -92,6 +94,24 @@ class FolderLibraryRepositoryTest {
         }
     }
 
+    @Test fun observationFailureRetainsBooksAndRecoveryDoesNotScanSaf() = runBlocking {
+        withTimeout(10_000) {
+            withHarness { h ->
+                h.add("A")
+                val loaded = h.loaded(1)
+                val reads = h.reads["A"]
+                h.inventory.unreadable.value = true
+                val failed = h.repository.catalog.first { it.sync.error == ReadingSyncIssue.Cache }
+                assertEquals(loaded.books, failed.books)
+                assertTrue(failed.sync.stale)
+                h.inventory.unreadable.value = false
+                val recovered = h.repository.catalog.first { !it.loading && it.sync.error == null }
+                assertEquals(loaded.books, recovered.books)
+                assertEquals(reads, h.reads["A"])
+            }
+        }
+    }
+
     private suspend fun withHarness(block: suspend (Harness) -> Unit) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         try {
@@ -150,7 +170,11 @@ private class MemoryLibraryInventoryStore : LibraryInventoryStore {
         val folder: LibraryFolderEntity? = null,
     )
     private val rows = MutableStateFlow<Map<LibraryFolderKey, Rows>>(emptyMap())
-    override fun observe(key: LibraryFolderKey) = rows.map { it[key]?.books.orEmpty() }
+    val unreadable = MutableStateFlow(false)
+    override fun observe(key: LibraryFolderKey) = combine(rows, unreadable) { rows, failed ->
+        if (failed) throw IOException("cache unavailable")
+        rows[key]?.books.orEmpty()
+    }
     override fun observeFolder(key: LibraryFolderKey) = rows.map { it[key]?.folder }
     override suspend fun books(key: LibraryFolderKey) = rows.value[key]?.books.orEmpty()
     override suspend fun putBooks(books: List<LibraryBookEntity>) {

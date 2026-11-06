@@ -8,17 +8,13 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import java.io.IOException
 import java.util.UUID
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retryWhen
 
 internal class ReadingSourceConfigRepository(private val store: DataStore<Preferences>) {
-    val config = store.data.retryWhen { cause, attempt ->
-        if (cause !is IOException) return@retryWhen false
-        delay(500L * (attempt + 1).coerceAtMost(20))
-        true
-    }.map {
+    private val observationRetry = ObservationRetry()
+    fun retryRead() = observationRetry.retry()
+    val config = store.data.recoverObservation(observationRetry).map {
         ReadingSourceConfig(
             it[sourceId],
             it[koreader],

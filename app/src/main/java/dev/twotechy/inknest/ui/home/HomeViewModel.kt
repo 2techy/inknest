@@ -13,7 +13,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -50,16 +49,6 @@ internal class HomeViewModel(
             sync = sync,
             isRefreshing = refresh.running || sync.running,
             appsRefreshFailed = refresh.appsFailed,
-        )
-    }.catch {
-        emit(
-            HomeUiState.Loaded(
-                reading = ReadingSectionState.Error(
-                    ReadingSyncIssue.Cache,
-                ),
-                pinnedApps = emptyList(),
-                stats = null,
-            ),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 

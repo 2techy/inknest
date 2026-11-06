@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -52,13 +53,21 @@ internal class KoreaderStatisticsRepository(
     private var request: Pair<String, Deferred<Unit>>? = null
     private val status =
         MutableStateFlow<Pair<String?, ReadingSyncStatus>>(null to ReadingSyncStatus())
+    private val observationRetry = ObservationRetry()
+    private val readError = MutableStateFlow<String?>(null)
     private val tree = config.config.map { it.koreaderTreeUri }.distinctUntilChanged()
     override val data = tree.flatMapLatest { selected ->
         if (selected == null) {
             flowOf(StatisticsData())
         } else {
             combine(
-                dao.observeSnapshot(selected).map { snapshot ->
+                dao.observeSnapshot(selected).recoverObservation(
+                    observationRetry,
+                    onError = { readError.value = selected },
+                    onSuccess = {
+                        if (readError.value == selected) readError.value = null
+                    },
+                ).onStart { emit(null) }.map { snapshot ->
                     StatisticsData(
                         days = snapshot?.days.orEmpty().associate {
                             LocalDate.ofEpochDay(it.day) to StatisticsAmount(it.seconds, it.pages)
@@ -70,10 +79,18 @@ internal class KoreaderStatisticsRepository(
                     )
                 },
                 status,
-            ) { cached, (key, sync) ->
-                cached.copy(
-                    sync = if (key == selected) sync else ReadingSyncStatus(),
-                )
+                readError,
+            ) { cached, (key, sync), failed ->
+                val current = if (key == selected) sync else ReadingSyncStatus()
+                val recovered = if (failed == selected) {
+                    current.copy(
+                        error = ReadingSyncIssue.Cache,
+                        stale = cached.updatedAt != null,
+                    )
+                } else {
+                    current
+                }
+                cached.copy(sync = recovered)
             }
         }
     }.stateIn(scope, SharingStarted.Eagerly, StatisticsData())
@@ -126,6 +143,8 @@ internal class KoreaderStatisticsRepository(
     }
 
     override suspend fun refresh() {
+        observationRetry.retry()
+        config.retryRead()
         val selected = config.config.first().koreaderTreeUri ?: return
         val job = requests.withLock {
             request?.takeIf { it.first == selected && it.second.isActive }?.second

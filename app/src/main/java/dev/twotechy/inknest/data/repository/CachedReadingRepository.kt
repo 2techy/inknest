@@ -47,6 +47,8 @@ internal class CachedReadingRepository(
     private val jobs = mutableMapOf<ReadingCacheKey, Deferred<Unit>>()
     private val running = MutableStateFlow<Map<ReadingCacheKey, Any>>(emptyMap())
     private val writeErrors = MutableStateFlow<Map<ReadingCacheKey, ReadingSyncIssue>>(emptyMap())
+    private val observationRetry = ObservationRetry()
+    private val readErrors = MutableStateFlow<Set<Pair<ReadingCacheKey, String>>>(emptySet())
     private val key = config.config.map { it.readingCacheKey() }.distinctUntilChanged()
     private val observation = key.flatMapLatest { active ->
         if (active ==
@@ -56,7 +58,11 @@ internal class CachedReadingRepository(
         } else {
             cache.observe(active).map {
                 ReadingCacheObservation(active, it)
-            }.onStart { emit(ReadingCacheObservation(active)) }
+            }.recoverObservation(
+                observationRetry,
+                onError = { readErrors.update { it + (active to "current") } },
+                onSuccess = { readErrors.update { it - (active to "current") } },
+            ).onStart { emit(ReadingCacheObservation(active)) }
         }
     }.stateIn(scope, SharingStarted.Eagerly, ReadingCacheObservation(null))
 
@@ -68,19 +74,34 @@ internal class CachedReadingRepository(
         } else {
             cache.observeHistory(active).map { rows ->
                 active to rows.map { it.toReadingItem() }
-            }.onStart { emit(active to emptyList()) }
+            }.recoverObservation(
+                observationRetry,
+                onError = { readErrors.update { it + (active to "history") } },
+                onSuccess = { readErrors.update { it - (active to "history") } },
+            ).onStart { emit(active to emptyList()) }
         }
     }
     override val trackedItems = combine(history, key) { (observed, items), active ->
         if (observed == active) items else emptyList()
     }
 
-    override val reading = combine(observation, key, writeErrors) { state, active, errors ->
-        state.readingState(active, errors[active])
-    }
+    override val reading =
+        combine(observation, key, writeErrors, readErrors) { state, active, errors, reads ->
+            state.readingState(active, errors[active] ?: reads.issue(active))
+        }
     override val sync =
-        combine(observation, key, running, writeErrors) { state, active, inFlight, errors ->
-            state.syncStatus(active, active != null && active in inFlight, errors[active])
+        combine(observation, key, running, writeErrors, readErrors) {
+                state,
+                active,
+                inFlight,
+                errors,
+                reads,
+            ->
+            state.syncStatus(
+                active,
+                active != null && active in inFlight,
+                errors[active] ?: reads.issue(active),
+            )
         }
 
     init {
@@ -102,6 +123,8 @@ internal class CachedReadingRepository(
     }
 
     override suspend fun refresh() {
+        observationRetry.retry()
+        config.retryRead()
         val selected = config.config.first()
         val active = selected.readingCacheKey() ?: return
         val job = requests.withLock {
@@ -230,3 +253,6 @@ internal class CachedReadingRepository(
         refresh()
     }
 }
+
+private fun Set<Pair<ReadingCacheKey, String>>.issue(active: ReadingCacheKey?): ReadingSyncIssue? =
+    if (any { it.first == active }) ReadingSyncIssue.Cache else null

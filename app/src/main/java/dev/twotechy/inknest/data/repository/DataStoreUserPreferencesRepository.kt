@@ -1,7 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.core.IOException
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -11,30 +10,19 @@ import dev.twotechy.inknest.model.DisplayMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retryWhen
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withTimeoutOrNull
 
 internal class DataStoreUserPreferencesRepository(private val dataStore: DataStore<Preferences>) :
     UserPreferencesRepository {
 
     private val preferencesError = MutableStateFlow<String?>(null)
-    private val readRetry = MutableStateFlow(0L)
+    private val readRetry = ObservationRetry()
     override val readError = preferencesError.asStateFlow()
-
-    private val preferences = dataStore.data
-        .map { it.also { preferencesError.value = null } }
-        .retryWhen { cause, attempt ->
-            if (cause !is IOException) return@retryWhen false
-            preferencesError.value = "Unable to read preferences. Retrying…"
-            val generation = readRetry.value
-            withTimeoutOrNull(1_000L * (attempt + 1).coerceAtMost(30)) {
-                readRetry.first { it != generation }
-            }
-            true
-        }
+    private val preferences = dataStore.data.recoverObservation(
+        readRetry,
+        onError = { preferencesError.value = "Unable to read preferences. Retrying…" },
+        onSuccess = { preferencesError.value = null },
+    )
 
     override val pinnedComponentIds = preferences.map {
         decodeList(it[KEY_PINNED_COMPONENT_IDS])
@@ -64,7 +52,7 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
     }
 
     override fun retryRead() {
-        readRetry.update { it + 1 }
+        readRetry.retry()
     }
 
     override suspend fun pin(componentId: String) {
