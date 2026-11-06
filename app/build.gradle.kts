@@ -41,6 +41,25 @@ android {
                 enable = true
             }
         }
+        create("benchmark") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".benchmark"
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+            matchingFallbacks += "release"
+        }
+        create("profile") {
+            initWith(getByName("benchmark"))
+            optimization { enable = false }
+        }
+    }
+    sourceSets {
+        getByName("main").baselineProfiles.directories += "src/main/generated/baselineProfiles"
+        getByName("benchmark").kotlin.directories += "src/release/java"
+        getByName("profile") {
+            kotlin.directories += setOf("src/release/java", "src/benchmark/java")
+            manifest.srcFile("src/benchmark/AndroidManifest.xml")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -56,6 +75,7 @@ dependencies {
     // AndroidX platform integration
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.profileinstaller)
 
     // Lifecycle-aware UI state, saved state and coroutine scopes
     implementation(libs.androidx.lifecycle.runtime.compose)

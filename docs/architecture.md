@@ -63,6 +63,10 @@ A Compose STARTED effect calls AppViewModel, which delegates foreground reading/
 to an application-scoped ForegroundRefreshCoordinator. Activity handles platform intents, not
 refresh sequencing. Startup has one owner; actual source changes and explicit refresh actions
 remain repository operations. Concurrent callers share jobs without a freshness TTL.
+AppViewModel also exposes app preferences for the theme/setup gate. The root does not
+collect Settings' source/actions state; SettingsRoute owns that collection. Onboarding
+completion is observed in its own composition scope so source updates do not invalidate
+the entire Home scaffold.
 
 Local Room/DataStore observations recover expected I/O/SQLite failures before sharing state.
 Backoff is 1/2/4/8/16/30 seconds, cancellation is preserved and manual retry wakes pending reads.
@@ -77,3 +81,8 @@ pending requests. Intents and Context remain in the platform layer; requests are
 Source capability results and exception mapping live in data/source; source implementations do
 not import repositories. Dispatchers are constructor dependencies. Repository and StatsViewModel
 share a StatisticsClock from DI; tests replace it and dispatchers without changing system time.
+
+The production graph remains in `:app`. The separate `:benchmark` instrumentation module
+drives release-like benchmark and unminified profile variants through the real UI and SAF
+boundaries. Synthetic setup exists only in those target source sets; release contains app
+profiles but no fixture or setup entry point. See [benchmarking.md](benchmarking.md).

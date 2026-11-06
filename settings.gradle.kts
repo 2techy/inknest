@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "InkNest"
-include(":app")
+include(":app", ":benchmark")

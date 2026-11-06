@@ -3,17 +3,18 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.test) apply false
     alias(libs.plugins.room) apply false
     alias(libs.plugins.ksp) apply false
 }
 
 spotless {
     kotlin {
-        target("app/src/**/*.kt")
+        target("app/src/**/*.kt", "benchmark/src/**/*.kt")
         ktlint(libs.versions.ktlint.get())
     }
     kotlinGradle {
-        target("*.gradle.kts", "app/*.gradle.kts")
+        target("*.gradle.kts", "app/*.gradle.kts", "benchmark/*.gradle.kts")
         ktlint(libs.versions.ktlint.get())
     }
 }

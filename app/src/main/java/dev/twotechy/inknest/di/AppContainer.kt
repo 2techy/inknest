@@ -52,7 +52,7 @@ internal class AppContainer(
     val readingItemDispatcher: ReadingItemDispatcher,
 ) {
     val appViewModelFactory = viewModelFactory {
-        initializer { AppViewModel(foregroundRefreshCoordinator) }
+        initializer { AppViewModel(foregroundRefreshCoordinator, userPreferencesRepository) }
     }
     val statsViewModelFactory = viewModelFactory {
         initializer {

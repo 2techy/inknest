@@ -31,6 +31,9 @@ luaj = "3.0.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 androidxTestRunner = "1.7.0"
+benchmark = "1.5.0"
+uiautomator = "2.4.1"
+profileinstaller = "1.4.1"
 
 [libraries]
 # AndroidX platform integration
@@ -67,11 +70,17 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 
+# Release profiles and isolated performance instrumentation
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
+androidx-benchmark-macro = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
+androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
+
 [plugins]
 # Deterministic formatting for Kotlin sources and Gradle scripts
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 
 # Android application build
+android-test = { id = "com.android.test", version.ref = "agp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 
 # Compose compiler (uses the shared Kotlin version)

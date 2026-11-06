@@ -26,7 +26,6 @@ import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
 import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.settings.SettingsRoute
-import dev.twotechy.inknest.ui.settings.SettingsUiState
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
 import dev.twotechy.inknest.ui.theme.InkNestTheme
 
@@ -36,22 +35,28 @@ internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewMo
     LifecycleEventEffect(Lifecycle.Event.ON_START) { app.onForeground() }
     val settings: SettingsViewModel = viewModel(factory = container.settingsViewModelFactory)
     val onboarding: OnboardingViewModel = viewModel(factory = container.onboardingViewModelFactory)
-    val state by settings.uiState.collectAsStateWithLifecycle()
-    val setup by onboarding.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(state.preferences?.onboardingCompleted) {
-        state.preferences?.let { navigation.offerSetup(it.onboardingCompleted) }
+    val preferences by app.preferences.collectAsStateWithLifecycle()
+    LaunchedEffect(preferences?.onboardingCompleted) {
+        preferences?.let { navigation.offerSetup(it.onboardingCompleted) }
     }
-    LaunchedEffect(setup.finished) {
-        navigation.finishSetup(setup.finished)
-    }
+    OnboardingCompletionEffect(onboarding, navigation)
     CompositionLocalProvider(
         LocalContentGestureSession provides navigation.gestureSession,
         LocalBookCoverLoader provides container.bookCoverLoader,
     ) {
-        InkNestTheme(state.preferences ?: AppPreferences()) {
-            InkNestContent(container, navigation, settings, onboarding, state)
+        InkNestTheme(preferences ?: AppPreferences()) {
+            InkNestContent(container, navigation, settings, onboarding)
         }
     }
+}
+
+@Composable
+private fun OnboardingCompletionEffect(
+    onboarding: OnboardingViewModel,
+    navigation: AppNavigationViewModel,
+) {
+    val state by onboarding.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(state.finished) { navigation.finishSetup(state.finished) }
 }
 
 @Composable
@@ -60,7 +65,6 @@ private fun InkNestContent(
     navigation: AppNavigationViewModel,
     settings: SettingsViewModel,
     onboarding: OnboardingViewModel,
-    settingsState: SettingsUiState,
 ) {
     val selected by navigation.selected.collectAsStateWithLifecycle()
     val tab = TopLevelDestination.valueOf(selected)
@@ -76,7 +80,7 @@ private fun InkNestContent(
     val showNavigation = !setupVisible &&
         (tab != TopLevelDestination.Settings || page == SettingsPage.Overview)
     AppScaffold(tab, navigation::select, showNavigation) { padding ->
-        if (setupVisible && settingsState.preferences != null) {
+        if (setupVisible) {
             OnboardingRoute(
                 onboarding = onboarding,
                 isDefault = isDefaultLauncher,
