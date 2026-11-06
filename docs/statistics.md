@@ -101,3 +101,7 @@ renders state/callbacks. The calendar checks date/timezone at minute resolution;
 
 The dashboard omits the average-period caption and page-count explanatory paragraph.
 Chart totals show just their value and unit. The calendar fills the content width with a responsive calendar density.
+
+Repository and StatsViewModel use the same injected StatisticsClock. Its shared state checks
+date/zone once per minute; tests use a fake clock and injected dispatchers. Startup refresh
+belongs to the foreground coordinator, while later KOReader source changes still refresh automatically.

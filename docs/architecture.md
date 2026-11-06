@@ -50,3 +50,30 @@ pins/preferences/source selection; no second store is created. Statistics is ind
 of current-book parsing and inventory membership. Routes do not scan files or aggregate
 statistics. See [Library](library.md), [Statistics](statistics.md) and
 [Reading cache](reading-cache.md) for refresh/cancellation and source boundaries.
+
+
+## State and work ownership
+
+Settings and onboarding each own a SourceSetupStateHolder. They share saved source data through
+repositories, while picker requests, in-flight actions and errors belong to each owner. Onboarding
+exposes a single UiState; navigation records FirstRun versus Review and completion only closes
+an open wizard. HOME bypasses setup for the current session without persisting completion.
+
+A Compose STARTED effect calls AppViewModel, which delegates foreground reading/statistics updates
+to an application-scoped ForegroundRefreshCoordinator. Activity handles platform intents, not
+refresh sequencing. Startup has one owner; actual source changes and explicit refresh actions
+remain repository operations. Concurrent callers share jobs without a freshness TTL.
+
+Local Room/DataStore observations recover expected I/O/SQLite failures before sharing state.
+Backoff is 1/2/4/8/16/30 seconds, cancellation is preserved and manual retry wakes pending reads.
+Recovery never publishes an invented empty snapshot or initiates a SAF scan. Home combines the
+independent repository states and keeps unaffected pins/stats/reading content.
+
+ReadingOpenRepository prepares a source-validated, Android-independent opening request. Home and
+Library ViewModels own ReadingOpenStateHolder; routes claim each Ready request once and dispatch
+through ReadingItemDispatcher only while resumed. Pause/disposal cancels preparation and drops
+pending requests. Intents and Context remain in the platform layer; requests are not persisted.
+
+Source capability results and exception mapping live in data/source; source implementations do
+not import repositories. Dispatchers are constructor dependencies. Repository and StatsViewModel
+share a StatisticsClock from DI; tests replace it and dispatchers without changing system time.

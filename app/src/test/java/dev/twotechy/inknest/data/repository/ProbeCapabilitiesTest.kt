@@ -2,11 +2,14 @@ package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.data.source.InvalidBookMetadata
 import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.ProbeIssue
+import dev.twotechy.inknest.data.source.ProbeRead
 import dev.twotechy.inknest.data.source.SourceLimitExceeded
 import dev.twotechy.inknest.data.source.UnresolvedBookPath
 import dev.twotechy.inknest.data.source.UnsupportedBookFormat
 import dev.twotechy.inknest.data.source.lua.LuaFailure
 import dev.twotechy.inknest.data.source.lua.LuaSourceException
+import dev.twotechy.inknest.data.source.readCapability
 import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
 import dev.twotechy.inknest.data.source.stats.UnstableStatisticsSnapshot
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema

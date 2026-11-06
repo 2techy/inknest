@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.data.repository
+package dev.twotechy.inknest.data.source
 
 import dev.twotechy.inknest.data.source.InvalidBookMetadata
 import dev.twotechy.inknest.data.source.MissingSourceFile

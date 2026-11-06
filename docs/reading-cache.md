@@ -5,7 +5,7 @@ and an independent `ReadingSyncStatus`; pins, clock and statistics remain separa
 sample-data path exists. Current reading and tracked history share the same cache and source
 refresh. Sidecar progress/status and EPUB title/author/cover enrich resolved books; unsupported or
 missing fields remain unknown. The current card opens the configured reader through
-`ReadingItemOpener`, without writing synthetic progress or last-read timestamps.
+`ReadingOpenRepository` / `ReadingItemDispatcher`, without writing synthetic progress or last-read timestamps.
 
 ## Data and source boundaries
 
@@ -56,10 +56,11 @@ cover cache along with reading rows. No bitmap is stored in ViewModels or saved 
 
 ## Opening the reader
 
-`ReadingItemOpener` is a main-safe platform boundary shared by Home and Library. Each action
-re-resolves the original document, validates the selected source again, then dispatches ACTION_VIEW
-with its content URI/MIME, ClipData and temporary read permission to the configured reader.
-Package/intent resolution runs off the main thread. Opening does not parse or copy the EPUB.
+Home and Library ViewModels own opening state. ReadingOpenRepository re-resolves the original
+document and validates the selected source. The resumed Route claims each request once and uses
+ReadingItemDispatcher to dispatch ACTION_VIEW with its URI/MIME, ClipData and read permission.
+Package/intent resolution runs off main; dispatch runs on the injected main dispatcher. Opening
+does not parse or copy the EPUB. Pause/disposal drops pending work; requests are not persisted.
 
 There is no persisted confirmation/version gate or app-only fallback. Missing app/file/grant,
 unsupported handler and changed-source outcomes are explicit. File errors offer refresh; access
@@ -82,7 +83,7 @@ book probes use the same opener, rather than a separate intent implementation.
 
 ## Refresh and failures
 
-Activity foreground (`onStart`), Home refresh and Settings refresh share application-owned jobs.
+A lifecycle-aware STARTED effect delegates foreground updates through AppViewModel and the shared refresh coordinator. Home/Settings refresh use the same application-owned repository jobs.
 Concurrent callers await the same active job. Cancelling an await does not cancel other callers.
 Source changes cancel obsolete jobs, and active key plus coroutine cancellation are checked before
 writing. Late cancellation cleanup cannot clear another job's running state.

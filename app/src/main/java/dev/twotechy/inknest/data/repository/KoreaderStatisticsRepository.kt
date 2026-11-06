@@ -10,10 +10,13 @@ import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
+import dev.twotechy.inknest.platform.clock.StatisticsClock
+import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
 import java.io.IOException
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -21,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +33,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -49,8 +50,11 @@ internal class KoreaderStatisticsRepository(
     source: StatisticsEventSource,
     private val scope: CoroutineScope,
     transition: Mutex = Mutex(),
+    private val clock: StatisticsClock = SystemStatisticsClock(scope),
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : StatisticsRepository {
-    private val importer = StatisticsImporter(config, dao, source, transition)
+    private val importer =
+        StatisticsImporter(config, dao, source, transition) { clock.moments.value.zone }
     private val requests = Mutex()
     private var request: Pair<String, Deferred<Unit>>? = null
     private val status =
@@ -97,12 +101,12 @@ internal class KoreaderStatisticsRepository(
         }
     }.stateIn(scope, SharingStarted.Eagerly, StatisticsData())
 
-    override val stats = combine(data, localStatisticsClock()) { data, (today, _) ->
+    override val stats = combine(data, clock.moments) { data, (today, _) ->
         data.updatedAt?.let {
             val (daily, weekly) = miniStatistics(data.days, today)
             ReadingStats(daily, weekly)
         }
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(defaultDispatcher)
 
     init {
         scope.launch {
@@ -118,7 +122,7 @@ internal class KoreaderStatisticsRepository(
 
     init {
         scope.launch {
-            combine(tree, data, localStatisticsClock()) { selected, cached, (_, zone) ->
+            combine(tree, data, clock.moments) { selected, cached, (_, zone) ->
                 Triple(selected, cached.zone, zone)
             }.distinctUntilChanged()
                 .collectLatest { (selected, cachedZone, zone) ->
@@ -186,12 +190,3 @@ private fun statisticsIssue(error: Exception): ReadingSyncIssue = when (error) {
     is IOException -> ReadingSyncIssue.Provider
     else -> throw error
 }
-
-// Date/zone changes use local summaries or re-bin Room rows; the clock never reads SAF.
-internal fun localStatisticsClock() = flow {
-    while (true) {
-        val zone = ZoneId.systemDefault()
-        emit(LocalDate.now(zone) to zone)
-        delay(60_000)
-    }
-}.distinctUntilChanged()

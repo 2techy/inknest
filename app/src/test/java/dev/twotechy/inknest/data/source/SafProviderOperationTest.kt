@@ -1,8 +1,8 @@
 package dev.twotechy.inknest.data.source
 
-import dev.twotechy.inknest.data.repository.ProbeIssue
-import dev.twotechy.inknest.data.repository.ProbeRead
-import dev.twotechy.inknest.data.repository.readCapability
+import dev.twotechy.inknest.data.source.ProbeIssue
+import dev.twotechy.inknest.data.source.ProbeRead
+import dev.twotechy.inknest.data.source.readCapability
 import java.io.FileNotFoundException
 import java.io.IOException
 import kotlinx.coroutines.CancellationException

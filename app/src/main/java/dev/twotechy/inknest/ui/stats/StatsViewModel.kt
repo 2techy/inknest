@@ -7,12 +7,13 @@ import dev.twotechy.inknest.data.repository.StatisticsBucket
 import dev.twotechy.inknest.data.repository.StatisticsDashboard
 import dev.twotechy.inknest.data.repository.StatisticsPeriod
 import dev.twotechy.inknest.data.repository.StatisticsRepository
-import dev.twotechy.inknest.data.repository.localStatisticsClock
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
 import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
+import dev.twotechy.inknest.platform.clock.StatisticsClock
 import java.time.LocalDate
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,6 +48,8 @@ internal data class StatsUiState(
 internal class StatsViewModel(
     private val repository: StatisticsRepository,
     private val saved: SavedStateHandle,
+    clock: StatisticsClock,
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     private val options = combine(
         saved.getStateFlow("stats.granularity", StatisticsGranularity.Days.name),
@@ -58,12 +61,12 @@ internal class StatsViewModel(
                 ?: StatisticsGranularity.Days,
         )
     }
-    val uiState = combine(repository.data, localStatisticsClock(), options) {
+    val uiState = combine(repository.data, clock.moments, options) {
             data,
             clock,
             options,
         ->
-        val today = clock.first
+        val today = clock.today
         val dashboard = data.updatedAt?.let {
             StatisticsDashboard(today, data.days.filterKeys { it <= today })
         }
@@ -82,7 +85,7 @@ internal class StatsViewModel(
                 )
             },
         )
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(defaultDispatcher)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsUiState())
 
     fun granularity(granularity: StatisticsGranularity) {

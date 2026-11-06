@@ -21,6 +21,7 @@ internal class ReadingItemDispatcher(
     private val repository: ReadingOpenRepository,
     private val launcher: BookIntentLauncher = AndroidBookIntentLauncher(context),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) {
     suspend fun dispatch(prepared: PreparedReadingOpen): OpenResult = try {
         val intent = withContext(ioDispatcher) { launcher.prepare(prepared.intent()) }
@@ -29,7 +30,7 @@ internal class ReadingItemDispatcher(
             OpenResult.SourceChanged
         } else {
             currentCoroutineContext().ensureActive()
-            unavailable ?: withContext(Dispatchers.Main.immediate) { launcher.launch(intent) }
+            unavailable ?: withContext(mainDispatcher) { launcher.launch(intent) }
         }
     } catch (_: SecurityException) {
         OpenResult.PermissionLost

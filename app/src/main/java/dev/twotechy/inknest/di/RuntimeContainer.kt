@@ -44,6 +44,7 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
         installedAppsRepository = apps,
         readingStatsRepository = readerData.statistics,
         statisticsRepository = readerData.statistics,
+        statisticsClock = readerData.statisticsClock,
         userPreferencesRepository = preferences,
         appLauncher = AppLauncher(appContext),
         appIconLoader = icons,

@@ -7,6 +7,7 @@ import dev.twotechy.inknest.data.source.SourceDocumentReader
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -25,6 +26,7 @@ internal class UnsupportedStatisticsSchema : IOException()
 internal class StatisticsSnapshotProbe(
     private val files: SourceDocumentReader,
     private val cache: File,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : StatisticsEventSource {
     private val mutex = Mutex()
     suspend fun read(tree: String): StatisticsProbeResult =
@@ -42,7 +44,7 @@ internal class StatisticsSnapshotProbe(
     private suspend fun <T> readSnapshotData(
         source: StatisticsSnapshotFiles,
         read: suspend (SQLiteDatabase, Boolean) -> T,
-    ): T = withContext(Dispatchers.IO) {
+    ): T = withContext(ioDispatcher) {
         mutex.withLock {
             var last: Exception? = null
             repeat(MAX_ATTEMPTS) { attempt ->

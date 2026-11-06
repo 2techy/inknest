@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.source
 
-import dev.twotechy.inknest.data.repository.ProbeRead
-import dev.twotechy.inknest.data.repository.readCapability
+import dev.twotechy.inknest.data.source.ProbeRead
+import dev.twotechy.inknest.data.source.readCapability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingStatus

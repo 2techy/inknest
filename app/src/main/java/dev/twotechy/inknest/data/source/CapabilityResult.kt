@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.data.repository
+package dev.twotechy.inknest.data.source
 
 internal enum class ProbeIssue {
     NotConfigured,

@@ -24,12 +24,22 @@ import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.platform.AndroidBookCoverSource
 import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.ReadingItemDispatcher
+import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
 import java.io.File
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 
 // One application-scoped graph for reading data; shares the existing DataStore and Room instance.
-internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
+internal class ReadingDataContainer(
+    context: Context,
+    scope: CoroutineScope,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+) {
+    val statisticsClock = SystemStatisticsClock(scope, defaultDispatcher)
     private val appContext = context.applicationContext
     val config = ReadingSourceConfigRepository(appContext.userPreferencesDataStore)
     val access = SafSourceAccess(appContext.contentResolver)
@@ -60,13 +70,16 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
         reading,
         libraryMetadata::readBook,
     )
-    private val statisticsSnapshot = StatisticsSnapshotProbe(files, appContext.cacheDir)
+    private val statisticsSnapshot =
+        StatisticsSnapshotProbe(files, appContext.cacheDir, ioDispatcher)
     val statistics = KoreaderStatisticsRepository(
         config,
         database.statisticsDao(),
         statisticsSnapshot,
         scope,
         transition,
+        statisticsClock,
+        defaultDispatcher,
     )
     val settings = SafSourceSettingsRepository(
         config,
@@ -79,8 +92,14 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
         covers,
         statistics,
     )
-    val opening = SafReadingOpenRepository(config, books)
-    val dispatcher = ReadingItemDispatcher(appContext, opening)
+    val opening = SafReadingOpenRepository(config, books, ioDispatcher)
+    val dispatcher =
+        ReadingItemDispatcher(
+            appContext,
+            opening,
+            ioDispatcher = ioDispatcher,
+            mainDispatcher = mainDispatcher,
+        )
 
     private suspend fun cachedMetadata(config: ReadingSourceConfig, path: String): BookMetadata? {
         val source = config.sourceId ?: return null

@@ -21,6 +21,7 @@ import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.LauncherModeController
 import dev.twotechy.inknest.platform.ReadingItemDispatcher
+import dev.twotechy.inknest.platform.clock.StatisticsClock
 import dev.twotechy.inknest.ui.AppViewModel
 import dev.twotechy.inknest.ui.apps.AppsViewModel
 import dev.twotechy.inknest.ui.home.HomeViewModel
@@ -43,6 +44,7 @@ internal class AppContainer(
     val launcherModeController: LauncherModeController,
     val acknowledgementsRepository: AcknowledgementsRepository,
     val statisticsRepository: StatisticsRepository,
+    val statisticsClock: StatisticsClock,
     val sourceSettingsRepository: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
     val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
     val safSourceAccess: SafSourceAccess? = null,
@@ -53,7 +55,9 @@ internal class AppContainer(
         initializer { AppViewModel(foregroundRefreshCoordinator) }
     }
     val statsViewModelFactory = viewModelFactory {
-        initializer { StatsViewModel(statisticsRepository, createSavedStateHandle()) }
+        initializer {
+            StatsViewModel(statisticsRepository, createSavedStateHandle(), statisticsClock)
+        }
     }
     val settingsViewModelFactory = viewModelFactory {
         initializer {
