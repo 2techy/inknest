@@ -40,7 +40,7 @@ internal fun HomeDestination(
     val home: HomeViewModel = viewModel(factory = container.homeViewModelFactory)
     HomeRoute(
         viewModel = home,
-        readingItemOpener = container.readingItemOpener,
+        readingItemDispatcher = container.readingItemDispatcher,
         appLauncher = container.appLauncher,
         appIconLoader = container.appIconLoader,
         modifier = Modifier.fillMaxSize(),
@@ -71,7 +71,7 @@ internal fun LibraryDestination(
     val library: LibraryViewModel = viewModel(factory = container.libraryViewModelFactory)
     LibraryRoute(
         viewModel = library,
-        opener = container.readingItemOpener,
+        dispatcher = container.readingItemDispatcher,
         onSettings = {
             navigation.select(TopLevelDestination.Settings)
             navigation.openSettingsPage(SettingsPage.ReadingData.name)

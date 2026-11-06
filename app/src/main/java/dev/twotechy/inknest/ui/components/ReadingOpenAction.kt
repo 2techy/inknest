@@ -4,52 +4,47 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.model.ReadingItemId
-import dev.twotechy.inknest.platform.OpenResult
-import dev.twotechy.inknest.platform.ReadingItemOpener
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import dev.twotechy.inknest.model.OpenResult
+import dev.twotechy.inknest.model.ReadingOpenState
+import dev.twotechy.inknest.platform.ReadingItemDispatcher
+import dev.twotechy.inknest.ui.reading.ReadingOpenActions
+
+internal data class ReadingOpenErrorActions(val settings: () -> Unit, val refresh: () -> Unit)
 
 @Composable
-internal fun rememberReadingOpenAction(
-    opener: ReadingItemOpener?,
-    onSettings: () -> Unit,
-    onRefresh: () -> Unit,
-): (ReadingItemId) -> Unit {
-    val scope = rememberCoroutineScope()
-    var error by remember { mutableStateOf<OpenResult?>(null) }
-    var opening by remember { mutableStateOf(false) }
-    var request by remember { mutableStateOf<Job?>(null) }
-    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
-        request?.cancel()
-        error = null
+internal fun ReadingOpenEffect(
+    state: ReadingOpenState,
+    actions: ReadingOpenActions,
+    dispatcher: ReadingItemDispatcher,
+    errors: ReadingOpenErrorActions,
+) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { actions.cancel() }
+    DisposableEffect(actions) { onDispose { actions.cancel() } }
+    val request = when (state) {
+        is ReadingOpenState.Ready -> state.request
+        is ReadingOpenState.Dispatching -> state.request
+        else -> null
     }
-    error?.let { issue ->
-        ReadingOpenErrorDialog(issue, { error = null }, onSettings, onRefresh)
-    }
-    return { id ->
-        if (opener == null) {
-            onSettings()
-        } else if (!opening) {
-            request = scope.launch {
-                opening = true
-                try {
-                    val result = opener.open(id)
-                    if (result != OpenResult.Dispatched) error = result
-                } finally {
-                    opening = false
+    LaunchedEffect(request?.id, lifecycle, dispatcher) {
+        if (request != null) {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                actions.claim(request.id)?.let { prepared ->
+                    actions.complete(request.id, dispatcher.dispatch(prepared))
                 }
             }
         }
+    }
+    (state as? ReadingOpenState.Error)?.let {
+        ReadingOpenErrorDialog(it.error, actions.dismiss, errors.settings, errors.refresh)
     }
 }
 

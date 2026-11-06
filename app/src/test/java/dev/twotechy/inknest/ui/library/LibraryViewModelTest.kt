@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import dev.twotechy.inknest.data.repository.LibraryFolder
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
+import dev.twotechy.inknest.data.repository.TestReadingOpenRepository
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
@@ -84,7 +85,7 @@ class LibraryViewModelTest {
         try {
             val source = CachedBooks()
             val handle = SavedStateHandle()
-            val first = LibraryViewModel(source, handle, dispatcher)
+            val first = LibraryViewModel(source, handle, TestReadingOpenRepository(), dispatcher)
             store.put("first", first)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 first.uiState.collect()
@@ -99,7 +100,13 @@ class LibraryViewModelTest {
             runCurrent()
             assertEquals(1, first.uiState.value.books.size)
             val values = handle.keys().associateWith { handle.get<Any?>(it) }
-            val restored = LibraryViewModel(source, SavedStateHandle(values), dispatcher)
+            val restored =
+                LibraryViewModel(
+                    source,
+                    SavedStateHandle(values),
+                    TestReadingOpenRepository(),
+                    dispatcher,
+                )
             store.put("restored", restored)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 restored.uiState.collect()

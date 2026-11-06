@@ -7,6 +7,7 @@ import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.ForegroundRefreshCoordinator
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.LibraryRepository
+import dev.twotechy.inknest.data.repository.ReadingOpenRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
@@ -19,7 +20,7 @@ import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.LauncherModeController
-import dev.twotechy.inknest.platform.ReadingItemOpener
+import dev.twotechy.inknest.platform.ReadingItemDispatcher
 import dev.twotechy.inknest.ui.AppViewModel
 import dev.twotechy.inknest.ui.apps.AppsViewModel
 import dev.twotechy.inknest.ui.home.HomeViewModel
@@ -45,7 +46,8 @@ internal class AppContainer(
     val sourceSettingsRepository: SourceSettingsRepository = UnconnectedSourceSettingsRepository(),
     val readingSourceConfigRepository: ReadingSourceConfigRepository? = null,
     val safSourceAccess: SafSourceAccess? = null,
-    val readingItemOpener: ReadingItemOpener? = null,
+    val readingOpenRepository: ReadingOpenRepository,
+    val readingItemDispatcher: ReadingItemDispatcher,
 ) {
     val appViewModelFactory = viewModelFactory {
         initializer { AppViewModel(foregroundRefreshCoordinator) }
@@ -81,12 +83,15 @@ internal class AppContainer(
                 readingRepository,
                 installedAppsRepository,
                 readingStatsRepository,
+                readingOpenRepository,
             )
         }
     }
 
     val libraryViewModelFactory = viewModelFactory {
-        initializer { LibraryViewModel(libraryRepository, createSavedStateHandle()) }
+        initializer {
+            LibraryViewModel(libraryRepository, createSavedStateHandle(), readingOpenRepository)
+        }
     }
 
     val appsViewModelFactory = viewModelFactory {

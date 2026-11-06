@@ -7,15 +7,17 @@ import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.source.BookProbeDataSource
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.model.OpenResult
 import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.ReadingOpenPreparation
 import dev.twotechy.inknest.platform.BookIntentLauncher
-import dev.twotechy.inknest.platform.OpenResult
-import dev.twotechy.inknest.platform.ReadingItemOpener
+import dev.twotechy.inknest.platform.ReadingItemDispatcher
 import dev.twotechy.inknest.platform.koreaderDocumentIntent
 import java.io.File
 import java.io.InputStream
@@ -85,6 +87,32 @@ class ReadingItemOpenerTest {
         }
     }
 
+    @Test fun changedSourceAfterPreparationCannotDispatch() = runBlocking {
+        val fixture = Fixture()
+        try {
+            fixture.configure()
+            val prepared = fixture.repository.prepare(
+                fixture.id("A.epub"),
+            ) as ReadingOpenPreparation.Ready
+            var dispatched = false
+            val dispatcher =
+                ReadingItemDispatcher(
+                    fixture.context,
+                    fixture.repository,
+                    BookIntentLauncher {
+                        dispatched = true
+                        OpenResult.Dispatched
+                    },
+                )
+            fixture.config.setSourcePackage("changed.reader")
+            assertEquals(OpenResult.SourceChanged, dispatcher.dispatch(prepared.prepared))
+            assertTrue(!dispatched)
+            assertEquals(0, fixture.documents.reads)
+        } finally {
+            fixture.close()
+        }
+    }
+
     @Test fun readerOwnedUriPreservesTheOriginalPathWithoutForeignGrants() {
         val path = "webdav/folder/Book with spaces \u0111\u1eb9p.epub"
         val document = DocumentsContract.buildDocumentUriUsingTree(Uri.parse(TREE), "primary:$path")
@@ -131,7 +159,8 @@ class ReadingItemOpenerTest {
         val config = ReadingSourceConfigRepository(store)
         val documents = Documents()
         private val books = BookProbeDataSource(documents, directory)
-        val realOpener = ReadingItemOpener(context, config, books)
+        val repository = SafReadingOpenRepository(config, books)
+        val realOpener = TestBookOpener(repository, ReadingItemDispatcher(context, repository))
         suspend fun configure() {
             val before = config.config.first()
             config.activateTree(before, config.treeCandidate(before, SourceFolder.KOReader, TREE))
@@ -139,19 +168,32 @@ class ReadingItemOpenerTest {
         }
         suspend fun id(name: String) =
             ReadingItemId(checkNotNull(config.config.first().sourceId), "primary:Download/$name")
-        fun recordingOpener(intents: MutableList<Intent>) = ReadingItemOpener(
-            context,
-            config,
-            books,
-            BookIntentLauncher {
-                intents.add(it)
-                OpenResult.Dispatched
-            },
+        fun recordingOpener(intents: MutableList<Intent>) = TestBookOpener(
+            repository,
+            ReadingItemDispatcher(
+                context,
+                repository,
+                BookIntentLauncher {
+                    intents.add(it)
+                    OpenResult.Dispatched
+                },
+            ),
         )
         fun close() {
             scope.cancel()
             directory.deleteRecursively()
         }
+    }
+
+    private class TestBookOpener(
+        private val repository: SafReadingOpenRepository,
+        private val dispatcher: ReadingItemDispatcher,
+    ) {
+        suspend fun open(item: ReadingItemId): OpenResult =
+            when (val result = repository.prepare(item)) {
+                is ReadingOpenPreparation.Ready -> dispatcher.dispatch(result.prepared)
+                is ReadingOpenPreparation.Failed -> result.error
+            }
     }
 
     private class Documents : SourceDocumentReader {

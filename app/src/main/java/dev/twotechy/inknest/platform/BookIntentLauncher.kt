@@ -3,6 +3,7 @@ package dev.twotechy.inknest.platform
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import dev.twotechy.inknest.model.OpenResult
 
 internal fun interface BookIntentLauncher {
     fun launch(intent: Intent): OpenResult

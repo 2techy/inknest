@@ -9,6 +9,7 @@ import dev.twotechy.inknest.data.repository.CachedReadingRepository
 import dev.twotechy.inknest.data.repository.FolderLibraryRepository
 import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
 import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
 import dev.twotechy.inknest.data.source.BookCoverCache
 import dev.twotechy.inknest.data.source.BookMetadata
@@ -22,7 +23,7 @@ import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.platform.AndroidBookCoverSource
 import dev.twotechy.inknest.platform.BookCoverLoader
-import dev.twotechy.inknest.platform.ReadingItemOpener
+import dev.twotechy.inknest.platform.ReadingItemDispatcher
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
@@ -78,7 +79,8 @@ internal class ReadingDataContainer(context: Context, scope: CoroutineScope) {
         covers,
         statistics,
     )
-    val opener = ReadingItemOpener(appContext, config, books)
+    val opening = SafReadingOpenRepository(config, books)
+    val dispatcher = ReadingItemDispatcher(appContext, opening)
 
     private suspend fun cachedMetadata(config: ReadingSourceConfig, path: String): BookMetadata? {
         val source = config.sourceId ?: return null

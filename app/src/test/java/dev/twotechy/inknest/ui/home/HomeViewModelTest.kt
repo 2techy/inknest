@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
+import dev.twotechy.inknest.data.repository.TestReadingOpenRepository
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import dev.twotechy.inknest.model.ReadingItem
@@ -65,6 +66,7 @@ class HomeViewModelTest {
             override val stats = this@HomeViewModelTest.stats
             override suspend fun refresh() = reloadStats()
         },
+        TestReadingOpenRepository(),
     ).also { store.put("home", it) }
 
     @Test

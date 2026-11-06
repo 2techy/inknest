@@ -3,10 +3,12 @@ package dev.twotechy.inknest.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.ReadingOpenRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
 import dev.twotechy.inknest.model.ReadingSyncIssue
+import dev.twotechy.inknest.ui.reading.ReadingOpenStateHolder
 import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -21,7 +23,9 @@ internal class HomeViewModel(
     private val readingRepository: ReadingRepository,
     private val installedAppsRepository: InstalledAppsRepository,
     private val readingStatsRepository: ReadingStatsRepository,
+    openingRepository: ReadingOpenRepository,
 ) : ViewModel() {
+    val bookOpening = ReadingOpenStateHolder(openingRepository, viewModelScope)
     private val refreshing = MutableStateFlow(false)
     private var refreshJob: Job? = null
 
@@ -50,6 +54,8 @@ internal class HomeViewModel(
             isRefreshing = refresh.running || sync.running,
             appsRefreshFailed = refresh.appsFailed,
         )
+    }.combine(bookOpening.state) { content, opening ->
+        content.copy(opening = opening)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 
     fun refreshApps() {

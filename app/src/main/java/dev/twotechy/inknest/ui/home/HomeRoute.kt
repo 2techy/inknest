@@ -6,16 +6,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.twotechy.inknest.model.ReadingOpenState
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
-import dev.twotechy.inknest.platform.ReadingItemOpener
+import dev.twotechy.inknest.platform.ReadingItemDispatcher
+import dev.twotechy.inknest.ui.components.ReadingOpenEffect
+import dev.twotechy.inknest.ui.components.ReadingOpenErrorActions
 import dev.twotechy.inknest.ui.components.rememberAppLaunchAction
-import dev.twotechy.inknest.ui.components.rememberReadingOpenAction
 
 @Composable
 internal fun HomeRoute(
     viewModel: HomeViewModel,
-    readingItemOpener: ReadingItemOpener?,
+    readingItemDispatcher: ReadingItemDispatcher,
     appLauncher: AppLauncher,
     appIconLoader: AppIconLoader,
     modifier: Modifier,
@@ -27,13 +29,18 @@ internal fun HomeRoute(
 
     val loaded = state as? HomeUiState.Loaded
     val content = loaded?.reading as? ReadingSectionState.Content
-    val readingAction = rememberReadingOpenAction(readingItemOpener, onSettings, viewModel::refresh)
+    ReadingOpenEffect(
+        loaded?.opening ?: ReadingOpenState.Idle,
+        viewModel.bookOpening.actions,
+        readingItemDispatcher,
+        ReadingOpenErrorActions(onSettings, viewModel::refresh),
+    )
 
     HomeScreen(
         state = state,
         actions = HomeActions(
             reading = {
-                content?.current?.let { readingAction(it.id) }
+                content?.current?.let { viewModel.bookOpening.actions.open(it.id) }
             },
             refresh = viewModel::refresh,
             launchApp = rememberAppLaunchAction(appLauncher, viewModel::refreshApps),

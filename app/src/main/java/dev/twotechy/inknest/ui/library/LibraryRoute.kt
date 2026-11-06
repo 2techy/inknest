@@ -12,19 +12,26 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.model.ReadingItem
-import dev.twotechy.inknest.platform.ReadingItemOpener
-import dev.twotechy.inknest.ui.components.rememberReadingOpenAction
+import dev.twotechy.inknest.platform.ReadingItemDispatcher
+import dev.twotechy.inknest.ui.components.ReadingOpenEffect
+import dev.twotechy.inknest.ui.components.ReadingOpenErrorActions
 
 @Composable
 internal fun LibraryRoute(
     viewModel: LibraryViewModel,
-    opener: ReadingItemOpener?,
+    dispatcher: ReadingItemDispatcher,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val open = rememberReadingOpenAction(opener, onSettings, viewModel::refresh)
+    val open = viewModel.bookOpening.actions.open
+    ReadingOpenEffect(
+        state.opening,
+        viewModel.bookOpening.actions,
+        dispatcher,
+        ReadingOpenErrorActions(onSettings, viewModel::refresh),
+    )
     BackHandler(state.options.searching) { viewModel.searching(false) }
     var selected by remember { mutableStateOf<ReadingItem?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { selected = null }

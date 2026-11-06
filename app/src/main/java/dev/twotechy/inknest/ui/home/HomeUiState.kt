@@ -2,6 +2,7 @@ package dev.twotechy.inknest.ui.home
 
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.ReadingOpenState
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 
@@ -36,5 +37,6 @@ sealed interface HomeUiState {
         val sync: ReadingSyncStatus = ReadingSyncStatus(),
         val isRefreshing: Boolean = false,
         val appsRefreshFailed: Boolean = false,
+        val opening: ReadingOpenState = ReadingOpenState.Idle,
     ) : HomeUiState
 }
