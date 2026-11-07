@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
@@ -79,9 +80,21 @@ private fun LibraryBody(state: LibraryUiState, actions: LibraryActions) {
     LibraryBooks(state, actions) {
         Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.md)) {
             LibraryFilters(state.options.filter, state.totalCount, actions.filter)
-            state.options.folderUri?.let {
-                Text(sourceFolderLabel(it), style = MaterialTheme.typography.bodySmall)
+            state.options.authorKey?.let {
+                Text(
+                    state.options.authorName ?: stringResource(R.string.library_unknown_author),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    pluralStringResource(
+                        R.plurals.library_author_count,
+                        state.books.size,
+                        state.books.size,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
+
             if (!state.sync.running && state.sync.error != null) {
                 state.folders.filter { it.sync.error != null }.forEach { folder ->
                     Text(
@@ -99,7 +112,7 @@ private fun LibraryBody(state: LibraryUiState, actions: LibraryActions) {
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            if (state.books.isEmpty()) LibraryEmptyState(state.totalCount > 0, actions)
+            LibraryShelfEmptyState(state, actions)
         }
     }
 }
@@ -150,5 +163,20 @@ private fun LibraryStatePanel(title: Int, detail: Int, settings: (() -> Unit)? =
             settings?.let { stringResource(R.string.reading_source_action) },
             settings ?: {},
         )
+    }
+}
+
+@Composable
+private fun LibraryShelfEmptyState(state: LibraryUiState, actions: LibraryActions) {
+    if (state.books.isEmpty()) {
+        if (state.options.authorKey !=
+            null
+        ) {
+            ActionButton(
+                stringResource(R.string.library_back_authors),
+                onClick = actions.backToAuthors,
+            )
+        }
+        LibraryEmptyState(state.totalCount > 0, actions)
     }
 }

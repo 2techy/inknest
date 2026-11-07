@@ -57,9 +57,14 @@ internal fun libraryUiState(catalog: LibraryCatalog, options: LibraryOptions): L
             it.id in membership
         }
     }
+    val matches = selectLibraryBooks(scoped, options)
     return LibraryUiState(
         options = options,
-        books = selectLibraryBooks(scoped, options),
+        books = matches.filter {
+            options.authorKey == null ||
+                libraryAuthorKey(it.author) == options.authorKey
+        },
+        authors = libraryAuthors(matches),
         totalCount = scoped.size,
         folders = catalog.folders,
         loading = (folder?.loading ?: catalog.loading) && scoped.isEmpty(),

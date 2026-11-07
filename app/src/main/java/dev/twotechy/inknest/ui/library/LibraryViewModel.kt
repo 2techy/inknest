@@ -45,18 +45,36 @@ internal class LibraryViewModel(
         .combine(savedState.getStateFlow<String?>("libraryFolder", null)) { options, folder ->
             options.copy(folderUri = folder)
         }
+    private val browsing = combine(
+        options,
+        savedState.getStateFlow("libraryBrowse", LibraryBrowse.Books.name),
+        savedState.getStateFlow<String?>("libraryAuthor", null),
+        savedState.getStateFlow<String?>("libraryAuthorName", null),
+    ) { options, browse, author, name ->
+        options.copy(
+            browse =
+                LibraryBrowse.entries.find {
+                    it.name == browse
+                } ?: LibraryBrowse.Books,
+            authorKey = author,
+            authorName = name,
+        )
+    }
     private val catalog = repository.catalog
-    val uiState = combine(catalog, options) { catalog, options -> catalog to options }
+    val uiState = combine(catalog, browsing) { catalog, options -> catalog to options }
         .mapLatest { (catalog, options) ->
             val selected = options.folderUri?.takeIf { uri ->
                 catalog.folders.any { it.uri == uri }
             }
-            if (selected != options.folderUri &&
-                !catalog.loading
-            ) {
-                savedState["libraryFolder"] = null
+            val removed = selected != options.folderUri && !catalog.loading
+            if (removed) {
+                folder(null)
             }
-            val effective = options.copy(folderUri = selected)
+            val effective = options.copy(
+                folderUri = selected,
+                authorKey = if (removed) null else options.authorKey,
+                authorName = if (removed) null else options.authorName,
+            )
             withContext(queryDispatcher) {
                 libraryUiState(catalog, effective)
             }
@@ -88,7 +106,20 @@ internal class LibraryViewModel(
             }
     }
     fun folder(uri: String?) {
+        backToAuthors()
         savedState["libraryFolder"] = uri
+    }
+    fun browse(value: LibraryBrowse) {
+        backToAuthors()
+        savedState["libraryBrowse"] = value.name
+    }
+    fun author(value: LibraryAuthor) {
+        savedState["libraryAuthorName"] = value.name
+        savedState["libraryAuthor"] = value.key
+    }
+    fun backToAuthors() {
+        savedState["libraryAuthor"] = null
+        savedState["libraryAuthorName"] = null
     }
     fun clearFilters() {
         folder(null)

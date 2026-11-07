@@ -29,17 +29,53 @@ internal fun LibraryBooks(
     actions: LibraryActions,
     header: @Composable () -> Unit,
 ) {
-    val grid = rememberLazyGridState()
-    val list = rememberLazyListState()
-    val criteria = Triple(state.options.query, state.options.filter, state.options.sort)
+    val flatGrid = rememberLazyGridState()
+    val flatList = rememberLazyListState()
+    val authorGrid = rememberLazyGridState()
+    val authorList = rememberLazyListState()
+    val index = rememberLazyListState()
+    val grid = if (state.options.authorKey == null) flatGrid else authorGrid
+    val list = if (state.options.authorKey == null) flatList else authorList
+    val criteria =
+        listOf(
+            state.options.query,
+            state.options.filter,
+            state.options.sort,
+            state.options.folderUri,
+            state.options.browse,
+        )
     var previous by remember { mutableStateOf(criteria) }
     LaunchedEffect(criteria) {
         // Preserve restored scroll on first composition; reset only for a new user query/order.
         if (previous != criteria) {
-            grid.scrollToItem(0)
-            list.scrollToItem(0)
+            flatGrid.scrollToItem(0)
+            flatList.scrollToItem(0)
+            authorGrid.scrollToItem(0)
+            authorList.scrollToItem(0)
+            index.scrollToItem(0)
             previous = criteria
         }
+    }
+    var previousAuthor by remember { mutableStateOf(state.options.authorKey) }
+    LaunchedEffect(state.options.authorKey) {
+        if (state.options.authorKey != null && previousAuthor != state.options.authorKey) {
+            authorGrid.scrollToItem(0)
+            authorList.scrollToItem(0)
+        }
+        previousAuthor = state.options.authorKey
+    }
+    if (state.authorIndex) {
+        LazyColumn(
+            state = index,
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(InkSpacing.md),
+        ) {
+            item(key = "controls") { header() }
+            items(state.authors, key = LibraryAuthor::key) {
+                LibraryAuthorRow(it) { actions.author(it) }
+            }
+        }
+        return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)

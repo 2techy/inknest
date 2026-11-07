@@ -20,7 +20,7 @@ batches, reusing known file fingerprints. A completed inventory survives restart
 one resumes. Initial setup, folder changes and cache reset trigger indexing. Manual Refresh library
 picks up added/deleted files; tab switches and clock ticks do not scan the folder.
 
-The library tables share the existing reading Room database, currently schema v5. Development uses
+The library tables share the existing reading Room database, currently schema v6. Development uses
 destructive version fallback without migration code. Preferences, pins and tree grants are separate.
 Clearing reading cache also clears the inventory/covers and lets the active folder rebuild. Source
 changes cancel obsolete scans; observations and writes are checked against the active folder.
@@ -51,3 +51,24 @@ Grid and list share these actions. Background/HOME dismisses details and a pendi
 query, filters and scroll position are retained. No debug confirmation or version-specific
 unlock is required, and an unsupported request never silently falls back to app-only launch.
 No opening action fabricates reading history or progress.
+
+## Browsing authors
+
+Library offers All books (flat shelf) and Authors (name/count rows leading to a book shelf).
+The source-folder submenu remains available with one configured root. It filters
+configured sources, not filesystem subdirectories. Search/status filtering happens before
+author counts; book sorting applies within shelves. Authors are normalized for whitespace
+and case without removing accents, splitting creator strings or guessing from filenames.
+Missing metadata is grouped under Unknown author, last in the list.
+
+Browse mode and selected author use SavedStateHandle, not new preferences or database columns.
+Back closes search first, then returns from an author shelf to the author index. Navbar stays
+visible. Browsing uses cached catalog projections and never initiates a source scan.
+
+Library keeps Search and More on the toolbar. More groups Browse library, Folders,
+Book layout and Sort by into single-level submenus; Refresh stays a direct action.
+Author index omits book-only layout/sorting. Submenus provide a back-arrow header and mark the
+current selection; dismiss/Back closes the popup and backgrounding clears it.
+Folder/browse choices stay inside More, without a summary below the page title. Search uses the
+shared inline Apps/Library field with a single-line placeholder and 48dp touch bounds.
+Actions are contextual rather than limited by screen width.

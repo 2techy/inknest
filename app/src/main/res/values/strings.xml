@@ -226,4 +226,16 @@
     <string name="remove_book_folder_description">Remove %1$s from InkNest? Books will no longer appear in Library. Book files and KOReader data will stay on your device.</string>
     <string name="book_folder_conflict">This folder is already covered by another book folder. Choose a separate folder or remove the overlapping entry first.</string>
     <string name="library_named_folder_error">Could not refresh %1$s. Cached books are kept.</string>
+    <string name="library_options">Library options</string>
+    <string name="library_all_books">All books</string>
+    <string name="library_authors">Authors</string>
+    <string name="library_unknown_author">Unknown author</string>
+    <string name="library_back_authors">Back to authors</string>
+    <plurals name="library_author_count"><item quantity="one">%d book</item><item quantity="other">%d books</item></plurals>
+    <string name="library_menu_browse">Browse library</string>
+    <string name="library_menu_layout">Book layout</string>
+    <string name="library_menu_sort">Sort by</string>
+    <string name="library_layout_grid">Grid</string>
+    <string name="library_layout_list">List</string>
+    <string name="library_submenu">%1$s ›</string>
 </resources>

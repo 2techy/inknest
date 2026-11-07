@@ -32,6 +32,7 @@ internal fun LibraryRoute(
         dispatcher,
         ReadingOpenErrorActions(onSettings, viewModel::refresh),
     )
+    BackHandler(state.options.authorKey != null) { viewModel.backToAuthors() }
     BackHandler(state.options.searching) { viewModel.searching(false) }
     var selected by remember { mutableStateOf<ReadingItem?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { selected = null }
@@ -49,6 +50,9 @@ internal fun LibraryRoute(
             open = { open(it.id) },
             details = { selected = it },
             folder = viewModel::folder,
+            browse = viewModel::browse,
+            author = viewModel::author,
+            backToAuthors = viewModel::backToAuthors,
         ),
         modifier,
         contentPadding,
