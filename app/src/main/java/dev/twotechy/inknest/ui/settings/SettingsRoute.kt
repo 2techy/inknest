@@ -20,24 +20,31 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.platform.AppLanguageController
 import dev.twotechy.inknest.ui.components.ConfirmationDialog
 import dev.twotechy.inknest.ui.components.LauncherActions
 
 private enum class Confirmation { Disconnect, ClearCache }
+
+internal data class SettingsEnvironment(
+    val launcher: LauncherActions,
+    val language: AppLanguageController,
+    val isDefaultLauncher: Boolean,
+)
 
 @Composable
 internal fun SettingsRoute(
     viewModel: SettingsViewModel,
     page: SettingsPage,
     openPage: (SettingsPage) -> Unit,
-    launcher: LauncherActions,
-    isDefaultLauncher: Boolean,
+    environment: SettingsEnvironment,
     onReviewSetup: () -> Unit,
     modifier: Modifier,
     contentPadding: PaddingValues,
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val language = rememberLanguageSelection(environment.language, page)
     var confirmation by remember(page) { mutableStateOf<Confirmation?>(null) }
     SourceFolderSelection(
         state.pendingFolder,
@@ -54,6 +61,7 @@ internal fun SettingsRoute(
         openPage = openPage,
         back = back,
         displayMode = viewModel::setDisplayMode,
+        language = language.open,
         showStats = viewModel::showStats,
         showPins = viewModel::showPins,
         connect = viewModel::requestFolder,
@@ -64,7 +72,8 @@ internal fun SettingsRoute(
                 Confirmation.Disconnect
         },
         refresh = viewModel::refresh, clearCache = { confirmation = Confirmation.ClearCache },
-        requestLauncher = launcher.request, systemSettings = launcher.openSettings,
+        requestLauncher = environment.launcher.request,
+        systemSettings = environment.launcher.openSettings,
         reviewSetup = onReviewSetup,
         website = {
             openDeveloperWebsite(context)
@@ -73,46 +82,49 @@ internal fun SettingsRoute(
     )
     key(page) {
         SettingsScreen(
-            state = state,
+            state = state.copy(language = language.current),
             page = page,
-            isDefaultLauncher = isDefaultLauncher,
+            isDefaultLauncher = environment.isDefaultLauncher,
             actions = actions,
             modifier = modifier,
             contentPadding = contentPadding,
         )
     }
-    confirmation?.let { selected ->
-        SettingsConfirmation(selected, onConfirm = {
-            confirmation = null
-            if (selected ==
-                Confirmation.Disconnect
-            ) {
-                viewModel.disconnect()
-            } else {
-                viewModel.clearCache()
-            }
-        }, onDismiss = { confirmation = null })
-    }
+    SettingsConfirmation(
+        confirmation,
+        viewModel::disconnect,
+        viewModel::clearCache,
+        onDismiss = { confirmation = null },
+    )
 }
 
 @Composable
 private fun SettingsConfirmation(
-    selected: Confirmation,
-    onConfirm: () -> Unit,
+    selected: Confirmation?,
+    disconnect: () -> Unit,
+    clearCache: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val disconnect = selected == Confirmation.Disconnect
+    if (selected == null) return
+    val disconnecting = selected == Confirmation.Disconnect
     ConfirmationDialog(
         title = stringResource(
-            if (disconnect) R.string.disconnect_source else R.string.clear_reading_cache,
+            if (disconnecting) R.string.disconnect_source else R.string.clear_reading_cache,
         ),
         message = stringResource(
-            if (disconnect) R.string.disconnect_description else R.string.clear_cache_description,
+            if (disconnecting) {
+                R.string.disconnect_description
+            } else {
+                R.string.clear_cache_description
+            },
         ),
         confirmLabel = stringResource(
-            if (disconnect) R.string.confirm_disconnect else R.string.confirm_clear_cache,
+            if (disconnecting) R.string.confirm_disconnect else R.string.confirm_clear_cache,
         ),
-        onConfirm = onConfirm,
+        onConfirm = {
+            onDismiss()
+            if (disconnecting) disconnect() else clearCache()
+        },
         onDismiss = onDismiss,
     )
 }

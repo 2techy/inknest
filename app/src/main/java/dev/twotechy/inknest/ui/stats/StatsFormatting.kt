@@ -5,6 +5,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
+import dev.twotechy.inknest.ui.components.currentUiLocale
 import java.text.NumberFormat
 
 @Composable
@@ -13,7 +14,10 @@ internal fun formatStatsAmount(amount: StatisticsAmount, unit: StatisticsUnit): 
         StatisticsUnit.Time -> formatReadingTime(amount.seconds)
 
         StatisticsUnit.Pages -> amount.pages?.let {
-            stringResource(R.string.stats_pages_value, NumberFormat.getIntegerInstance().format(it))
+            stringResource(
+                R.string.stats_pages_value,
+                NumberFormat.getIntegerInstance(currentUiLocale()).format(it),
+            )
         } ?: stringResource(R.string.stats_unknown)
     }
 
@@ -27,7 +31,10 @@ internal fun formatReadingTime(seconds: Long): String = when {
 @Composable
 internal fun formatStatsAverage(value: Double?, unit: StatisticsUnit): String {
     if (value == null) return stringResource(R.string.stats_unknown)
-    val number = NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1 }
+    val number = NumberFormat.getNumberInstance(currentUiLocale()).apply {
+        maximumFractionDigits =
+            1
+    }
         .format(if (unit == StatisticsUnit.Time) value / 60 else value)
     return stringResource(
         if (unit ==

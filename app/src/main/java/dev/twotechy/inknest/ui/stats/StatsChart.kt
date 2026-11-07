@@ -24,6 +24,7 @@ import dev.twotechy.inknest.data.repository.StatisticsBucket
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
+import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
 import java.text.NumberFormat
@@ -55,7 +56,10 @@ internal fun StatsChart(buckets: List<StatisticsBucket>, options: StatsOptions) 
 
 @Composable
 private fun ChartAxis(scale: Long, unit: StatisticsUnit) {
-    val number = NumberFormat.getNumberInstance().apply { maximumFractionDigits = 0 }
+    val number = NumberFormat.getNumberInstance(currentUiLocale()).apply {
+        maximumFractionDigits =
+            0
+    }
     val display = if (unit == StatisticsUnit.Time) scale / 60 else scale
     Column(
         Modifier.width(InkStatsTokens.chartAxisWidth).height(InkStatsTokens.chartHeight),
@@ -126,6 +130,7 @@ private fun ChartDates(buckets: List<StatisticsBucket>, granularity: StatisticsG
             StatisticsGranularity.Months -> "MMM yy"
             StatisticsGranularity.Years -> "yyyy"
         },
+        currentUiLocale(),
     )
     val indices = listOf(0, buckets.lastIndex / 2, buckets.lastIndex)
         .filter { it in buckets.indices }.distinct()

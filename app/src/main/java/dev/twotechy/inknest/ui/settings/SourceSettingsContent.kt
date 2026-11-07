@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.SourceStatus
+import dev.twotechy.inknest.ui.components.currentUiLocale
 import java.text.DateFormat
 import java.util.Date
 
@@ -33,11 +34,16 @@ internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActi
 @Composable
 internal fun DataSettingsContent(state: SettingsUiState, actions: SettingsActions) {
     val source = state.source
+    val locale = currentUiLocale()
     Column {
         SettingsValue(
             stringResource(R.string.last_updated),
             source.lastUpdated?.let {
-                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it))
+                DateFormat.getDateTimeInstance(
+                    DateFormat.SHORT,
+                    DateFormat.SHORT,
+                    locale,
+                ).format(Date(it))
             } ?: stringResource(R.string.unknown_value),
         )
         SettingsValue(

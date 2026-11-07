@@ -13,12 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkTextStyles
@@ -28,7 +28,7 @@ import java.util.Date
 @Composable
 internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?, showStats: Boolean = true) {
     val context = LocalContext.current
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = currentUiLocale()
     val time = remember(tick, locale) {
         SimpleDateFormat(
             if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a",
@@ -36,7 +36,10 @@ internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?, showStats: Boo
         ).format(Date(tick))
     }
     val date = remember(tick, locale) {
-        SimpleDateFormat("EEEE, MMMM d", locale).format(Date(tick))
+        SimpleDateFormat(
+            DateFormat.getBestDateTimePattern(locale, "EEEEMMMMd"),
+            locale,
+        ).format(Date(tick))
     }
     val captions =
         listOf(stringResource(R.string.home_today), stringResource(R.string.home_this_week))
@@ -122,9 +125,10 @@ private fun ReadingStats(
     }
 }
 
+@Composable
 private fun formatReadingTime(minutes: Int?): String = when {
-    minutes == null || minutes < 0 -> "—"
-    minutes < 60 -> "$minutes min"
-    minutes % 60 == 0 -> "${minutes / 60} h"
-    else -> "${minutes / 60} h ${minutes % 60} min"
+    minutes == null || minutes < 0 -> stringResource(R.string.unknown_value)
+    minutes < 60 -> stringResource(R.string.home_minutes, minutes)
+    minutes % 60 == 0 -> stringResource(R.string.home_hours, minutes / 60)
+    else -> stringResource(R.string.home_hours_minutes, minutes / 60, minutes % 60)
 }

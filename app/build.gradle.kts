@@ -26,6 +26,16 @@ android {
         buildConfig = true
     }
 
+    androidResources {
+        // Do not let dependency-only translations override our supported locale fallback.
+        localeFilters += listOf("en", "vi")
+    }
+
+    bundle {
+        // Both languages remain available offline when users switch within the app.
+        language { enableSplit = false }
+    }
+
     packaging {
         resources {
             // AGP's default service merge takes precedence over exclusions.
@@ -74,6 +84,7 @@ room3 {
 dependencies {
     // AndroidX platform integration
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.profileinstaller)
 

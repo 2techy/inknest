@@ -43,5 +43,28 @@ HOME returns to InkNest Home when InkNest owns the Home role. Apps and pins rema
 without a reading source.
 
 E-Ink mode grayscales app icons; Standard preserves their colors. Both keep static transitions.
-Appearance can hide mini stats and pins without deleting pins. Device-wide font size controls
+Appearance groups Language and Display mode under General; both open a selection dialog.
+The Home sections group can hide mini stats and pins without deleting pins. Device-wide font size controls
 text. Firmware refresh settings remain managed by the device, not InkNest.
+
+## App language
+
+Settings → Appearance → Language offers System default, English and Tiếng Việt.
+System default follows Android's locale list; unsupported languages fall back to English.
+The names English and Tiếng Việt remain in their own languages. Onboarding follows the
+selected app language without a separate language step. Changing language recreates the
+Activity while retaining the current Settings page; open popups close.
+
+InkNest uses AndroidX AppCompat per-app locales, not a second DataStore preference.
+Android 13 and later share the selection with Android's app-language settings. Older
+Android versions use AppCompat's automatic locale storage. This storage can produce
+StrictMode disk-access diagnostics in debug on Android 12 and earlier, as documented by
+[Android](https://developer.android.com/guide/topics/resources/app-languages).
+
+English resources are the default; Vietnamese resources live in `values-vi`.
+Only en/vi locale resources are packaged, including dependencies, and App Bundle language
+splitting is disabled so both choices stay available offline. Date labels,
+chart captions and number formatting use the UI locale. Language changes do not change
+timezone, stored reading dates or streak calculations. Book metadata, external app names
+and third-party license text remain supplied by their sources. Installed app metadata is
+reloaded after effective UI-locale changes; browsing books does not need a new source scan.

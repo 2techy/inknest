@@ -2,7 +2,6 @@ package dev.twotechy.inknest.ui.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,22 +34,20 @@ internal fun BookFoldersContent(state: SourceConnectionUiState, actions: SourceC
     var removing by remember { mutableStateOf<String?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { removing = null }
     val enabled = state.source.available && !state.saving
-    Column(
-        Modifier.padding(top = InkSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(InkSpacing.sm),
-    ) {
-        Text(stringResource(R.string.book_folders), style = MaterialTheme.typography.labelLarge)
-        if (state.source.booksFolders.isEmpty()) {
-            Text(
-                stringResource(R.string.folder_not_selected),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        state.source.booksFolders.forEach { folder ->
-            BookFolderRow(folder, enabled, actions.replaceBookFolder) { removing = it }
-        }
-        SettingsCommand(stringResource(R.string.add_book_folder), enabled) {
-            actions.selectFolder(SourceFolder.Books)
+    Column(Modifier.padding(top = InkSpacing.lg)) {
+        SettingsSection(stringResource(R.string.book_folders)) {
+            if (state.source.booksFolders.isEmpty()) {
+                Text(
+                    stringResource(R.string.folder_not_selected),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            state.source.booksFolders.forEach { folder ->
+                BookFolderRow(folder, enabled, actions.replaceBookFolder) { removing = it }
+            }
+            SettingsCommand(stringResource(R.string.add_book_folder), enabled) {
+                actions.selectFolder(SourceFolder.Books)
+            }
         }
     }
     removing?.let { uri ->

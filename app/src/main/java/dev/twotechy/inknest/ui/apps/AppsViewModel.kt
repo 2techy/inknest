@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 
 enum class AppsViewMode { Grid, List }
 
+enum class AppsError { Catalog, SavePins }
+
 data class AppItemUiModel(
     val componentId: String,
     val label: String,
@@ -34,7 +36,7 @@ data class AppsUiState(
     val allApps: List<AppItemUiModel> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
-    val error: String? = null,
+    val error: AppsError? = null,
     val canDismissError: Boolean = false,
 )
 
@@ -50,7 +52,7 @@ internal class AppsViewModel(
     )
     private data class Display(val query: String, val searching: Boolean, val mode: AppsViewMode)
 
-    private val actionError = MutableStateFlow<String?>(null)
+    private val actionError = MutableStateFlow<AppsError?>(null)
     private var reloadJob: Job? = null
     private val catalog = combine(
         installedAppsRepository.installedApps,
@@ -103,7 +105,7 @@ internal class AppsViewModel(
             pinnedApps = data.pins.map { item(it.componentId, it.label, it.iconVersion) },
             isLoading = data.loading && data.apps.isEmpty(),
             isRefreshing = data.loading && data.apps.isNotEmpty(),
-            error = error ?: data.error,
+            error = error ?: data.error?.let { AppsError.Catalog },
             canDismissError = error != null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppsUiState())
@@ -136,7 +138,7 @@ internal class AppsViewModel(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                actionError.value = "Unable to save pinned apps. Please try again."
+                actionError.value = AppsError.SavePins
             }
         }
     }

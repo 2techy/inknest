@@ -86,3 +86,9 @@ The production graph remains in `:app`. The separate `:benchmark` instrumentatio
 drives release-like benchmark and unminified profile variants through the real UI and SAF
 boundaries. Synthetic setup exists only in those target source sets; release contains app
 profiles but no fixture or setup entry point. See [benchmarking.md](benchmarking.md).
+
+App language is platform configuration: AppLanguageController delegates to AppCompat, with
+native per-app locale storage on Android 13+ and automatic AppCompat storage below it.
+SettingsRoute combines that platform selection into screen state and owns the transient
+language dialog. No locale is persisted in Room or app-preferences DataStore. Activity
+recreation retains navigation and ViewModels; language changes never replay selection actions.

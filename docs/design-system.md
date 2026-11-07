@@ -112,6 +112,21 @@ Home pins and Apps share the app grid foundation and labelMedium. Home reserves 
 lines for stable rows. Long labels wrap to at most two lines with ellipsis. Book cards stack
 cover/details when the remaining text width would become too small for the current font scale.
 
+## Settings hierarchy
+
+Settings uses the same row hierarchy across categories: 16sp regular titles and 12sp secondary
+summaries, with 4dp between them. Row components own their divider layout so compound rows
+cannot overlay a divider above their content. Selection rows, navigation rows and toggles align to the page
+gutter; navigation and toggle rows share thin full-width dividers. Section headings use 14sp
+medium text, without a decorative horizontal rule. Use the shared section/content gaps of
+24dp/12dp; do not add outlined cards around groups.
+
+Appearance groups Language and Display mode under General, both using a summary row that
+opens the same static selection-dialog shell. Home sections contains the visibility toggles.
+Radio marks belong in the selection dialog; onboarding may keep the same choices inline.
+Read-only metadata stays compact and has no chevron. Outlined buttons are reserved for direct
+commands such as refresh/cache actions, rather than navigating to a child page.
+
 ## Color and display modes
 
 | Semantic base | Hex |

@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
-import dev.twotechy.inknest.ui.theme.InkSpacing
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 
 @Composable
 internal fun SettingsScreen(
@@ -35,7 +35,7 @@ internal fun SettingsScreen(
     ) {
         LazyColumn(
             Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap),
         ) {
             state.error?.let { error ->
                 item {

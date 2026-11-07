@@ -17,6 +17,7 @@ import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.data.source.SafSourceAccess
 import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.platform.AppLanguageController
 import dev.twotechy.inknest.platform.AppLauncher
 import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.LauncherModeController
@@ -51,8 +52,16 @@ internal class AppContainer(
     val readingOpenRepository: ReadingOpenRepository,
     val readingItemDispatcher: ReadingItemDispatcher,
 ) {
+    val appLanguageController = AppLanguageController()
+
     val appViewModelFactory = viewModelFactory {
-        initializer { AppViewModel(foregroundRefreshCoordinator, userPreferencesRepository) }
+        initializer {
+            AppViewModel(
+                foregroundRefreshCoordinator,
+                userPreferencesRepository,
+                installedAppsRepository,
+            )
+        }
     }
     val statsViewModelFactory = viewModelFactory {
         initializer {

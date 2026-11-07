@@ -2,16 +2,16 @@ package dev.twotechy.inknest
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import dev.twotechy.inknest.ui.InkNestApp
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val navigation by lazy {
         ViewModelProvider(this, AppNavigationViewModel.Factory)[AppNavigationViewModel::class.java]
     }

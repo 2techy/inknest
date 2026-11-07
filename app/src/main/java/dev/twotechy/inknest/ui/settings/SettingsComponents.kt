@@ -32,11 +32,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.theme.InkBorder
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkRadius
 import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
@@ -49,45 +52,53 @@ internal fun SettingsRow(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.rowMinHeight)
-            .clickable(
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            )
-            .padding(vertical = InkSettingsTokens.rowPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
-    ) {
-        if (icon != null) {
-            Box(Modifier.size(InkSettingsTokens.leadingSize), contentAlignment = Alignment.Center) {
-                Icon(painterResource(icon), null, Modifier.size(InkSettingsTokens.iconSize))
+    Column {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.rowMinHeight)
+                .clickable(
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                )
+                .padding(vertical = InkSettingsTokens.rowPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
+        ) {
+            if (icon != null) {
+                Box(
+                    Modifier.size(InkSettingsTokens.leadingSize),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(painterResource(icon), null, Modifier.size(InkSettingsTokens.iconSize))
+                }
             }
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            if (description != null) {
-                Text(
-                    description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge)
+                if (description != null) {
+                    Text(
+                        description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (enabled) {
+                Icon(
+                    painterResource(R.drawable.ic_chevron_right),
+                    null,
+                    Modifier.size(InkSettingsTokens.chevronSize),
                 )
             }
         }
-        if (enabled) {
-            Icon(
-                painterResource(R.drawable.ic_chevron_right),
-                null,
-                Modifier.size(InkSettingsTokens.chevronSize),
-            )
-        }
+        HorizontalDivider(
+            thickness = InkBorder.thin,
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
     }
-    HorizontalDivider(thickness = InkBorder.thin, color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
@@ -111,8 +122,11 @@ internal fun SettingsToggle(
     checked: Boolean,
     enabled: Boolean,
     onChange: (Boolean) -> Unit,
-) = SettingsSelectionRow(title, description, SelectionState(checked, enabled, Role.Checkbox)) {
-    onChange(!checked)
+) {
+    SettingsSelectionRow(title, description, SelectionState(checked, enabled, Role.Checkbox)) {
+        onChange(!checked)
+    }
+    HorizontalDivider(thickness = InkBorder.thin, color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 private data class SelectionState(val selected: Boolean, val enabled: Boolean, val role: Role)
@@ -278,18 +292,13 @@ private fun SettingsDescription(text: String) {
 
 @Composable
 internal fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
-        ) {
-            Text(title, style = MaterialTheme.typography.labelLarge)
-            HorizontalDivider(
-                Modifier.weight(1f),
-                thickness = InkBorder.default,
-                color = MaterialTheme.colorScheme.outlineVariant,
-            )
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {
+        Text(
+            title,
+            modifier = Modifier.semantics { heading() },
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Column { content() }
     }
 }

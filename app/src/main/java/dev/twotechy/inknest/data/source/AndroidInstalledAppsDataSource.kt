@@ -2,9 +2,9 @@ package dev.twotechy.inknest.data.source
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import dev.twotechy.inknest.model.AppInfo
 import java.text.Collator
-import java.util.Locale
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,7 +19,8 @@ internal class AndroidInstalledAppsDataSource(
 ) : InstalledAppsDataSource {
 
     override suspend fun loadInstalledApps(): List<AppInfo> = withContext(ioDispatcher) {
-        val packageManager = context.packageManager
+        val localized = ContextCompat.getContextForLanguage(context)
+        val packageManager = localized.packageManager
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
         }
@@ -28,7 +29,7 @@ internal class AndroidInstalledAppsDataSource(
         val resolveInfos = packageManager.queryIntentActivities(intent, 0)
         val packageVersions = mutableMapOf<String, Long>()
 
-        val collator = Collator.getInstance(Locale.getDefault()).apply {
+        val collator = Collator.getInstance(localized.resources.configuration.locales[0]).apply {
             strength = Collator.PRIMARY
         }
 

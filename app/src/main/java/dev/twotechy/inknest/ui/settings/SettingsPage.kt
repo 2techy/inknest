@@ -20,6 +20,7 @@ internal data class SettingsActions(
     val openPage: (SettingsPage) -> Unit,
     val back: () -> Unit,
     val displayMode: (DisplayMode) -> Unit,
+    val language: () -> Unit,
     val showStats: (Boolean) -> Unit,
     val showPins: (Boolean) -> Unit,
     val connect: (SourceFolder) -> Unit,

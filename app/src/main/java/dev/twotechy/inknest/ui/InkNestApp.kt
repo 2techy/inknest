@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,6 +25,7 @@ import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
+import dev.twotechy.inknest.ui.settings.SettingsEnvironment
 import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.settings.SettingsRoute
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
@@ -33,6 +35,8 @@ import dev.twotechy.inknest.ui.theme.InkNestTheme
 internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewModel) {
     val app: AppViewModel = viewModel(factory = container.appViewModelFactory)
     LifecycleEventEffect(Lifecycle.Event.ON_START) { app.onForeground() }
+    val locales = LocalConfiguration.current.locales.toLanguageTags()
+    LaunchedEffect(locales) { app.onLocalesChanged(locales) }
     val settings: SettingsViewModel = viewModel(factory = container.settingsViewModelFactory)
     val onboarding: OnboardingViewModel = viewModel(factory = container.onboardingViewModelFactory)
     val preferences by app.preferences.collectAsStateWithLifecycle()
@@ -104,8 +108,11 @@ private fun InkNestContent(
                         viewModel = settings,
                         page = page,
                         openPage = openPage,
-                        launcher = launcher,
-                        isDefaultLauncher = isDefaultLauncher,
+                        environment = SettingsEnvironment(
+                            launcher,
+                            container.appLanguageController,
+                            isDefaultLauncher,
+                        ),
                         onReviewSetup = {
                             onboarding.restart()
                             navigation.reviewSetup()

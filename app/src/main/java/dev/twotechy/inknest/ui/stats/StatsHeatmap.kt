@@ -29,10 +29,12 @@ import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
+import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkHeatmapPalette
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private data class HeatmapLayout(
     val first: java.time.LocalDate,
@@ -50,8 +52,7 @@ private data class HeatmapLayout(
 @Composable
 internal fun StatsHeatmap(overview: StatsOverview, unit: StatisticsUnit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val labelWidth =
-            InkStatsTokens.heatmapLabelWidth * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val labelWidth = heatmapLabelWidth()
         val available = (maxWidth - labelWidth).coerceAtLeast(InkStatsTokens.heatmapCellSize)
         val columnSize = InkStatsTokens.heatmapCellSize + InkStatsTokens.heatmapHorizontalGap
         val weeks = (available / columnSize).toInt().coerceIn(16, 52)
@@ -75,7 +76,25 @@ internal fun StatsHeatmap(overview: StatsOverview, unit: StatisticsUnit) {
 }
 
 @Composable
+private fun heatmapLabelWidth(): Dp {
+    val locale = currentUiLocale()
+    val formatter = DateTimeFormatter.ofPattern("EEE", locale)
+    val measurer = rememberTextMeasurer()
+    val style = MaterialTheme.typography.bodySmall
+    val density = LocalDensity.current
+    val measured = listOf(0L, 3L, 6L).maxOf { day ->
+        val text = java.time.LocalDate.of(2024, 1, 1).plusDays(day).format(formatter)
+        with(density) { measurer.measure(text, style, softWrap = false).size.width.toDp() }
+    }
+    return maxOf(
+        InkStatsTokens.heatmapLabelWidth * density.fontScale.coerceAtLeast(1f),
+        measured + InkSpacing.xs,
+    )
+}
+
+@Composable
 private fun HeatmapGrid(overview: StatsOverview, unit: StatisticsUnit, layout: HeatmapLayout) {
+    val locale = currentUiLocale()
     val values = (0 until layout.weeks * 7).map { index ->
         val date = layout.first.plusDays(index.toLong())
         date to (overview.activity[date] ?: StatisticsAmount()).value(unit)
@@ -99,7 +118,7 @@ private fun HeatmapGrid(overview: StatsOverview, unit: StatisticsUnit, layout: H
                     Text(
                         layout.first.plusDays(
                             index * 3L,
-                        ).format(DateTimeFormatter.ofPattern("EEE")),
+                        ).format(DateTimeFormatter.ofPattern("EEE", locale)),
                         Modifier.offset(
                             y = layout.rowStep * (index * 3) + (layout.rowStep - labelHeight) / 2,
                         ),
@@ -154,7 +173,8 @@ private fun HeatmapMonths(layout: HeatmapLayout) {
     val style = MaterialTheme.typography.labelSmall
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    val captions = monthCaptions(layout) { text ->
+    val locale = currentUiLocale()
+    val captions = monthCaptions(layout, locale) { text ->
         with(density) { measurer.measure(text, style, softWrap = false).size.width.toDp() }
     }
     Box(
@@ -172,8 +192,12 @@ private fun HeatmapMonths(layout: HeatmapLayout) {
     }
 }
 
-private fun monthCaptions(layout: HeatmapLayout, measure: (String) -> Dp): List<MonthCaption> {
-    val formatter = DateTimeFormatter.ofPattern("MMM")
+private fun monthCaptions(
+    layout: HeatmapLayout,
+    locale: Locale,
+    measure: (String) -> Dp,
+): List<MonthCaption> {
+    val formatter = DateTimeFormatter.ofPattern("MMM", locale)
     val weeks = (0 until layout.weeks).filter { index ->
         val day = layout.first.plusWeeks(index.toLong())
         index == 0 || day.month != day.minusWeeks(1).month

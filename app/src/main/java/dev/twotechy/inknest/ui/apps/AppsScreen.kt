@@ -97,10 +97,18 @@ internal fun AppsScreen(
 
 @Composable
 private fun AppsError(state: AppsUiState, onRetry: () -> Unit, onDismiss: () -> Unit) {
-    val message = state.error ?: return
+    if (state.error == null) return
     val label = if (state.canDismissError) R.string.dismiss else R.string.retry
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
-        Text(message)
+        Text(
+            stringResource(
+                if (state.error == AppsError.SavePins) {
+                    R.string.apps_pins_save_failed
+                } else {
+                    R.string.apps_refresh_failed
+                },
+            ),
+        )
         ActionButton(
             stringResource(label),
             onClick = if (state.canDismissError) onDismiss else onRetry,

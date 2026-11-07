@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -85,7 +86,7 @@ internal fun InkNestBottomBar(
             val labelWidth = with(density) { (maxWidth / 5 - InkSpacing.sm).toPx() }
             val labelsFit = TopLevelDestination.entries.all {
                 measurer.measure(
-                    it.name,
+                    stringResource(it.label()),
                     NavigationLabelStyle.copy(fontWeight = FontWeight.SemiBold),
                     softWrap = false,
                 ).size.width <= labelWidth
@@ -107,7 +108,7 @@ internal fun InkNestBottomBar(
                 }
                 if (!labelsFit) {
                     Text(
-                        selected.name,
+                        stringResource(selected.label()),
                         Modifier.fillMaxWidth().padding(bottom = InkSpacing.sm),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelLarge,
@@ -150,6 +151,7 @@ private fun NavigationEntry(
     onSelect: (TopLevelDestination) -> Unit,
     showLabel: Boolean = true,
 ) {
+    val label = stringResource(tab.label())
     val minHeight = if (showLabel) {
         InkNavigationTokens.minHeight
     } else {
@@ -157,7 +159,7 @@ private fun NavigationEntry(
     }
     Column(
         modifier.heightIn(min = minHeight)
-            .semantics { if (!showLabel) contentDescription = tab.name }
+            .semantics { if (!showLabel) contentDescription = label }
             .selectable(
                 selected = tab == selected,
                 role = Role.Tab,
@@ -172,7 +174,7 @@ private fun NavigationEntry(
         DestinationIcon(tab, tab == selected)
         if (showLabel) {
             Text(
-                tab.name,
+                label,
                 textAlign = TextAlign.Center,
                 style = NavigationLabelStyle,
                 fontWeight = if (tab == selected) FontWeight.SemiBold else FontWeight.Medium,
@@ -205,4 +207,12 @@ private fun DestinationIcon(tab: TopLevelDestination, selected: Boolean) {
         modifier = Modifier.size(NavigationIconSize),
         tint = MaterialTheme.colorScheme.onSurface,
     )
+}
+
+private fun TopLevelDestination.label(): Int = when (this) {
+    TopLevelDestination.Library -> R.string.library_title
+    TopLevelDestination.Stats -> R.string.nav_stats
+    TopLevelDestination.Home -> R.string.nav_home
+    TopLevelDestination.Apps -> R.string.apps_title
+    TopLevelDestination.Settings -> R.string.settings_title
 }

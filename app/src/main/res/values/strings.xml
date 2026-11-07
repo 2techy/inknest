@@ -27,7 +27,7 @@
     <string name="settings_unavailable">System settings are unavailable.</string>
     <string name="settings_title">Settings</string>
     <string name="appearance_title">Appearance</string>
-    <string name="appearance_summary">Display mode and Home sections</string>
+    <string name="appearance_summary">Language, display mode and Home sections</string>
     <string name="launcher_title">Launcher</string>
     <string name="launcher_summary">Choose your default Home app</string>
     <string name="about_title">About</string>
@@ -238,4 +238,16 @@
     <string name="library_layout_grid">Grid</string>
     <string name="library_layout_list">List</string>
     <string name="library_submenu">%1$s ›</string>
+    <string name="language_title">Language</string>
+    <string name="language_system">System default</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_vietnamese" translatable="false">Tiếng Việt</string>
+    <string name="apps_refresh_failed">Unable to refresh apps. Please try again.</string>
+    <string name="apps_pins_save_failed">Unable to save pinned apps. Please try again.</string>
+    <string name="home_minutes">%1$d min</string>
+    <string name="home_hours">%1$d h</string>
+    <string name="home_hours_minutes">%1$d h %2$d min</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_home">Home</string>
+    <string name="settings_general_heading">General</string>
 </resources>

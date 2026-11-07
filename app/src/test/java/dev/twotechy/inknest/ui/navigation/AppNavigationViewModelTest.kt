@@ -58,6 +58,22 @@ class AppNavigationViewModelTest {
         assertEquals(true, vm.onboardingVisible.value)
     }
 
+    @Test fun `locale recreation retains Appearance without reopening completed setup`() {
+        val model = AppNavigationViewModel(
+            SavedStateHandle(
+                mapOf(
+                    "selectedDestination" to "Settings",
+                    "settingsPage" to "Appearance",
+                ),
+            ),
+        )
+        model.handleInitialLaunch(isHome = true, fromHistory = false, restoring = true)
+        model.offerSetup(true)
+        assertEquals("Settings", model.selected.value)
+        assertEquals("Appearance", model.settingsPage.value)
+        assertEquals(false, model.onboardingVisible.value)
+    }
+
     @Test fun `restored picker keeps settings while a new HOME still resets navigation`() {
         val saved = SavedStateHandle(
             mapOf(

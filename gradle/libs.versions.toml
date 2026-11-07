@@ -9,6 +9,7 @@ ktlint = "1.8.0"
 
 # AndroidX platform integration
 activityCompose = "1.13.0"
+appcompat = "1.8.0"
 coreKtx = "1.19.1"
 
 # Lifecycle state holders and structured concurrency
@@ -37,6 +38,7 @@ profileinstaller = "1.4.1"
 
 [libraries]
 # AndroidX platform integration
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 
