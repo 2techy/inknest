@@ -64,3 +64,4 @@ Development targets are iReader Tango 2 and Samsung Galaxy S25 Ultra. E-Ink cont
 Created by [2Techy](https://2techy.dev). Licensed under [MIT](LICENSE).
 
 Third-party components retain their own [licenses and notices](app/src/main/assets/licenses), also available in **Settings → About → Third-party licenses**.
+
