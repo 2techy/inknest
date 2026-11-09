@@ -7,8 +7,9 @@ empty snapshot means zero recorded reading. Runtime mock data is not used.
 
 ## Screen and units
 
-One Time/Pages selector controls Daily avg, the streak's activity criterion, period totals,
-heatmap intensity and the chart. Min today and Pages today remain visible together.
+One Time/Pages selector controls Today, Daily avg, the streak's activity criterion, period
+totals, heatmap intensity and the chart. Only the selected unit appears in Today. The screen
+orders Today, daily average/streak, trend, activity calendar and period totals.
 Daily average covers the last 30 calendar days including today, with zero-activity days
 included. The streak ends today when today has activity; otherwise yesterday may continue
 it until today ends. Missing page data makes a page-based value unknown, not zero.
@@ -105,3 +106,18 @@ Chart totals show just their value and unit. The calendar fills the content widt
 Repository and StatsViewModel use the same injected StatisticsClock. Its shared state checks
 date/zone once per minute; tests use a fake clock and injected dispatchers. Startup refresh
 belongs to the foreground coordinator, while later KOReader source changes still refresh automatically.
+
+## Home reading rhythm
+
+Home shows a time-only calendar between the current book and pinned apps. It uses the same
+responsive 16–52 week density, labels, square cells and grayscale intensity as Stats.
+Future dates are absent. The clock mini stats show today's reading time and a time-based
+reading streak, including yesterday's streak until today ends when today has no activity.
+The three Stats highlights (Today, daily average and streak) share one row with centered values above their labels; text wraps at
+larger font scales without shrinking it.
+
+Home projects up to 52 weeks of daily summaries from StatisticsRepository on an injected
+Default dispatcher and observes the shared StatisticsClock. No snapshot hides the calendar;
+a successfully imported empty snapshot shows an empty calendar. Refresh errors retain the
+cached calendar and expose the stale-data notice. Opening Stats preserves its selected unit.
+Appearance has an independent, default-enabled Reading rhythm toggle in DataStore.

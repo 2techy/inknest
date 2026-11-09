@@ -159,9 +159,15 @@ Home uses the same header, section typography and app icon dimensions as Apps:
 - One structural rule separates the clock overview from reading and launcher content.
 - Reading setup/loading/error notices use a compact outlined row with a 14/20sp title,
   12/16sp description and 12dp padding. The whole actionable row is a touch target.
+- Home orders the clock overview, current book, optional reading rhythm and pins.
+  Reading rhythm opens Stats without changing its selected unit. It uses a time-only calendar
+  with the same responsive 16–52 week columns as Stats, month/weekday labels and the shared grayscale cells.
+  No snapshot hides the section; a successful empty snapshot shows an empty calendar.
 - Pinned apps use the shared 48dp outlined icon frame, 36dp artwork and 12/16sp labels.
   The section heading includes a 48dp action to open Apps. The grid keeps responsive
-  columns, aligned trailing cells and two-line labels at larger font scales.
+  columns, aligned trailing cells and two-line labels at larger font scales. Home displays
+  only the first row in saved order. When pins overflow, a View all action includes the total
+  pin count and opens Apps; all saved pins remain available there.
 - A current-book card has one outline, an 18/24sp title and a text/chevron action beside
   the book details, with a full-width progress track below.
   No nested button or second type family is added to Home.
@@ -252,3 +258,13 @@ This budget counts retained bitmap allocations, excluding active UI references a
 decode buffers. Decodes are serialized and duplicate requests reuse the completed result.
 Cache hits initialize the first frame directly; clear reading cache/disconnect also clears
 cover RAM cache and prevents older in-flight work from repopulating it.
+
+## Stats hierarchy
+
+The Time/Pages control applies to every reading value, including Today. The summary shows
+Today, Daily avg and streak in three equal-width columns, with centered values above their
+labels and no average-period caption. Trend and its existing
+calendar granularities precede the activity calendar and period totals. Sections use spacing
+and light rules without metric cards or animation. Home's reading rhythm visibility is
+independent of its clock mini stats and pinned-app visibility. Clock mini stats show today’s
+reading time and the time-based reading streak.
