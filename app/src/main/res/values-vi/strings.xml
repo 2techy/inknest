@@ -254,4 +254,7 @@
     <string name="home_heatmap_description">Hiển thị hoạt động đọc trên Trang chủ.</string>
     <string name="home_heatmap_title">Nhịp đọc</string>
     <string name="home_all_pins_count">Xem tất cả · %1$d</string>
+    <string name="about_tagline">Bắt đầu hành trình đọc tại đây.</string>
+    <string name="check_for_updates">Kiểm tra cập nhật</string>
+    <string name="updates_coming_soon">Sắp ra mắt</string>
 </resources>

@@ -258,4 +258,7 @@
     <string name="license_material_symbols" translatable="false">Material Symbols</string>
     <string name="license_mit" translatable="false">MIT</string>
     <string name="license_apache" translatable="false">Apache License 2.0</string>
+    <string name="about_tagline">Your reading starts here.</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="updates_coming_soon">Coming soon</string>
 </resources>

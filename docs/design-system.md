@@ -190,7 +190,10 @@ extra tinted backgrounds are required to distinguish these sections.
   These groups do not add another level of navigation.
 - Display mode descriptions belong to the radio choices, avoiding a repeated explanatory
   paragraph. The same choices are used in onboarding.
-- About groups icon/name/version/author into one identity row. Developer tools have been removed.
+- About centers the app icon/name, a short reading-focused tagline and version/author metadata.
+  A full-width outlined Check for updates command is disabled with a Coming soon caption.
+  Website and setup links follow; third-party licenses remains the last navigation row.
+  The update placeholder performs no action or network request. Developer tools remain absent.
 
 ## Onboarding
 
