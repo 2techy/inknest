@@ -83,10 +83,10 @@ Commands use Windows PowerShell. On POSIX use `bash ./gradlew` instead of
 | Connected Android tests | `.\gradlew.bat :app:connectedDebugAndroidTest` |
 | Performance APKs | `.\gradlew.bat :app:assembleBenchmark :benchmark:assembleBenchmark` |
 
-Install on an authorized device using `:app:installDebug` or the README's ADB command.
+Install on an authorized device using `:app:installDebug` or the [development guide's ADB command](docs/en/development.md).
 With multiple devices, specify an ADB serial for installs and `-Device` for the benchmark
 runner. Read native tests before running them on personal devices: they may exercise
-provider grants/lifecycle. See [benchmarking](docs/benchmarking.md) for fixture permissions.
+provider grants/lifecycle. See [benchmarking](docs/en/benchmarking.md) for fixture permissions.
 Do not invent a `:benchmark:lintBenchmark` task; this test module has no such task.
 
 ## Conventions and verification
@@ -130,8 +130,8 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
 - Do not log/commit private book contents, document URIs, keystores, passwords, signed APKs
   or mappings. `.gitignore` covers outputs/signing files and `app/release/`. Keep `plan.md`
   local via `.git/info/exclude` and measurement artifacts under ignored build paths.
-- No network sync/telemetry or project license is configured. Do not add either as an
-  incidental change. Preserve third-party notices; signing is separate from licensing.
+- No network sync/telemetry is configured. Do not add either as an incidental change.
+  The project uses the MIT license. Preserve third-party notices; signing is separate from licensing.
 
 ## Working protocol and completion
 
@@ -149,8 +149,8 @@ Commits without phase/milestone labels, matching existing Git history.
 
 ## Detailed contracts
 
-- [Architecture](docs/architecture.md), [design system](docs/design-system.md)
-- [Source integration](docs/koreader-probe.md), [reading cache/opening](docs/reading-cache.md)
-- [Library](docs/library.md), [statistics](docs/statistics.md), [setup](docs/setup.md)
-- [Release/signing](docs/release.md), [reliability](docs/reliability.md)
-- [Benchmarks and profiles](docs/benchmarking.md)
+- [Architecture](docs/en/architecture.md), [design system](docs/en/design-system.md)
+- [Source integration](docs/en/koreader-integration.md), [reading cache/opening](docs/en/reading-cache.md)
+- [Library](docs/en/library.md), [statistics](docs/en/statistics.md), [setup](docs/en/setup.md)
+- [Release/signing](docs/en/release.md), [reliability](docs/en/reliability.md)
+- [Benchmarks and profiles](docs/en/benchmarking.md)

@@ -1,5 +1,7 @@
 # Reading statistics
 
+[Tiếng Việt](../vi/statistics.md) · [Documentation](README.md)
+
 Statistics reads KOReader's `settings/statistics.sqlite3` through the selected KOReader
 SAF tree. Books inventory and reading history do not supply duration or page counts.
 A missing database, denied grant or unsupported schema is unavailable; only a successful
@@ -21,18 +23,18 @@ weeks including the current partial week), Months (12 months including this mont
 same cached daily amounts without another source fetch. Switching chart granularity does not
 change period totals, average, streak or heatmap. The unit choice applies to every chart mode.
 
-The heatmap spans the full content width with a responsive16–52 Monday–Sunday week
-columns (about26 weeks at the Tango-sized width). A48dp weekday-label gutter grows with
-font scale. Square cells are capped at10dp, with roughly3dp horizontal and2dp vertical gaps. It retains month/weekday axes but has no week-count caption
+The heatmap spans the full content width with a responsive 16–52 Monday–Sunday week
+columns (about 26 weeks at the Tango-sized width). A 48dp weekday-label gutter grows with
+font scale. Square cells are capped at 10dp, with roughly 3dp horizontal and 2dp vertical gaps. It retains month/weekday axes but has no week-count caption
 or Less/More legend. Future dates remain absent; unknown days retain their diagonal mark.
-Empty cells have pale0.75dp outlines; activity uses solid grayscale and2dp corner rounding.
+Empty cells have pale 0.75dp outlines; activity uses solid grayscale and 2dp corner rounding.
 
 Intensity is relative to known positive values in the visible window, separately for Time
 and Pages. The lower 25/50/75-percentile cutoffs split activity into four shades. Zero and
 unknown days do not shift the thresholds. When all active values are equal (including one
-active day), shade3 keeps that activity visible instead of blending into empty cells. The
+active day), shade 3 keeps that activity visible instead of blending into empty cells. The
 shading reflects relative activity, not fixed minute/page thresholds. Totals and
-recorded page semantics are unchanged. No bitmap rendering, Glance or dependency is added.
+recorded page semantics are unchanged.
 
 Library filters and Stats unit tabs share ChoiceTab: 12sp/16sp medium text, a 32dp minimum
 visible surface and at least 48dp touch bounds. Granularity tabs use the same compact typography.
@@ -55,11 +57,11 @@ identity; it is not inferred from a title. Counts are not estimated from time or
 KOReader's own [statistics implementation](https://github.com/koreader/koreader/blob/master/plugins/statistics.koplugin/main.lua)
 can rescale historical page records through its `page_stat` view to a book's current page
 count. InkNest currently preserves recorded layouts instead. Font/layout changes can therefore
-produce totals different from KOReader's rescaled view; this limitation is documented here instead of repeated on the dashboard.
+produce totals different from KOReader's rescaled view and dashboard.
 
 ## Persistence and refresh
 
-The same bounded snapshot reader serves diagnostics and production. It copies SQLite and
+Production uses a bounded snapshot reader. It copies SQLite and
 existing WAL/SHM into a private temporary directory, validates metadata, integrity and required
 columns, opens read-only and removes the copy in finally. Source change/cancellation interrupts
 queries. Up to three attempts handle transient snapshot failures; SAF remains best effort while KOReader writes.

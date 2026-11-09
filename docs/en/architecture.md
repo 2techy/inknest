@@ -1,6 +1,8 @@
 # InkNest architecture
 
-InkNest follows the unidirectional data flow used by Now in Android:
+[Tiếng Việt](../vi/architecture.md) · [Documentation](README.md)
+
+InkNest uses unidirectional data flow:
 repositories expose data; ViewModels produce observable UI state; routes collect state
 with lifecycle awareness and connect actions; screens render state and callbacks.
 
@@ -21,27 +23,25 @@ with lifecycle awareness and connect actions; screens render state and callbacks
   state/callbacks; they do not access repositories or perform IO.
 - `ui/onboarding`: the route owns wizard collection and Back handling. The app supplies
   display preference state/actions; the route does not depend on another feature's ViewModel.
-- Debug diagnostics have their own routes in `src/debug`; release has no probe controls.
-  Runtime mock/preview sources are absent. StrictMode policies exist only in debug.
+- Developer-tool and source-probe routes are absent in both debug and release.
+  Runtime sample-data sources are absent. StrictMode policies exist only in debug;
+  release provides no-op runtime diagnostics.
 - `ui/InkNestApp`: composition root for theme, top-level navigation and feature routes.
   `ui/components` and `ui/theme` own shared UI behavior and design tokens.
 
 ## Deliberate scope
 
-Keep one `:app` module and manual constructor injection at the current project size.
-Do not add Hilt, a domain layer or pass-through use cases solely to resemble a sample's
-module graph. Use repositories directly for simple preference/source operations.
+Keep one `:app` module and manual constructor injection at the current project size. The reading database uses Room schema 6
+with destructive cache fallback during development; preferences, pins and source selections
+remain in DataStore. Stable upgrade compatibility is not promised.
+Additional DI frameworks, domain layers and pass-through use cases are not required
+by the current graph. Use repositories directly for simple preference/source operations.
 Repository failures must not replace saved values with pretend success, and UI labels
 remain Android string resources. Preserve cancellation when handling coroutine failures.
 
 Settings has four categories: Reading & data, Appearance, Launcher and About. This is
 product organization, separate from repository boundaries. Combining menus does not
 combine preference storage with reading-source/cache storage.
-
-Reference inspected locally: `C:/Users/thanh/Downloads/nowinandroid`, especially
-`docs/ArchitectureLearningJourney.md`, `feature/settings/impl/.../SettingsViewModel.kt`
-and `feature/foryou/impl/.../ForYouViewModel.kt`. Follow those separation/state principles
-without copying the sample's scale or unrelated infrastructure.
 
 ## Reading data
 

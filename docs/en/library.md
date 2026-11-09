@@ -1,6 +1,8 @@
 # Library
 
-Library indexes all recognized book files recursively inside the selected Books SAF tree, including
+[Tiếng Việt](../vi/library.md) · [Documentation](README.md)
+
+Library indexes all recognized book files recursively inside the selected Books SAF trees, including
 books never opened in KOReader. KOReader history is optional enrichment for reading status,
 progress and last-read time, not the source of library membership. Files outside the selected
 folder do not appear just because they exist in reader history.
@@ -8,10 +10,17 @@ folder do not appear just because they exist in reader history.
 ## Data flow
 
 `SafBookCatalogSource` lists the granted primary-storage tree through ContentResolver. It validates
-that every document remains inside the root, skips hidden/sidecar folders, prevents repeated-directory
+that every document remains inside each root, skips hidden/sidecar folders, prevents repeated-directory
 traversal, supports cancellation and bounds depth to 64 and total entries to 100,000. Recognized
 extensions include EPUB, PDF, DjVu, MOBI/AZW, FB2, text, comic archives and common document formats.
 It does not scan other device folders or request broad storage access.
+
+| Recognized extensions | Metadata and artwork |
+| --- | --- |
+| `epub` | Extracted title, first creator and supported raster cover when available. |
+| `pdf`, `djvu`, `djv`, `mobi`, `azw`, `azw3`, `fb2`, `txt`, `cbz`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Filename-based entries and placeholder covers. |
+
+Recognition means the file can appear in Library; opening still requires a compatible KOReader handler. Reading status/progress can be enriched from KOReader independently of embedded metadata support.
 
 `FolderLibraryRepository` owns an application-scoped shared scan and a Room inventory partitioned
 by source identity and Books tree. A complete discovery replaces membership transactionally; a
@@ -46,7 +55,7 @@ Unknown values follow known values and ties retain stable folder order/identity.
 explicit KOReader status; 100% alone does not imply Finished.
 
 Tapping a book opens that original document in the selected KOReader package through
-`ReadingItemOpener`. Long-press opens its details and path; that dialog can also open the book.
+`ReadingOpenRepository` and `ReadingItemDispatcher`. Long-press opens its details and path; that dialog can also open the book.
 Grid and list share these actions. Background/HOME dismisses details and a pending UI launch;
 query, filters and scroll position are retained. No debug confirmation or version-specific
 unlock is required, and an unsupported request never silently falls back to app-only launch.

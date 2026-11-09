@@ -1,5 +1,7 @@
 # Current reading cache
 
+[Tiếng Việt](../vi/reading-cache.md) · [Documentation](README.md)
+
 Both debug and release use `CachedReadingRepository`. Home observes Room-backed current reading
 and an independent `ReadingSyncStatus`; pins, clock and statistics remain separate. No runtime
 sample-data path exists. Current reading and tracked history share the same cache and source
@@ -15,14 +17,14 @@ Missing both sources or corrupt data cannot masquerade as a successfully empty s
 file missing/outside grants retains its identity and filename with an availability warning.
 No current-book choice is inferred from statistics or basename/title matches.
 
-Room schema v5 is exported in `app/schemas`. During development, schema changes do not carry
+Room schema 6 is exported in `app/schemas`. During development, schema changes do not carry
 migration code: increment the Room version when changing the schema, and allow Room to recreate
 the disposable reading database when no migration exists. Preferences, pins and SAF configuration
 live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
 rebuilds reading data from the configured source. `reading_items` stores source/path identity, availability,
 metadata, progress/status, source last-read time and nullable history order. `reading_sources`
 stores the current pointer, attempt/success timestamps, error and skipped-history count. The source/path domain identity remains stable across primary-storage aliases. Physical
-cache rows additionally use a fingerprint of the two tree assignments, so a candidate Books
+cache rows additionally use a fingerprint of the KOReader tree and sorted Books trees, so a candidate Books
 selection cannot overwrite the active partition before DataStore switches to it.
 
 Candidate read/validation and cache write precede DataStore activation. A failed candidate keeps
@@ -66,7 +68,7 @@ There is no persisted confirmation/version gate or app-only fallback. Missing ap
 unsupported handler and changed-source outcomes are explicit. File errors offer refresh; access
 or configuration errors offer Settings. `Dispatched` means Android accepted the intent, not that
 KOReader confirmed opening the file. Progress/history/current-book cache remain source-driven.
-Old open-mode/version preference keys are ignored; no preference migration or second store is added.
+Legacy open-mode/version preference keys are ignored.
 
 On some devices (confirmed on Tango 2), ExternalStorageProvider descriptors resolve inside
 KOReader to `/mnt/user/...`, which its Lua file checks cannot reopen. After validating the SAF
@@ -77,8 +79,7 @@ foreign URI-grant flags are removed because the receiving app owns that provider
 other readers/providers retain the original SAF intent. No `file://` exposure bypass is used.
 
 The mapping rejects invalid/traversal IDs and other volumes. A focused regression covers encoded
-names, exact path/MIME preservation, absent/wrong provider ownership and grant handling. Debug
-book probes use the same opener, rather than a separate intent implementation.
+names, exact path/MIME preservation, absent/wrong provider ownership and grant handling. No debug-only opening flow is provided.
 
 
 ## Refresh and failures
@@ -97,33 +98,5 @@ removes reading rows, the Books inventory and covers, then reloads the configure
 Books-only configurations can also clear/rebuild their inventory; cache size includes thumbnails. Switching tabs/clock ticks never starts
 source parsing.
 
-## Verification
 
-On 2026-11-04, 41 shared JVM tests passed in both variants. Six targeted Android tests exercised
-actual Room persistence/reopen, A/B/A, concurrent refresh/caller cancellation, failure recovery,
-candidate isolation and late jobs, success-only Empty, disconnect isolation and actual Lua current
-selection. Two explicit opt-in SAF tests verified invalid root handling and real permission loss
-with the configured cache. The virtual app kept its cached book after grant loss plus process
-restart, then recovered through both native folder pickers. Both grants were restored.
-
-Debug/release builds, lint and Spotless passed. Optimized release was installed and verified with
-real KOReader data: current cache, refresh, clear/reload and restart worked; pins remained intact.
-Home was inspected at the existing virtual 862×1648/density320 setup and font scale 150%, then the
-original font scale and debug build were restored. These results do not establish Tango hardware
-compatibility. Production direct-open now follows the URI dispatch contract above.
-
-Versions were checked against the official [Room releases](https://developer.android.com/jetpack/androidx/releases/room3),
-[SQLite releases](https://developer.android.com/jetpack/androidx/releases/sqlite) and
-[KSP release](https://github.com/google/ksp/releases/tag/2.3.13).
-
-The reading-core extension was checked on 2026-11-05 with six selected JVM tests and targeted
-Android checks for metadata/thumbnail reuse and invalidation, EPUB2/3 and missing
-artwork, decreasing progress, path deduplication, corrupt/partial history and opener failures.
-Existing cache persistence/candidate-cancellation tests also passed. Optimized release opened the
-configured KOReader app cold and warm using real virtual-device data; actual metadata/covers were
-inspected at the existing viewport and 150% font scale. No full launcher regression or hardware
-E-Ink acceptance was repeated.
-
-Statistics snapshots share the reading database (schema 6), but retain their own source
-identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps.
-See [Statistics](statistics.md).
+Statistics shares schema 6 but owns its source identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps. See [statistics](statistics.md) and [reliability checks](reliability.md).

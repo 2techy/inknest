@@ -1,5 +1,7 @@
 # Startup and memory measurements
 
+[Tiếng Việt](../vi/benchmarking.md) · [Documentation](README.md)
+
 `:benchmark` is a self-instrumenting Android test module. Production remains in `:app`.
 The `benchmark` target inherits release R8 optimization and uses debug signing with
 application ID `dev.twotechy.inknest.benchmark`. Its manifest is shell-profileable.
@@ -8,7 +10,7 @@ diagnostics. Release signing remains the separate process in [release.md](releas
 
 ## Run
 
-Use JDK 21, an authorized Android 11+ ADB device, and the repository's Gradle wrapper. On Windows:
+Use Java 25, an authorized Android 11+ ADB device, and the repository's Gradle wrapper. See [development prerequisites](development.md). On Windows:
 
 ```powershell
 ./scripts/benchmark.ps1 -Mode Smoke -Device SERIAL -Label smoke

@@ -1,168 +1,66 @@
 # InkNest
 
-**InkNest Launcher** is an offline, reading-first Android launcher by [2techy](https://2techy.dev).
-It brings KOReader progress, a book library, reading statistics and pinned apps onto an
-E-Ink-oriented Home screen. Books open in KOReader; InkNest does not include a reader engine.
+**A quiet home for your books and apps.**
 
-InkNest is in active development (`0.1.0-dev`) and requires Android 8.0+ (API 26).
-The primary development target is iReader Tango 2; Samsung Galaxy S25 Ultra is the
-secondary target. Device-specific reading and E-Ink behavior need physical verification.
+InkNest is an offline Android launcher built around reading on E-Ink devices. Bring your KOReader library, reading progress and favorite apps together on one Home screen.
+
+[Get started](docs/en/setup.md) · [Documentation](docs/en/README.md) · [Contributing](CONTRIBUTING.md) · [Tiếng Việt](docs/vi/README.md)
 
 ## Features
 
-- **Home:** clock/date, current book/progress, continue reading, mini stats and pinned apps.
-- **Library:** recursively scan multiple book folders, including books never opened;
-  grid/list browsing, search, folder/status filters, sorting and opening in KOReader.
-  EPUB metadata/raster covers are extracted; other formats use filename-based entries
-  and placeholders where metadata is unavailable. See [format support](docs/library.md).
-- **Statistics:** time/pages, daily average, streak, calendar totals, activity heatmap
-  and daily/weekly/monthly/yearly chart views based on KOReader statistics.
-- **Apps/launcher:** find and launch installed apps, pin/reorder shortcuts and optionally
-  select InkNest as Android's default Home app.
-- **Settings/setup:** optional onboarding, reading-source folders, E-Ink grayscale or
-  Standard color icons and toggles for Home stats/pins. Both modes use static transitions.
-- **Gestures:** swipe between main tabs and pull to refresh on supported screens,
-  alongside navigation and refresh controls.
+- **Your reading at a glance.** A clock, current book, progress and reading activity on Home.
+- **One library, multiple folders.** Browse covers or lists, search by title or author, filter and sort, then open books in KOReader.
+- **Reading statistics.** Track time, recorded pages, daily averages and streaks with charts and an activity calendar.
+- **Everyday launcher essentials.** Find and launch installed apps, pin favorites and choose InkNest as your default Home app.
+- **Designed for E-Ink.** A grayscale interface, static transitions and a choice of grayscale or original-color app icons.
+- **English and Vietnamese.** Switch languages in the app, with both available offline.
 
-Apps/pins work without a reading source. Reading integration currently supports KOReader
-(`org.koreader.launcher`) and primary internal storage via Android ExternalStorageProvider.
-SD/cloud providers, reader write-back, network synchronization and OEM display-refresh APIs
-are outside the current implementation.
+## Getting started
 
-## Build and run
+InkNest requires **Android 8.0 or later (API 26)**. Install KOReader separately to connect your reading data; apps and pinned shortcuts also work on their own.
 
-### Prerequisites
+1. [Build and install InkNest](docs/en/development.md).
+2. Open InkNest and choose a display mode. You can skip setup and return to it later.
+3. In **Settings → Reading & data**, select KOReader, its data folder and your book folders.
+4. Refresh your library. Optionally set InkNest as your default launcher in **Settings → Launcher**.
 
-- Android Studio, Android SDK Platform 37 and SDK Platform-Tools.
-- Java 25, specified in [the daemon configuration](gradle/gradle-daemon-jvm.properties).
-  Use a compatible JDK or Studio's bundled JBR. Java 11 in the app's compile options
-  is the bytecode compatibility target, not the build JDK requirement.
-- An Android 8.0+ device/emulator with debugging authorized for installation.
+The [setup guide](docs/en/setup.md) covers folder selection, permissions, recovery and switching back to your previous launcher.
 
-Open this checkout in Android Studio and sync Gradle. Configure the SDK through Studio
-or untracked `local.properties`. Gradle resolves dependencies; no API keys, backend service
-or separate package-install step is required. First sync needs access to the configured
-Gradle/Maven repositories.
+## Build from source
 
-Windows PowerShell, if Java is not already configured:
+Use **Java 25**, **Android SDK Platform 37** and the checked-in Gradle wrapper. From the repository root on Windows:
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
-.\gradlew.bat --version
 .\gradlew.bat :app:assembleDebug
 ```
 
-On macOS/Linux use `bash ./gradlew` instead of `.\gradlew.bat`. Build/dependency versions
-are maintained in the [wrapper configuration](gradle/wrapper/gradle-wrapper.properties)
-and [version catalog](gradle/libs.versions.toml).
+On macOS/Linux, use `bash ./gradlew :app:assembleDebug`. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
-Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. Select `app` in Android Studio
-and run on your device, or install/launch from the repository root with ADB:
+InkNest uses Kotlin, Jetpack Compose, Room, DataStore and manual dependency injection. See [development](docs/en/development.md) for SDK setup, installation and checks, or [architecture](docs/en/architecture.md) for the application structure.
 
-```powershell
-adb devices -l
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n dev.twotechy.inknest/.MainActivity
-```
+## Documentation
 
-With multiple devices, add `-s SERIAL` after `adb`, using the ID from `adb devices -l`.
-Another signing key cannot update an existing installation; avoid uninstalling blindly
-because it deletes local settings.
+| Guide | What it covers |
+| --- | --- |
+| [Setup](docs/en/setup.md) | KOReader connection, folders, language and launcher settings |
+| [Library](docs/en/library.md) | Supported formats, browsing and opening books |
+| [Statistics](docs/en/statistics.md) | Reading metrics, page counting and calendars |
+| [Development](docs/en/development.md) | Toolchain, builds and verification |
+| [Contributing](docs/en/contributing.md) | Bug reports, proposals, pull requests and translations |
+| [All documentation](docs/en/README.md) | Architecture, design, source contracts, benchmarks and releases |
 
-### Connect reading data
+The same guides are available in [Vietnamese](docs/vi/README.md).
 
-1. Install KOReader separately and open a book so its data directory exists.
-2. During onboarding or in **Settings → Reading & data**, select KOReader and its data
-   folder containing `settings.reader.lua` or `history.lua`.
-3. Add book folders through the system picker and refresh Library. Statistics also
-   requires KOReader's `settings/statistics.sqlite3`.
-4. Optionally choose InkNest as the default launcher in **Settings → Launcher**.
+## Project status
 
-Paths vary by device; no fixed `/koreader` or `/webdav` path is assumed. Access is limited
-to granted trees. Failed refreshes retain cached content, but KOReader may not yet have
-flushed its latest session. See [setup and recovery](docs/setup.md) for changing folders,
-clearing cache, reviewing setup and restoring your previous default launcher.
+InkNest is in active development (`0.1.0-dev`). Reading-cache upgrades may rebuild local data; stable upgrade compatibility is not yet promised.
 
-## Architecture and layout
+Reading integration currently supports KOReader (`org.koreader.launcher`) and primary internal storage through Android's document picker. InkNest does not include a reader engine. SD/cloud providers, reader write-back, network synchronization and OEM display-refresh controls are outside the current implementation.
 
-The production app uses Kotlin, Compose/Material 3, lifecycle-aware ViewModels,
-coroutines/Flow and manual DI. Repositories feed UI state; Routes connect platform actions,
-and Screens render state/callbacks. Room 3 caches reading/library/statistics, Preferences
-DataStore saves settings/pins/source selections, and bounded LuaJ/EPUB/SQLite adapters
-read KOReader files. Normal debug/release builds have no runtime mock-data mode.
+Development targets are iReader Tango 2 and Samsung Galaxy S25 Ultra. E-Ink contrast, ghosting and reader compatibility require [physical-device verification](docs/en/reliability.md).
 
-```text
-app/src/main/
-  java/dev/twotechy/inknest/
-    di/                  Shared graph and ViewModel factories
-    data/                Repositories, local storage and source adapters
-    model/               Application models
-    platform/            Android integration, image loading and clocks
-    ui/                  Feature state/routes/screens, shared controls and theme
-  res/                   UI resources
-  assets/licenses/       Third-party notices
-  generated/baselineProfiles/  Versioned, generated app profiles
-app/src/debug/           StrictMode diagnostics
-app/src/release/         No-op diagnostics
-app/src/test/            JVM tests
-app/src/androidTest/     Native integration/lifecycle tests
-app/src/benchmark/       Isolated synthetic fixture/setup for performance variants
-app/schemas/             Exported Room schema snapshots
-benchmark/               Performance instrumentation module
-scripts/benchmark.ps1    Device benchmark/profile runner
-docs/                    Detailed guides and implementation contracts
-```
+## License
 
-Room currently uses schema **6** with destructive cache rebuilding during development;
-pins/preferences/source selections are stored separately. Stable upgrade compatibility
-is not promised for this development version. Read [architecture](docs/architecture.md)
-and [reading cache](docs/reading-cache.md) before changing persistence.
+Created by [2Techy](https://2techy.dev). Licensed under [MIT](LICENSE).
 
-## Development and verification
-
-From the repository root:
-
-```powershell
-.\gradlew.bat spotlessCheck
-.\gradlew.bat :app:testDebugUnitTest
-.\gradlew.bat :app:lintDebug :app:lintRelease
-.\gradlew.bat :app:assembleDebug :app:assembleRelease
-```
-
-Use `spotlessApply` to format Kotlin/Gradle sources. Select a focused JVM test with:
-
-```powershell
-.\gradlew.bat :app:testDebugUnitTest --tests '*StatsViewModelTest'
-```
-
-Android integration tests require a connected test device/emulator:
-
-```powershell
-.\gradlew.bat :app:connectedDebugAndroidTest
-```
-
-Tests cover Room, SAF/source access, book opening/lifecycle and gestures. Inspect selected
-native tests before running on personal devices. JVM tests use JUnit 4 and coroutine test
-dispatchers. See [AGENTS.md](AGENTS.md) for repository working conventions and verification.
-
-### Performance and releases
-
-The separate `:benchmark` module uses a synthetic dataset with release-like R8-optimized
-builds and generates app profiles. Fixtures/setup are excluded from normal debug/release.
-Benchmark instrumentation requires Android 11+ (API 30). See [benchmarking](docs/benchmarking.md)
-for commands, conditions and limits; benchmark infrastructure alone implies no RAM savings.
-
-`assembleRelease` outputs `app/build/outputs/apk/release/app-release-unsigned.apk`.
-Sign before installation/distribution with your private keystore, preserving the same
-certificate for updates. Follow [release signing](docs/release.md) and
-[physical-device acceptance](docs/reliability.md). Keep keys, signed APKs and mappings out of Git.
-
-## Further reading and licensing
-
-- [Source integration/parser limits](docs/koreader-probe.md)
-- [Library](docs/library.md) and [statistics semantics](docs/statistics.md)
-- [Design system](docs/design-system.md)
-
-No project-wide license file is currently included. Third-party notices are packaged in
-[`app/src/main/assets/licenses`](app/src/main/assets/licenses) and shown in Settings → About.
-Those notices do not assign a license to InkNest itself.
+Third-party components retain their own [licenses and notices](app/src/main/assets/licenses), also available in **Settings → About → Third-party licenses**.

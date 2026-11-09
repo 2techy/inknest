@@ -1,0 +1,45 @@
+# Build và phát triển InkNest
+
+[English](../en/development.md) · [Mục lục](README.md)
+
+## Công cụ cần có
+
+- Android Studio, Android SDK Platform 37 và SDK Platform-Tools.
+- Java 25, theo [cấu hình Gradle daemon](../../gradle/gradle-daemon-jvm.properties). Dùng JDK tương thích; JBR đi kèm Studio chỉ phù hợp nếu đúng phiên bản. Java 11 trong compile options là mức tương thích bytecode, không phải JDK để build.
+- Thiết bị hoặc giả lập Android 8.0 trở lên đã cho phép debug để chạy app; instrumentation đo hiệu năng cần Android 11 trở lên.
+
+Mở repo bằng Android Studio và sync Gradle. Đường dẫn SDK nằm trong `local.properties` không được đưa vào Git. Gradle tự tải dependency; không cần backend, API key hoặc bước cài package riêng. Build đầu tiên cần truy cập kho Gradle/Maven đã cấu hình. Phiên bản nằm trong [cấu hình wrapper](../../gradle/wrapper/gradle-wrapper.properties) và [version catalog](../../gradle/libs.versions.toml).
+
+Chạy lệnh PowerShell từ gốc repo. Nếu cần, đặt `JAVA_HOME` tới JDK 25. Trên macOS/Linux, thay `.\gradlew.bat` bằng `bash ./gradlew`; wrapper chưa có executable bit trong Git. Script benchmark dùng PowerShell và gọi wrapper Windows.
+
+## Build và cài đặt
+
+```powershell
+.\gradlew.bat --version
+.\gradlew.bat :app:assembleDebug
+adb devices -l
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dev.twotechy.inknest/.MainActivity
+```
+
+Có thể chạy `app` từ Android Studio hoặc dùng `.\gradlew.bat :app:installDebug`. Nếu có nhiều thiết bị ADB, thêm `-s SERIAL` sau `adb`; với tác vụ thiết bị của Gradle, chọn đích bằng `ANDROID_SERIAL`. APK ký bằng chứng chỉ khác không thể cập nhật bản đã cài. Gỡ ứng dụng xóa cài đặt và ghim, nên dùng thiết bị/profile thử nghiệm riêng khi phù hợp.
+
+Xem [thiết lập](setup.md) để kết nối nguồn đọc thật. Debug/release thông thường không có chế độ dữ liệu mẫu. [Ký bản phát hành](release.md) là bước riêng với build APK debug.
+
+## Kiểm tra
+
+| Mục đích | Lệnh |
+| --- | --- |
+| Kiểm tra / áp dụng định dạng | `.\gradlew.bat spotlessCheck` / `.\gradlew.bat spotlessApply` |
+| Biên dịch Kotlin | `.\gradlew.bat :app:compileDebugKotlin` |
+| JVM test | `.\gradlew.bat :app:testDebugUnitTest` |
+| Chạy riêng JVM test | `.\gradlew.bat :app:testDebugUnitTest --tests '*StatsViewModelTest'` |
+| Lint Android | `.\gradlew.bat :app:lintDebug :app:lintRelease` |
+| Debug và release tối ưu chưa ký | `.\gradlew.bat :app:assembleDebug :app:assembleRelease` |
+| Biên dịch Android test không cần thiết bị | `.\gradlew.bat :app:assembleDebugAndroidTest` |
+| Android test trên thiết bị kết nối | `.\gradlew.bat :app:connectedDebugAndroidTest` |
+| APK đo hiệu năng | `.\gradlew.bat :app:assembleBenchmark :benchmark:assembleBenchmark` |
+
+Với thay đổi code, chạy kiểm tra định dạng, test liên quan, build debug/release bị ảnh hưởng và lint. Không sửa Kotlin khi lint đang chạy. Đọc native test trước khi dùng thiết bị cá nhân: test SAF opt-in có thể thu hồi quyền đã cấu hình. Xem [kiểm tra độ tin cậy](reliability.md) cho phục hồi và vòng đời. Không có task `:benchmark:lintBenchmark`.
+
+Thay đổi chỉ gồm tài liệu cần kiểm tra link, lệnh và diff thay vì chạy ma trận thiết bị. Báo rõ kiểm tra thực sự đã chạy và giới hạn; kiểm tra bố cục trên giả lập không xác nhận phần cứng E-Ink. Xem [đo hiệu năng](benchmarking.md) về dữ liệu mẫu cách ly và phép đo.

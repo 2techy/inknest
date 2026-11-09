@@ -1,13 +1,14 @@
 # Build and sign an APK
 
-Use the checked-in Gradle wrapper and Android Studio's bundled JDK. Dependency versions come
+[Tiếng Việt](../vi/release.md) · [Documentation](README.md)
+
+Use the checked-in Gradle wrapper and Java 25 as described in [development](development.md). Dependency versions come
 from the version catalog. `versionName` and `versionCode` in `app/build.gradle.kts` are the
 single version source; About uses `BuildConfig.VERSION_NAME`.
 
 ## Local builds
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 .\gradlew.bat spotlessCheck :app:assembleDebug :app:assembleRelease :app:lintDebug
 ```
 
@@ -39,14 +40,15 @@ preferences and source selections live in DataStore. Stable upgrade compatibilit
 decided before publishing a stable release. No migration framework is included in dev builds.
 
 Backup and device transfer exclude InkNest data; SAF permissions and cache are device-local.
-There is no network synchronization or telemetry. Debug-only source probes and StrictMode
+There is no network synchronization or telemetry. Developer tools/source probes are absent from both build types. StrictMode
 diagnostics must be absent from the optimized release. Third-party notices remain in About.
-No project license is selected automatically.
+InkNest uses the [MIT license](../../LICENSE); bundled third-party components retain their own licenses.
 
 Before a public release, verify the signed artifact on the physical Tango 2: permissions,
 reading source, Home role, app launch, direct book opening, Library, Stats and recovery.
+Check the launcher/source/opening flows on S25 using [device acceptance](reliability.md).
 Check E-Ink contrast/ghosting on the panel; emulator screenshots cannot establish these.
-Keep the compatibility matrix and known limits with the release. Tag/publish only when requested.
+Include device/firmware versions and known limits in release notes.
 
 ## Known compatibility limits
 

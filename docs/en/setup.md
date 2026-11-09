@@ -1,6 +1,8 @@
 # Set up InkNest
 
-Install the APK, open InkNest and choose E-Ink or Standard display mode. Setup is optional;
+[Tiếng Việt](../vi/setup.md) · [Documentation](README.md)
+
+Build/install an APK using [development](development.md) or [release signing](release.md), open InkNest and choose E-Ink or Standard display mode. Setup is optional;
 Skip setup opens Home. You can revisit it from Settings → About → Review setup.
 
 ## Connect KOReader
@@ -23,8 +25,9 @@ Library combines all Books folders by default. Its folder menu filters one root 
 with search, reading status and sorting. Refresh scans every configured root; an unavailable
 root keeps cached books while other roots continue. If permission is lost, choose that folder again.
 
-This development build uses a new Books-folder configuration key without migration. Reselect
-Books folders after updating; the KOReader data folder, pins and display preferences stay saved.
+Older development builds may use a legacy Books-folder configuration key. After updating
+from those builds, reselect Books folders; the KOReader data folder, pins and display preferences
+are stored separately.
 A failed refresh preserves cached content.
 Clear reading cache rebuilds local reading data and covers without changing pins or appearance.
 Disconnect removes source configuration and local reading cache, not book files or KOReader data.
