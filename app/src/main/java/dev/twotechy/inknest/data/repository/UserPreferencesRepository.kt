@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flowOf
 interface UserPreferencesRepository {
     val appPreferences: Flow<AppPreferences>
     suspend fun setDisplayMode(mode: DisplayMode)
+    suspend fun setShowHomeHeatmap(show: Boolean)
     suspend fun setShowHomeStats(show: Boolean)
     suspend fun setShowHomePinnedApps(show: Boolean)
     suspend fun completeOnboarding()

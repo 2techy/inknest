@@ -49,7 +49,7 @@
     <string name="confirm_disconnect">Disconnect</string>
     <string name="cancel">Cancel</string>
     <string name="mini_stats">Mini stats</string>
-    <string name="mini_stats_description">Show reading time on Home.</string>
+    <string name="mini_stats_description">Show today’s reading time and reading streak on Home.</string>
     <string name="home_pins">Pinned apps</string>
     <string name="home_pins_description">Hide or show this section without removing your pins.</string>
     <string name="eink_mode">E-Ink</string>
@@ -250,4 +250,8 @@
     <string name="nav_stats">Stats</string>
     <string name="nav_home">Home</string>
     <string name="settings_general_heading">General</string>
+    <string name="home_heatmap">Reading rhythm</string>
+    <string name="home_heatmap_description">Show reading activity on Home.</string>
+    <string name="home_heatmap_title">Reading rhythm</string>
+    <string name="home_all_pins_count">View all · %1$d</string>
 </resources>

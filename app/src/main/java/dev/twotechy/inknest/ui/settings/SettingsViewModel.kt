@@ -88,6 +88,7 @@ internal class SettingsViewModel(
     }
 
     fun setDisplayMode(mode: DisplayMode) = save { preferences.setDisplayMode(mode) }
+    fun showHeatmap(show: Boolean) = save { preferences.setShowHomeHeatmap(show) }
     fun showStats(show: Boolean) = save { preferences.setShowHomeStats(show) }
     fun showPins(show: Boolean) = save { preferences.setShowHomePinnedApps(show) }
     fun selectSourceApp(packageName: String) = sourceSetup.selectApp(packageName)

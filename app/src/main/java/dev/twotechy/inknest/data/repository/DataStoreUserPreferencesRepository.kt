@@ -32,6 +32,7 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
         AppPreferences(
             displayMode = DisplayMode.entries.find { mode -> mode.name == it[KEY_DISPLAY_MODE] }
                 ?: DisplayMode.EInk,
+            showHomeHeatmap = it[KEY_SHOW_HEATMAP] ?: true,
             showHomeStats = it[KEY_SHOW_STATS] ?: true,
             showHomePinnedApps = it[KEY_SHOW_PINS] ?: true,
             onboardingCompleted = it[KEY_ONBOARDING_COMPLETED] ?: false,
@@ -40,6 +41,9 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
 
     override suspend fun setDisplayMode(mode: DisplayMode) {
         dataStore.edit { it[KEY_DISPLAY_MODE] = mode.name }
+    }
+    override suspend fun setShowHomeHeatmap(show: Boolean) {
+        dataStore.edit { it[KEY_SHOW_HEATMAP] = show }
     }
     override suspend fun setShowHomeStats(show: Boolean) {
         dataStore.edit { it[KEY_SHOW_STATS] = show }
@@ -102,6 +106,7 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
     internal companion object {
         val KEY_PINNED_COMPONENT_IDS = stringPreferencesKey("pinned_component_ids")
         private val KEY_DISPLAY_MODE = stringPreferencesKey("display_mode")
+        private val KEY_SHOW_HEATMAP = booleanPreferencesKey("show_home_heatmap")
         private val KEY_SHOW_STATS = booleanPreferencesKey("show_home_stats")
         private val KEY_SHOW_PINS = booleanPreferencesKey("show_home_pinned_apps")
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")

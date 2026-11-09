@@ -62,6 +62,7 @@ internal fun SettingsRoute(
         back = back,
         displayMode = viewModel::setDisplayMode,
         language = language.open,
+        showHeatmap = viewModel::showHeatmap,
         showStats = viewModel::showStats,
         showPins = viewModel::showPins,
         connect = viewModel::requestFolder,

@@ -31,6 +31,17 @@ class DataStoreUserPreferencesRepositoryTest {
         return DataStoreUserPreferencesRepository(dataStore)
     }
 
+    @Test fun heatmapDefaultsEnabledAndPersistsIndependently() = testScope.runTest {
+        val repo = createRepository()
+        assertTrue(repo.appPreferences.first().showHomeHeatmap)
+        repo.setShowHomeHeatmap(false)
+        assertEquals(false, repo.appPreferences.first().showHomeHeatmap)
+        repo.setShowHomeStats(false)
+        repo.setShowHomeHeatmap(true)
+        assertTrue(repo.appPreferences.first().showHomeHeatmap)
+        assertEquals(false, repo.appPreferences.first().showHomeStats)
+    }
+
     @Test
     fun `pin changes preserve ordering and uniqueness`() = testScope.runTest {
         val repo = createRepository()

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
 import dev.twotechy.inknest.ui.apps.AppsRoute
 import dev.twotechy.inknest.ui.apps.AppsViewModel
+import dev.twotechy.inknest.ui.home.HomeNavigation
 import dev.twotechy.inknest.ui.home.HomeRoute
 import dev.twotechy.inknest.ui.home.HomeViewModel
 import dev.twotechy.inknest.ui.library.LibraryRoute
@@ -45,8 +46,11 @@ internal fun HomeDestination(
         appIconLoader = container.appIconLoader,
         modifier = Modifier.fillMaxSize(),
         contentPadding = padding,
-        onNavigateToApps = { navigation.select(TopLevelDestination.Apps) },
-        onSettings = { navigation.select(TopLevelDestination.Settings) },
+        navigation = HomeNavigation(
+            apps = { navigation.select(TopLevelDestination.Apps) },
+            stats = { navigation.select(TopLevelDestination.Stats) },
+            settings = { navigation.select(TopLevelDestination.Settings) },
+        ),
     )
 }
 

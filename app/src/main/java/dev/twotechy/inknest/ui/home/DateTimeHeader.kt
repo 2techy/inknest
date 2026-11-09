@@ -42,9 +42,13 @@ internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?, showStats: Boo
         ).format(Date(tick))
     }
     val captions =
-        listOf(stringResource(R.string.home_today), stringResource(R.string.home_this_week))
+        listOf(stringResource(R.string.home_today), stringResource(R.string.stats_streak))
     val values =
-        listOf(formatReadingTime(stats?.todayMinutes), formatReadingTime(stats?.weekMinutes))
+        listOf(
+            formatReadingTime(stats?.todayMinutes),
+            stats?.streakDays?.let { stringResource(R.string.stats_days_value, it) }
+                ?: stringResource(R.string.unknown_value),
+        )
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val density = LocalDensity.current

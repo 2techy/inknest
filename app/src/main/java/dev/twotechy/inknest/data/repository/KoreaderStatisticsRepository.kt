@@ -103,8 +103,8 @@ internal class KoreaderStatisticsRepository(
 
     override val stats = combine(data, clock.moments) { data, (today, _) ->
         data.updatedAt?.let {
-            val (daily, weekly) = miniStatistics(data.days, today)
-            ReadingStats(daily, weekly)
+            val (daily, streak) = miniStatistics(data.days, today)
+            ReadingStats(daily, streak)
         }
     }.flowOn(defaultDispatcher)
 

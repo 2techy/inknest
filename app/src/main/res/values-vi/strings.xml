@@ -49,7 +49,7 @@
     <string name="confirm_disconnect">Ngắt kết nối</string>
     <string name="cancel">Hủy</string>
     <string name="mini_stats">Thống kê nhanh</string>
-    <string name="mini_stats_description">Hiện thời gian đọc trên Trang chủ.</string>
+    <string name="mini_stats_description">Hiện thời gian đọc hôm nay và chuỗi ngày đọc trên Trang chủ.</string>
     <string name="home_pins">Ứng dụng đã ghim</string>
     <string name="home_pins_description">Ẩn hoặc hiện mục này mà không bỏ ghim ứng dụng.</string>
     <string name="eink_mode">E-Ink</string>
@@ -250,4 +250,8 @@
     <string name="nav_stats">Thống kê</string>
     <string name="nav_home">Trang chủ</string>
     <string name="settings_general_heading">Chung</string>
+    <string name="home_heatmap">Nhịp đọc</string>
+    <string name="home_heatmap_description">Hiển thị hoạt động đọc trên Trang chủ.</string>
+    <string name="home_heatmap_title">Nhịp đọc</string>
+    <string name="home_all_pins_count">Xem tất cả · %1$d</string>
 </resources>

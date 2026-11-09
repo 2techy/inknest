@@ -38,6 +38,29 @@ class SettingsViewModelTest {
 
     @After fun teardown() = Dispatchers.resetMain()
 
+    @Test fun heatmapWriteFailureRetainsPreferenceAndRetrySaves() = runTest(dispatcher) {
+        val prefs = TestUserPreferencesRepository()
+        val vm = SettingsViewModel(
+            prefs,
+            UnconnectedSourceSettingsRepository(),
+            AcknowledgementsRepository { "" },
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        prefs.failure = IOException("disk unavailable")
+        vm.showHeatmap(false)
+        runCurrent()
+        assertEquals(true, vm.uiState.value.preferences!!.showHomeHeatmap)
+        assertEquals(SettingsError.Save, vm.uiState.value.error)
+        assertFalse(vm.uiState.value.saving)
+        prefs.failure = null
+        vm.showHeatmap(false)
+        runCurrent()
+        assertFalse(vm.uiState.value.preferences!!.showHomeHeatmap)
+        assertEquals(true, vm.uiState.value.preferences!!.showHomeStats)
+        assertNull(vm.uiState.value.error)
+    }
+
     @Test fun `write failure preserves settings and retry keeps pins and source`() = runTest(
         dispatcher,
     ) {

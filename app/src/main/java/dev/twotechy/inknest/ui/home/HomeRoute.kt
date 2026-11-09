@@ -22,8 +22,7 @@ internal fun HomeRoute(
     appIconLoader: AppIconLoader,
     modifier: Modifier,
     contentPadding: PaddingValues,
-    onNavigateToApps: () -> Unit,
-    onSettings: () -> Unit,
+    navigation: HomeNavigation,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -33,7 +32,7 @@ internal fun HomeRoute(
         loaded?.opening ?: ReadingOpenState.Idle,
         viewModel.bookOpening.actions,
         readingItemDispatcher,
-        ReadingOpenErrorActions(onSettings, viewModel::refresh),
+        ReadingOpenErrorActions(navigation.settings, viewModel::refresh),
     )
 
     HomeScreen(
@@ -44,8 +43,9 @@ internal fun HomeRoute(
             },
             refresh = viewModel::refresh,
             launchApp = rememberAppLaunchAction(appLauncher, viewModel::refreshApps),
-            openApps = onNavigateToApps,
-            settings = onSettings,
+            openStats = navigation.stats,
+            openApps = navigation.apps,
+            settings = navigation.settings,
         ),
         modifier = modifier.padding(contentPadding),
         iconLoader = appIconLoader,

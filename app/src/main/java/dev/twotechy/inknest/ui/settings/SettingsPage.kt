@@ -21,6 +21,7 @@ internal data class SettingsActions(
     val back: () -> Unit,
     val displayMode: (DisplayMode) -> Unit,
     val language: () -> Unit,
+    val showHeatmap: (Boolean) -> Unit,
     val showStats: (Boolean) -> Unit,
     val showPins: (Boolean) -> Unit,
     val connect: (SourceFolder) -> Unit,

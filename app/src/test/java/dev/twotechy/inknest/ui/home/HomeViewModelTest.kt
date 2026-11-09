@@ -5,12 +5,21 @@ import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
+import dev.twotechy.inknest.data.repository.StatisticsRepository
 import dev.twotechy.inknest.data.repository.TestReadingOpenRepository
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingStats
+import dev.twotechy.inknest.model.ReadingSyncIssue
+import dev.twotechy.inknest.model.ReadingSyncStatus
+import dev.twotechy.inknest.model.StatisticsAmount
+import dev.twotechy.inknest.model.StatisticsData
+import dev.twotechy.inknest.platform.clock.StatisticsClock
+import dev.twotechy.inknest.platform.clock.StatisticsMoment
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +50,18 @@ class HomeViewModelTest {
     private val reading = TestReadingRepository()
     private val pins = MutableStateFlow<List<PinnedApp>>(emptyList())
     private val stats = MutableStateFlow<ReadingStats?>(null)
+    private val today = LocalDate.parse("2027-01-03")
+    private val clock = object : StatisticsClock {
+        override val moments = MutableStateFlow(StatisticsMoment(today, ZoneId.of("UTC")))
+    }
+    private var statisticsRefreshes = 0
+    private val statistics = object : StatisticsRepository {
+        override val data = MutableStateFlow(StatisticsData())
+        override val stats = this@HomeViewModelTest.stats
+        override suspend fun refresh() {
+            statisticsRefreshes++
+        }
+    }
     private var reloadApps: suspend () -> Unit = {}
     private var reloadStats: suspend () -> Unit = {}
 
@@ -67,6 +88,9 @@ class HomeViewModelTest {
             override suspend fun refresh() = reloadStats()
         },
         TestReadingOpenRepository(),
+        statistics,
+        clock,
+        dispatcher,
     ).also { store.put("home", it) }
 
     @Test
@@ -119,6 +143,42 @@ class HomeViewModelTest {
         runCurrent()
         assertEquals(2, reading.refreshCalls)
         assertFalse((vm.uiState.value as HomeUiState.Loaded).isRefreshing)
+    }
+
+    @Test fun heatmapProjectsCalendarWindowAndRetainsCacheAcrossFailures() = runTest(dispatcher) {
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        assertNull((vm.uiState.value as HomeUiState.Loaded).activity)
+        val first = LocalDate.parse("2026-01-05")
+        statistics.data.value = StatisticsData(
+            updatedAt = 1,
+            days = listOf(first.minusDays(1), first, today, today.plusDays(1))
+                .associateWith { StatisticsAmount(60, null) },
+        )
+        runCurrent()
+        val activity = (vm.uiState.value as HomeUiState.Loaded).activity!!
+        assertEquals(setOf(first, today), activity.days.keys)
+        statistics.data.value = statistics.data.value.copy(
+            sync = ReadingSyncStatus(stale = true, error = ReadingSyncIssue.Provider),
+        )
+        runCurrent()
+        val stale = (vm.uiState.value as HomeUiState.Loaded).activity!!
+        assertEquals(activity.days, stale.days)
+        assertTrue(stale.sync.stale)
+        clock.moments.value = StatisticsMoment(today.plusDays(1), ZoneId.of("Asia/Ho_Chi_Minh"))
+        runCurrent()
+        val next = (vm.uiState.value as HomeUiState.Loaded).activity!!
+        assertEquals(today.plusDays(1), next.lastDay)
+        assertEquals(setOf(today, today.plusDays(1)), next.days.keys)
+        assertEquals(0, statisticsRefreshes)
+        statistics.data.value = StatisticsData(updatedAt = 2)
+        runCurrent()
+        assertNotNull((vm.uiState.value as HomeUiState.Loaded).activity)
+        assertTrue((vm.uiState.value as HomeUiState.Loaded).activity!!.days.isEmpty())
+        statistics.data.value = StatisticsData()
+        runCurrent()
+        assertNull((vm.uiState.value as HomeUiState.Loaded).activity)
     }
 
     private class TestReadingRepository : ReadingRepository {

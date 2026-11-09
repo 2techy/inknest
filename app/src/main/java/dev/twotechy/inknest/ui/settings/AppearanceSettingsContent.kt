@@ -48,6 +48,13 @@ internal fun AppearanceSettingsContent(state: SettingsUiState, actions: Settings
                 actions.showStats,
             )
             SettingsToggle(
+                stringResource(R.string.home_heatmap),
+                stringResource(R.string.home_heatmap_description),
+                preferences.showHomeHeatmap,
+                !state.saving,
+                actions.showHeatmap,
+            )
+            SettingsToggle(
                 stringResource(R.string.home_pins),
                 stringResource(R.string.home_pins_description),
                 preferences.showHomePinnedApps,

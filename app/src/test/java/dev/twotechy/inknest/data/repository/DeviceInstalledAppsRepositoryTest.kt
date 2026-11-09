@@ -33,6 +33,7 @@ class DeviceInstalledAppsRepositoryTest {
             dev.twotechy.inknest.model.AppPreferences(),
         )
         override suspend fun setDisplayMode(mode: dev.twotechy.inknest.model.DisplayMode) = Unit
+        override suspend fun setShowHomeHeatmap(show: Boolean) = Unit
         override suspend fun setShowHomeStats(show: Boolean) = Unit
         override suspend fun setShowHomePinnedApps(show: Boolean) = Unit
         override suspend fun completeOnboarding() = Unit

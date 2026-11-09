@@ -25,7 +25,7 @@ sealed interface ReadingSectionState {
     data class Content(val current: BookUiModel) : ReadingSectionState
 }
 
-data class HomeReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)
+data class HomeReadingStats(val todayMinutes: Int?, val streakDays: Int?)
 
 sealed interface HomeUiState {
     data object Loading : HomeUiState
@@ -37,6 +37,7 @@ sealed interface HomeUiState {
         val sync: ReadingSyncStatus = ReadingSyncStatus(),
         val isRefreshing: Boolean = false,
         val appsRefreshFailed: Boolean = false,
+        val activity: HomeActivity? = null,
         val opening: ReadingOpenState = ReadingOpenState.Idle,
     ) : HomeUiState
 }

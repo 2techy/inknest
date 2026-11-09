@@ -13,7 +13,7 @@ data class ReadingItem(
     val lastReadAt: Long? = null,
 )
 
-data class ReadingStats(val todayMinutes: Int?, val weekMinutes: Int?)
+data class ReadingStats(val todayMinutes: Int?, val streakDays: Int?)
 
 data class PinnedApp(val componentId: String, val label: String, val iconVersion: Long = 0)
 

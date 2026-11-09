@@ -7,15 +7,20 @@ import dev.twotechy.inknest.data.repository.ReadingOpenRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.ReadingStatsRepository
+import dev.twotechy.inknest.data.repository.StatisticsRepository
 import dev.twotechy.inknest.model.ReadingSyncIssue
+import dev.twotechy.inknest.platform.clock.StatisticsClock
 import dev.twotechy.inknest.ui.reading.ReadingOpenStateHolder
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -24,6 +29,9 @@ internal class HomeViewModel(
     private val installedAppsRepository: InstalledAppsRepository,
     private val readingStatsRepository: ReadingStatsRepository,
     openingRepository: ReadingOpenRepository,
+    statisticsRepository: StatisticsRepository,
+    clock: StatisticsClock,
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     val bookOpening = ReadingOpenStateHolder(openingRepository, viewModelScope)
     private val refreshing = MutableStateFlow(false)
@@ -36,6 +44,10 @@ internal class HomeViewModel(
         installedAppsRepository.error,
     ) { running, loading, error -> RefreshState(running || loading, error != null) }
 
+    private val activity = combine(statisticsRepository.data, clock.moments) { data, moment ->
+        homeActivity(data, moment.today)
+    }.flowOn(defaultDispatcher)
+
     val uiState: StateFlow<HomeUiState> = combine(
         readingRepository.reading,
         installedAppsRepository.pinnedApps,
@@ -45,7 +57,7 @@ internal class HomeViewModel(
     ) { reading, apps, stats, sync, refresh ->
         val readingSection = reading.toReadingSectionState()
         val homePins = apps.map { HomePinUiModel(it.componentId, it.label, it.iconVersion) }
-        val homeStats = stats?.let { HomeReadingStats(it.todayMinutes, it.weekMinutes) }
+        val homeStats = stats?.let { HomeReadingStats(it.todayMinutes, it.streakDays) }
         HomeUiState.Loaded(
             reading = readingSection,
             pinnedApps = homePins,
@@ -54,6 +66,8 @@ internal class HomeViewModel(
             isRefreshing = refresh.running || sync.running,
             appsRefreshFailed = refresh.appsFailed,
         )
+    }.combine(activity) { content, activity ->
+        content.copy(activity = activity)
     }.combine(bookOpening.state) { content, opening ->
         content.copy(opening = opening)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)

@@ -64,6 +64,11 @@ internal fun HomeScreen(
                     }
                 }
                 item { HomeReadingSection(loaded.reading, actions) }
+                if (preferences.showHomeHeatmap) {
+                    loaded.activity?.let { activity ->
+                        item { HomeActivitySection(activity, actions.openStats) }
+                    }
+                }
                 if (preferences.showHomePinnedApps) {
                     item { HomePinnedAppsSection(loaded.pinnedApps, iconLoader, actions) }
                 }

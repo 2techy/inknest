@@ -97,6 +97,8 @@ internal class AppContainer(
                 installedAppsRepository,
                 readingStatsRepository,
                 readingOpenRepository,
+                statisticsRepository,
+                statisticsClock,
             )
         }
     }

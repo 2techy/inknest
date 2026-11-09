@@ -17,6 +17,18 @@ class StatisticsSummaryTest {
     private fun event(time: String, seconds: Long, book: Long = 1) =
         ReadingEvent(Instant.parse(time).toEpochMilli(), seconds, book)
 
+    @Test fun miniStatsUseTimeStreakWithYesterdayGraceAndIgnoreFutureDays() {
+        val today = LocalDate.parse("2026-11-09")
+        val days = mapOf(
+            today.minusDays(2) to dev.twotechy.inknest.model.StatisticsAmount(1, null),
+            today.minusDays(1) to dev.twotechy.inknest.model.StatisticsAmount(120, null),
+            today.plusDays(1) to dev.twotechy.inknest.model.StatisticsAmount(600, 10),
+        )
+        assertEquals(0 to 2, miniStatistics(days, today))
+        assertEquals(0 to 0, miniStatistics(days, today.plusDays(3)))
+        assertEquals(0 to 0, miniStatistics(emptyMap(), today))
+    }
+
     @Test fun rangesKeepRereadsAndAssignCrossMidnightToStartDay() {
         val today = LocalDate.parse("2026-01-01")
         val zone = ZoneId.of("UTC")
@@ -33,7 +45,7 @@ class StatisticsSummaryTest {
         assertEquals(2, dashboard.days.filterKeys { it >= today.minusDays(6) }.size)
         assertEquals(30, week.size)
         assertEquals(300L, week[28].amount.seconds)
-        assertEquals(1 to 6, miniStatistics(events, today, zone))
+        assertEquals(1 to 2, miniStatistics(events, today, zone))
         val year = dashboard.chart(StatisticsGranularity.Months)
         assertEquals(12, year.size)
         assertEquals(LocalDate.parse("2025-02-01"), year.first().date)
@@ -52,8 +64,8 @@ class StatisticsSummaryTest {
             event("2026-11-02T00:30:00Z", 60),
         )
         val today = LocalDate.parse("2026-11-02")
-        assertEquals(0 to 0, miniStatistics(events, today, ZoneId.of("America/New_York")))
-        assertEquals(1 to 1, miniStatistics(events, today, ZoneId.of("UTC")))
+        assertEquals(0 to 1, miniStatistics(events, today, ZoneId.of("America/New_York")))
+        assertEquals(1 to 2, miniStatistics(events, today, ZoneId.of("UTC")))
         val dashboard = buildStatisticsDashboard(events, today, ZoneId.of("America/New_York"))
         val summary = dashboard.chart(StatisticsGranularity.Days)
         assertEquals(3660L, summary.sumOf { it.amount.seconds })
