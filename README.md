@@ -28,7 +28,7 @@ The [setup guide](docs/en/setup.md) covers folder selection, permissions, recove
 
 ## Build from source
 
-Use **Java 25**, **Android SDK Platform 37** and the checked-in Gradle wrapper. From the repository root on Windows:
+Use **Java 21**, **Android SDK Platform 37** and the checked-in Gradle wrapper. From the repository root on Windows:
 
 ```powershell
 .\gradlew.bat :app:assembleDebug

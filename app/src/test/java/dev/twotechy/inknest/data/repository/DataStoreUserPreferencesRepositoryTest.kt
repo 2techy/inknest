@@ -1,8 +1,10 @@
 package dev.twotechy.inknest.data.repository
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -24,10 +26,7 @@ class DataStoreUserPreferencesRepositoryTest {
 
     private fun createRepository(): DataStoreUserPreferencesRepository {
         val testFile = File(tmpFolder.newFolder(), "test_user_prefs.preferences_pb")
-        val dataStore = PreferenceDataStoreFactory.create(
-            scope = testScope,
-            produceFile = { testFile },
-        )
+        val dataStore = testPreferencesDataStore(testFile, testScope)
         return DataStoreUserPreferencesRepository(dataStore)
     }
 
@@ -40,6 +39,36 @@ class DataStoreUserPreferencesRepositoryTest {
         repo.setShowHomeHeatmap(true)
         assertTrue(repo.appPreferences.first().showHomeHeatmap)
         assertEquals(false, repo.appPreferences.first().showHomeStats)
+    }
+
+    @Test fun repeatedWritesSurviveStoreRecreation() = runTest {
+        val file = File(tmpFolder.newFolder(), "reopened.preferences_pb")
+        val firstJob = Job(backgroundScope.coroutineContext[Job])
+        try {
+            val store = testPreferencesDataStore(
+                file,
+                CoroutineScope(backgroundScope.coroutineContext + firstJob),
+            )
+            val repository = DataStoreUserPreferencesRepository(store)
+            repository.pin("reader/Activity")
+            repository.setShowHomeStats(false)
+            repository.setShowHomeStats(true)
+            repository.setShowHomeStats(false)
+        } finally {
+            firstJob.cancelAndJoin()
+        }
+        val secondJob = Job(backgroundScope.coroutineContext[Job])
+        try {
+            val store = testPreferencesDataStore(
+                file,
+                CoroutineScope(backgroundScope.coroutineContext + secondJob),
+            )
+            val repository = DataStoreUserPreferencesRepository(store)
+            assertEquals(listOf("reader/Activity"), repository.pinnedComponentIds.first())
+            assertEquals(false, repository.appPreferences.first().showHomeStats)
+        } finally {
+            secondJob.cancelAndJoin()
+        }
     }
 
     @Test

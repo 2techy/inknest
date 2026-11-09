@@ -62,8 +62,9 @@ Other important paths:
 
 ## Development commands
 
-Run from the repository root. Java 25 is specified in
-`gradle/gradle-daemon-jvm.properties`; use a compatible JDK or Studio's bundled JBR.
+Run from the repository root. Java 21 is specified in
+`gradle/gradle-daemon-jvm.properties`. App and benchmark use Java/Kotlin target 21.
+Use JDK 21; Studio's bundled JBR is suitable only if it matches this version.
 Install Android SDK Platform 37 and Platform-Tools. Gradle resolves dependencies without
 a separate install command. SDK location belongs in untracked `local.properties`.
 

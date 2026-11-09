@@ -6,7 +6,7 @@
 
 ## Chạy công cụ
 
-Dùng Java 25, thiết bị ADB Android 11 trở lên đã cấp quyền và Gradle wrapper của repo. Xem [công cụ phát triển](development.md). Trên Windows:
+Dùng Java 21, thiết bị ADB Android 11 trở lên đã cấp quyền và Gradle wrapper của repo. Xem [công cụ phát triển](development.md). Trên Windows:
 
 ```powershell
 ./scripts/benchmark.ps1 -Mode Smoke -Device SERIAL -Label smoke

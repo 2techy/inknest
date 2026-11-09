@@ -2,7 +2,7 @@
 
 [English](../en/release.md) · [Mục lục](README.md)
 
-Dùng Gradle wrapper trong repo và Java 25 theo [phát triển](development.md). Phiên bản dependency từ version catalog. `versionName` và `versionCode` trong `app/build.gradle.kts` là nguồn phiên bản duy nhất; Giới thiệu dùng `BuildConfig.VERSION_NAME`.
+Dùng Gradle wrapper trong repo và Java 21 theo [phát triển](development.md). Phiên bản dependency từ version catalog. `versionName` và `versionCode` trong `app/build.gradle.kts` là nguồn phiên bản duy nhất; Giới thiệu dùng `BuildConfig.VERSION_NAME`.
 
 ## Build cục bộ
 

@@ -1,6 +1,5 @@
 package dev.twotechy.inknest.data.repository
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import kotlinx.coroutines.flow.first
@@ -18,9 +17,7 @@ class ReadingSourceConfigRepositoryTest {
     @Test fun `independent source keys preserve pins and preferences`() = runTest {
         val file = folder.newFile("source.preferences_pb")
         file.delete()
-        val store = PreferenceDataStoreFactory.create(scope = backgroundScope, produceFile = {
-            file
-        })
+        val store = testPreferencesDataStore(file, backgroundScope)
         val source = ReadingSourceConfigRepository(store)
         val user = DataStoreUserPreferencesRepository(store)
         user.pin("reader/Activity")
@@ -69,9 +66,7 @@ class ReadingSourceConfigRepositoryTest {
     @Test fun multipleRootsKeepSourceIdentityAndStableCacheFingerprint() = runTest {
         val file = folder.newFile("roots.preferences_pb")
         file.delete()
-        val store = PreferenceDataStoreFactory.create(scope = backgroundScope, produceFile = {
-            file
-        })
+        val store = testPreferencesDataStore(file, backgroundScope)
         val source = ReadingSourceConfigRepository(store)
         val saved = ReadingSourceConfig("source", "reader", setOf("content://tree/books"))
         source.activateTree(source.config.first(), saved)

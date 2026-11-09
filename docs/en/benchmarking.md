@@ -10,7 +10,7 @@ diagnostics. Release signing remains the separate process in [release.md](releas
 
 ## Run
 
-Use Java 25, an authorized Android 11+ ADB device, and the repository's Gradle wrapper. See [development prerequisites](development.md). On Windows:
+Use Java 21, an authorized Android 11+ ADB device, and the repository's Gradle wrapper. See [development prerequisites](development.md). On Windows:
 
 ```powershell
 ./scripts/benchmark.ps1 -Mode Smoke -Device SERIAL -Label smoke

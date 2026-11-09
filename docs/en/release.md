@@ -2,7 +2,7 @@
 
 [Tiếng Việt](../vi/release.md) · [Documentation](README.md)
 
-Use the checked-in Gradle wrapper and Java 25 as described in [development](development.md). Dependency versions come
+Use the checked-in Gradle wrapper and Java 21 as described in [development](development.md). Dependency versions come
 from the version catalog. `versionName` and `versionCode` in `app/build.gradle.kts` are the
 single version source; About uses `BuildConfig.VERSION_NAME`.
 

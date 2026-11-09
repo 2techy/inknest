@@ -1,6 +1,5 @@
 package dev.twotechy.inknest.data.repository
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
@@ -124,9 +123,7 @@ class FolderLibraryRepositoryTest {
     private class Harness(directory: File, scope: CoroutineScope) {
         val config =
             ReadingSourceConfigRepository(
-                PreferenceDataStoreFactory.create(scope = scope) {
-                    File(directory, "source.preferences_pb")
-                },
+                testPreferencesDataStore(File(directory, "source.preferences_pb"), scope),
             )
         val inventory = MemoryLibraryInventoryStore()
         val reads = ConcurrentHashMap<String, Int>()
