@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and discussion
+    url: https://github.com/2techy/inknest/discussions
+    about: Ask about setup, usage or ideas before opening an issue.
+  - name: Report a security vulnerability
+    url: https://github.com/2techy/inknest/security/advisories/new
+    about: Share security-sensitive details privately.

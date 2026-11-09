@@ -19,6 +19,10 @@ Không tải lên sách riêng, document URI, database nguồn, khóa ký hoặc
 
 Đóng góp phải giữ khả năng hủy coroutine, báo lỗi ghi và giữ dữ liệu thành công khi đọc gặp lỗi dự kiến. Không tiện thể thêm đồng bộ mạng, telemetry, quyền truy cập bộ nhớ rộng cho production hoặc migration schema. Chính sách nâng cấp cache ổn định phải được quyết định rõ trước bản stable. Không đưa vật liệu ký và artifact build/đo lường vào Git.
 
+## Kiểm tra pull request
+
+Mọi PR vào `master`, kể cả draft và thay đổi tài liệu, chạy check `build`: định dạng, JVM tests debug/release, lint debug/release và biên dịch APK/test. Giữ check xanh, giải quyết review conversation trước khi squash merge. Không bắt buộc người duyệt thứ hai approve. Test emulator Android chạy thủ công; benchmark và nghiệm thu thiết bị thật thực hiện riêng. Xem [GitHub Actions](development.md#github-actions) về artifact và [báo cáo bảo mật](../../SECURITY.md) cho vấn đề nhạy cảm.
+
 ## Tài liệu và bản dịch
 
 Mỗi trang trong `docs/en` có bản cùng tên trong `docs/vi`. Tiếng Anh là bản đối chiếu kỹ thuật; cập nhật cả hai cùng lúc và giữ liên kết đổi ngôn ngữ. Không dịch identifier, lệnh, đường dẫn hoặc đơn vị. Nhãn UI khớp Android string resource tương ứng; dùng tiếng Việt tự nhiên và thuật ngữ thống nhất.

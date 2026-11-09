@@ -49,3 +49,13 @@ Với thay đổi code, chạy kiểm tra định dạng, test liên quan, build
 Thay đổi chỉ gồm tài liệu cần kiểm tra link, lệnh và diff thay vì chạy ma trận thiết bị. Báo rõ kiểm tra thực sự đã chạy và giới hạn; kiểm tra bố cục trên giả lập không xác nhận phần cứng E-Ink. Xem [đo hiệu năng](benchmarking.md) về dữ liệu mẫu cách ly và phép đo.
 
 JVM test của repository tạo Preferences DataStore bằng `OkioStorage` và serializer Preferences thật trên đĩa, để ghi lặp lại được trên các hệ điều hành máy phát triển. Android integration test kiểm tra triển khai storage Android dùng trong production.
+
+## GitHub Actions
+
+[Workflow CI](../../.github/workflows/ci.yml) chạy với mọi pull request vào `master`, kể cả draft, push vào `master` và khi chạy thủ công. Check duy nhất `build` kiểm tra định dạng, JVM tests debug/release, Android lint debug/release và build APK debug/release cùng Android test APK. Thay đổi chỉ gồm docs vẫn chạy check này. CI không cần signing secrets.
+
+CI dùng runner Ubuntu tiêu chuẩn, Temurin 21 và SDK package `platforms;android-37.0`. Chỉ push vào `master` được ghi Gradle cache; PR và workflow thủ công chỉ đọc. Report lỗi hết hạn sau một ngày. Khi chạy CI thủ công có thể bật `upload_debug_apk` để giữ APK debug một ngày; PR thông thường không upload APK.
+
+Chạy [workflow Android tests](../../.github/workflows/android-tests.yml) thủ công tại Actions → Android tests → Run workflow. Workflow dùng một emulator Android 14/API 34 x86_64 và bộ integration test mặc định. Test dùng nguồn thật/thu hồi quyền vẫn là opt-in và bị skip. Report/logcat khi lỗi hết hạn sau một ngày. Kết quả emulator không xác nhận Android 8 hoặc E-Ink thật; benchmark và tạo profile vẫn theo [quy trình thiết bị](benchmarking.md).
+
+Tự động hóa release được mô tả trong [ký bản phát hành](release.md). Workflow pin action và mặc định dùng token chỉ đọc. Repo giữ public, dùng runner tiêu chuẩn; cache trong giới hạn miễn phí 10 GB của repo. Allowance artifact thuộc organization, không có phần riêng cho mỗi repo. Retention log/artifact mặc định của repo là bảy ngày, artifact upload giữ một ngày. Không cấu hình nightly build hoặc runner trả phí.

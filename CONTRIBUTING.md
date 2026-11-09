@@ -19,6 +19,10 @@ Do not upload private books, document URIs, source databases, signing keys or pa
 
 A contribution should preserve cancellation, report failed writes and retain successful data when expected reads fail. Do not add network sync, telemetry, broad production storage access or schema migrations incidentally. Stable cache upgrade policy must be decided explicitly before a stable release. Keep signing material and build/measurement artifacts outside version control.
 
+## Pull request checks
+
+Every PR into `master`, including drafts and documentation changes, runs the `build` check: formatting, debug/release JVM tests, debug/release lint and APK/test compilation. Keep the check green and resolve review conversations before squash merge. An additional approving reviewer is not required. Android emulator tests are dispatched manually; benchmark and physical-device acceptance stay separate. See [GitHub Actions](docs/en/development.md#github-actions) for artifacts and [security reporting](SECURITY.md) for sensitive issues.
+
 ## Documentation and translations
 
 Each document in `docs/en` has a same-named counterpart in `docs/vi`. English is the technical reference; update both versions together and retain the cross-language link. Keep identifiers, commands, paths and units unchanged. Match UI labels to the corresponding Android string resources and use natural Vietnamese with consistent terminology.
