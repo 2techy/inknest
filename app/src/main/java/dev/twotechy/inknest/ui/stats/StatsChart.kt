@@ -25,6 +25,7 @@ import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.currentUiLocale
+import dev.twotechy.inknest.ui.components.formatStatsAmount
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
 import java.text.NumberFormat

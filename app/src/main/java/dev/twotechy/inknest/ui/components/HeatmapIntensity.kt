@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.ui.stats
+package dev.twotechy.inknest.ui.components
 
 // Only known, active days set the relative scale. Empty/unknown days never dilute it.
 internal class HeatmapIntensity(values: List<Long?>) {

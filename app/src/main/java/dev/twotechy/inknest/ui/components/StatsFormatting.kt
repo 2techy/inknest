@@ -1,11 +1,10 @@
-package dev.twotechy.inknest.ui.stats
+package dev.twotechy.inknest.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
-import dev.twotechy.inknest.ui.components.currentUiLocale
 import java.text.NumberFormat
 
 @Composable

@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.stats
 
+import dev.twotechy.inknest.ui.components.HeatmapIntensity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

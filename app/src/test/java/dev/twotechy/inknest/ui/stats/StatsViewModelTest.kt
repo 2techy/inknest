@@ -50,6 +50,33 @@ class StatsViewModelTest {
         Dispatchers.resetMain()
     }
 
+    @Test fun unitSwitchKeepsUnknownPagesAndNeverFetchesSources() = runTest(dispatcher) {
+        repository.data.value = repository.data.value.copy(
+            days = mapOf(today to StatisticsAmount(120, null)),
+        )
+        val saved = SavedStateHandle()
+        val vm = StatsViewModel(repository, saved, clock, dispatcher)
+        store.put("stats", vm)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        assertEquals(StatisticsUnit.Time, vm.uiState.value.options.unit)
+        assertEquals(4.0, vm.uiState.value.overview!!.average)
+        vm.unit(StatisticsUnit.Pages)
+        runCurrent()
+        val pages = vm.uiState.value.overview!!
+        assertEquals(null, pages.average)
+        assertEquals(null, pages.streak)
+        assertEquals(null, pages.today.pages)
+        assertEquals(null, pages.totals[StatisticsPeriod.AllTime]!!.pages)
+        assertEquals(null, pages.activity[today]!!.pages)
+        assertEquals(null, pages.chart.last().amount.pages)
+        assertEquals(0, repository.refreshes)
+        vm.unit(StatisticsUnit.Time)
+        runCurrent()
+        assertEquals(120L, vm.uiState.value.overview!!.today.seconds)
+        assertEquals(4.0, vm.uiState.value.overview!!.average)
+    }
+
     @Test fun calendarAndTimezoneChangesProjectLocalSummariesWithoutRefreshing() = runTest(
         dispatcher,
     ) {

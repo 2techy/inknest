@@ -188,9 +188,9 @@
     <string name="stats_activity">Hoạt động đọc</string>
     <string name="stats_unit_time">Thời gian</string>
     <string name="stats_unit_pages">Số trang</string>
-    <string name="stats_daily_average">TB mỗi ngày</string>
+    <string name="stats_daily_average">TB/ngày</string>
     <string name="stats_streak">Chuỗi ngày đọc</string>
-    <string name="stats_min_today">Phút hôm nay</string>
+    <string name="stats_min_today">Thời gian hôm nay</string>
     <string name="stats_pages_today">Trang hôm nay</string>
     <string name="stats_days_value">%1$d ngày</string>
     <string name="stats_pages_value">%1$s trang</string>

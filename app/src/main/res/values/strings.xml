@@ -190,7 +190,7 @@
     <string name="stats_unit_pages">Pages</string>
     <string name="stats_daily_average">Daily avg</string>
     <string name="stats_streak">Day streak</string>
-    <string name="stats_min_today">Min today</string>
+    <string name="stats_min_today">Time today</string>
     <string name="stats_pages_today">Pages today</string>
     <string name="stats_days_value">%1$d days</string>
     <string name="stats_pages_value">%1$s pages</string>

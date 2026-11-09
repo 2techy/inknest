@@ -16,6 +16,7 @@ import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.ReadingHeatmap
 import dev.twotechy.inknest.ui.components.ReadingSyncNotice
 import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenHeader
@@ -78,13 +79,14 @@ internal fun StatsScreen(
 private fun StatsDashboard(overview: StatsOverview, options: StatsOptions, actions: StatsActions) {
     StatsHighlights(overview, options.unit)
     HorizontalDivider()
-    StatsTotals(overview.totals, options.unit)
-    HorizontalDivider()
-    StatsHeatmap(overview, options.unit)
-    HorizontalDivider()
     Text(stringResource(R.string.stats_trend), style = MaterialTheme.typography.titleMedium)
     StatsGranularities(options.granularity, actions.granularity)
     StatsChart(overview.chart, options)
+    HorizontalDivider()
+    Text(stringResource(R.string.stats_activity), style = MaterialTheme.typography.titleMedium)
+    ReadingHeatmap(overview.activity, overview.lastDay, options.unit)
+    HorizontalDivider()
+    StatsTotals(overview.totals, options.unit)
 }
 
 @Composable

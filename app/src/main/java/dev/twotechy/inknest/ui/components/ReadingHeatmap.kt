@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.ui.stats
+package dev.twotechy.inknest.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -20,19 +20,18 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkHeatmapPalette
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -50,14 +49,18 @@ private data class HeatmapLayout(
 }
 
 @Composable
-internal fun StatsHeatmap(overview: StatsOverview, unit: StatisticsUnit) {
+internal fun ReadingHeatmap(
+    activity: Map<LocalDate, StatisticsAmount>,
+    lastDay: LocalDate,
+    unit: StatisticsUnit,
+) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val labelWidth = heatmapLabelWidth()
         val available = (maxWidth - labelWidth).coerceAtLeast(InkStatsTokens.heatmapCellSize)
         val columnSize = InkStatsTokens.heatmapCellSize + InkStatsTokens.heatmapHorizontalGap
         val weeks = (available / columnSize).toInt().coerceIn(16, 52)
         val layout = HeatmapLayout(
-            overview.lastDay.with(
+            lastDay.with(
                 java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY),
             )
                 .minusWeeks(weeks.toLong() - 1),
@@ -66,11 +69,7 @@ internal fun StatsHeatmap(overview: StatsOverview, unit: StatisticsUnit) {
             labelWidth,
         )
         Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.md)) {
-            Text(
-                stringResource(R.string.stats_activity),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            HeatmapGrid(overview, unit, layout)
+            HeatmapGrid(activity, lastDay, unit, layout)
         }
     }
 }
@@ -93,16 +92,21 @@ private fun heatmapLabelWidth(): Dp {
 }
 
 @Composable
-private fun HeatmapGrid(overview: StatsOverview, unit: StatisticsUnit, layout: HeatmapLayout) {
+private fun HeatmapGrid(
+    activity: Map<LocalDate, StatisticsAmount>,
+    lastDay: LocalDate,
+    unit: StatisticsUnit,
+    layout: HeatmapLayout,
+) {
     val locale = currentUiLocale()
     val values = (0 until layout.weeks * 7).map { index ->
         val date = layout.first.plusDays(index.toLong())
-        date to (overview.activity[date] ?: StatisticsAmount()).value(unit)
+        date to (activity[date] ?: StatisticsAmount()).value(unit)
     }
     val intensity =
-        HeatmapIntensity(values.filter { it.first <= overview.lastDay }.map { it.second })
-    val description = values.filter { it.first <= overview.lastDay }.map {
-        "${it.first}: ${formatStatsAmount(overview.activity[it.first] ?: StatisticsAmount(), unit)}"
+        HeatmapIntensity(values.filter { it.first <= lastDay }.map { it.second })
+    val description = values.filter { it.first <= lastDay }.map {
+        "${it.first}: ${formatStatsAmount(activity[it.first] ?: StatisticsAmount(), unit)}"
     }.joinToString("; ")
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
         Row {
@@ -136,7 +140,7 @@ private fun HeatmapGrid(overview: StatsOverview, unit: StatisticsUnit, layout: H
                 val gapY = InkStatsTokens.heatmapVerticalGap.toPx()
                 val side = layout.cellSize.toPx()
                 values.forEachIndexed { index, (date, value) ->
-                    if (date <= overview.lastDay) {
+                    if (date <= lastDay) {
                         val top = Offset(
                             index / 7 * column + (column - side) / 2,
                             index % 7 * row + gapY / 2,
