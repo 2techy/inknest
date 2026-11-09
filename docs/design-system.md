@@ -268,3 +268,9 @@ calendar granularities precede the activity calendar and period totals. Sections
 and light rules without metric cards or animation. Home's reading rhythm visibility is
 independent of its clock mini stats and pinned-app visibility. Clock mini stats show today’s
 reading time and the time-based reading streak.
+
+Third-party licenses is the last row in About. Its index lists LuaJ (MIT) and Material
+Symbols (Apache 2.0), each opening a separate scrollable detail page. LuaJ retains its full
+copyright/permission notice; Material Symbols retains both its notice and full Apache
+license. Back returns to the license index, then About. License loading, retry and cached
+content are independent per component; no network request is needed.

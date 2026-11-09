@@ -28,3 +28,36 @@ internal fun AcknowledgementsContent(state: AcknowledgementsUiState, retry: () -
         }
     }
 }
+
+@Composable
+internal fun ThirdPartyLicensesContent(openPage: (SettingsPage) -> Unit) {
+    Column {
+        SettingsRow(
+            stringResource(R.string.license_luaj),
+            stringResource(R.string.license_mit),
+            onClick = { openPage(SettingsPage.LuaJLicense) },
+        )
+        SettingsRow(
+            stringResource(R.string.license_material_symbols),
+            stringResource(R.string.license_apache),
+            onClick = { openPage(SettingsPage.MaterialSymbolsLicense) },
+        )
+    }
+}
+
+@Composable
+internal fun LicenseSettingsContent(
+    page: SettingsPage,
+    state: SettingsUiState,
+    actions: SettingsActions,
+) {
+    val license = page.license
+    if (license == null) {
+        ThirdPartyLicensesContent(actions.openPage)
+    } else {
+        AcknowledgementsContent(
+            state.acknowledgements[license] ?: AcknowledgementsUiState.NotLoaded,
+            actions.retryAcknowledgements,
+        )
+    }
+}

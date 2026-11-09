@@ -43,10 +43,10 @@ internal fun AboutSettingsContent(actions: SettingsActions) {
         }
         Column {
             SettingsRow(stringResource(R.string.developer_website), onClick = actions.website)
+            SettingsRow(stringResource(R.string.review_setup), onClick = actions.reviewSetup)
             SettingsRow(stringResource(R.string.notices_title), onClick = {
                 actions.openPage(SettingsPage.Notices)
             })
-            SettingsRow(stringResource(R.string.review_setup), onClick = actions.reviewSetup)
         }
     }
 }

@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.repository.SourceSettingsState
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.AppLanguage
 import dev.twotechy.inknest.model.AppPreferences
+import dev.twotechy.inknest.model.ThirdPartyLicense
 
 internal enum class SettingsError { Read, Save, Source, FolderConflict }
 
@@ -16,7 +17,7 @@ internal data class SettingsUiState(
     val sourceApps: List<AppInfo> = emptyList(),
     val saving: Boolean = false,
     val error: SettingsError? = null,
-    val acknowledgements: AcknowledgementsUiState = AcknowledgementsUiState.NotLoaded,
+    val acknowledgements: Map<ThirdPartyLicense, AcknowledgementsUiState> = emptyMap(),
 )
 
 internal sealed interface AcknowledgementsUiState {

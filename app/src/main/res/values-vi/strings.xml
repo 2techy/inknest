@@ -69,7 +69,7 @@
     <string name="clear_cache_description">Xóa dữ liệu đọc đã lưu rồi đọc lại nguồn. Giữ nguyên thư mục nguồn, quyền truy cập, ứng dụng đã ghim và tùy chọn ứng dụng.</string>
     <string name="confirm_clear_cache">Xóa bộ nhớ đệm</string>
     <string name="unknown_value">—</string>
-    <string name="notices_title">Ghi nhận và giấy phép</string>
+    <string name="notices_title">Giấy phép bên thứ ba</string>
     <string name="review_setup">Xem lại thiết lập</string>
     <string name="developer_website">Trang web 2techy</string>
     <string name="preferences_read_error">Không thể đọc tùy chọn. Hãy thử lại để tải cài đặt đã lưu.</string>

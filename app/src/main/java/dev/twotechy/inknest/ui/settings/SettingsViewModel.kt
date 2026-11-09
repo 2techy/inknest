@@ -11,6 +11,7 @@ import dev.twotechy.inknest.data.repository.UnconnectedInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
+import dev.twotechy.inknest.model.ThirdPartyLicense
 import dev.twotechy.inknest.ui.source.SourceSetupError
 import dev.twotechy.inknest.ui.source.SourceSetupStateHolder
 import java.io.IOException
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class SettingsViewModel(
@@ -42,7 +44,7 @@ internal class SettingsViewModel(
     private data class ActionState(val saving: Boolean = false, val error: SettingsError? = null)
     private val action = MutableStateFlow(ActionState())
     private val acknowledgements =
-        MutableStateFlow<AcknowledgementsUiState>(AcknowledgementsUiState.NotLoaded)
+        MutableStateFlow<Map<ThirdPartyLicense, AcknowledgementsUiState>>(emptyMap())
     private val loadedPreferences: StateFlow<AppPreferences?> = preferences.appPreferences
         .map<AppPreferences, AppPreferences?> { it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -68,22 +70,24 @@ internal class SettingsViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
-    fun loadAcknowledgements() {
-        if (acknowledgements.value is AcknowledgementsUiState.Content ||
-            acknowledgements.value == AcknowledgementsUiState.Loading
+    fun loadAcknowledgements(license: ThirdPartyLicense) {
+        val current = acknowledgements.value[license]
+        if (current is AcknowledgementsUiState.Content ||
+            current == AcknowledgementsUiState.Loading
         ) {
             return
         }
-        acknowledgements.value = AcknowledgementsUiState.Loading
+        acknowledgements.update { it + (license to AcknowledgementsUiState.Loading) }
         viewModelScope.launch {
-            acknowledgements.value = try {
-                AcknowledgementsUiState.Content(acknowledgementsRepository.read())
+            val result = try {
+                AcknowledgementsUiState.Content(acknowledgementsRepository.read(license))
             } catch (cancelled: CancellationException) {
-                acknowledgements.value = AcknowledgementsUiState.NotLoaded
+                acknowledgements.update { it - license }
                 throw cancelled
             } catch (_: IOException) {
                 AcknowledgementsUiState.Failed
             }
+            acknowledgements.update { it + (license to result) }
         }
     }
 

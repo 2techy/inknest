@@ -39,11 +39,7 @@ internal fun SettingsScreen(
         ) {
             state.error?.let { error ->
                 item {
-                    SettingsErrorPanel(
-                        error,
-                        actions.retry,
-                        actions.dismiss,
-                    )
+                    SettingsErrorPanel(error, actions.retry, actions.dismiss)
                 }
             }
             if (state.preferences == null) {
@@ -79,11 +75,11 @@ internal fun SettingsScreen(
 
                     SettingsPage.About -> item { AboutSettingsContent(actions) }
 
-                    SettingsPage.Notices -> item {
-                        AcknowledgementsContent(
-                            state.acknowledgements,
-                            actions.retryAcknowledgements,
-                        )
+                    SettingsPage.Notices,
+                    SettingsPage.LuaJLicense,
+                    SettingsPage.MaterialSymbolsLicense,
+                    -> item {
+                        LicenseSettingsContent(page, state, actions)
                     }
                 }
             }

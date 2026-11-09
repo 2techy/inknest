@@ -69,15 +69,15 @@
     <string name="clear_cache_description">Clear saved reading data, then read the source again. Keep source folders, access permissions, pinned apps and app preferences.</string>
     <string name="confirm_clear_cache">Clear cache</string>
     <string name="unknown_value">—</string>
-    <string name="notices_title">Acknowledgements</string>
+    <string name="notices_title">Third-party licenses</string>
     <string name="review_setup">Review setup</string>
     <string name="developer_website">2techy website</string>
     <string name="preferences_read_error">Unable to read preferences. Retry to load your saved settings.</string>
     <string name="preferences_save_error">Unable to save preferences. Your last saved settings are unchanged. Please try the action again.</string>
     <string name="source_action_error">The source action failed. Existing source data was kept. Please try again.</string>
     <string name="loading_settings">Loading settings…</string>
-    <string name="loading_notices">Loading acknowledgements…</string>
-    <string name="notices_unavailable">Unable to open acknowledgements. Please try again.</string>
+    <string name="loading_notices">Loading licenses…</string>
+    <string name="notices_unavailable">Unable to open licenses. Please try again.</string>
     <string name="website_unavailable">No browser is available to open this link.</string>
     <string name="setup_title">Welcome to InkNest</string>
     <string name="setup_welcome">A quiet Home for your books and apps. Choose a display mode to get started.</string>
@@ -254,4 +254,8 @@
     <string name="home_heatmap_description">Show reading activity on Home.</string>
     <string name="home_heatmap_title">Reading rhythm</string>
     <string name="home_all_pins_count">View all · %1$d</string>
+    <string name="license_luaj" translatable="false">LuaJ</string>
+    <string name="license_material_symbols" translatable="false">Material Symbols</string>
+    <string name="license_mit" translatable="false">MIT</string>
+    <string name="license_apache" translatable="false">Apache License 2.0</string>
 </resources>

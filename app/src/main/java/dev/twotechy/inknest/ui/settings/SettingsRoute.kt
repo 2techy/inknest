@@ -53,7 +53,7 @@ internal fun SettingsRoute(
         page,
     )
     LaunchedEffect(page) {
-        if (page == SettingsPage.Notices) viewModel.loadAcknowledgements()
+        page.license?.let(viewModel::loadAcknowledgements)
     }
     val back = { openPage(page.parent) }
     BackHandler(page != SettingsPage.Overview, back)
@@ -79,7 +79,7 @@ internal fun SettingsRoute(
         website = {
             openDeveloperWebsite(context)
         }, retry = viewModel::retryRead, dismiss = viewModel::dismissError,
-        retryAcknowledgements = viewModel::loadAcknowledgements,
+        retryAcknowledgements = { page.license?.let(viewModel::loadAcknowledgements) },
     )
     key(page) {
         SettingsScreen(
