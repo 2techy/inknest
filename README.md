@@ -65,3 +65,4 @@ Created by [2Techy](https://2techy.dev). Licensed under [MIT](LICENSE).
 
 Third-party components retain their own [licenses and notices](app/src/main/assets/licenses), also available in **Settings → About → Third-party licenses**.
 
+
