@@ -31,7 +31,28 @@ permissions before distribution. Keep mapping files privately with the matching 
 
 The same package signed with another key cannot replace an existing installation. Prefer a
 separate test device/profile; uninstalling deletes local configuration and pins. This project
-does not automatically uninstall, replace signing identities, tag, upload or publish builds.
+does not automatically uninstall or replace signing identities. Tags select builds for the draft-release workflow below; public release publication remains a maintainer action.
+
+## GitHub draft releases
+
+The [Draft release workflow](../../.github/workflows/release.yml) starts on tags matching `vX.Y.Z`, optionally followed by `-dev`, `-alpha.N`, `-beta.N` or `-rc.N` (N starts at 1). Update `versionName` and increase `versionCode` through a PR before tagging. The APK package must be `dev.twotechy.inknest`, its version must match the tag without `v`, and the tagged commit must belong to the history of `master`.
+
+Build, signing and draft management use separate jobs. The build job checks formatting, debug/release JVM tests and lint, then builds the unsigned release without signing secrets. The signing job aligns/signs/verifies the APK using the repository's `release` environment; it does not check out app code. Only the draft job has release-write and artifact-cleanup permissions, and it also does not check out app code.
+
+Configure environment `release` in repository settings with a deployment tag rule `v*`. Use the existing release key, backed up outside GitHub. Set these environment secrets through GitHub settings or an authenticated local secret-management flow; do not paste values into issues, PRs, chat or commands containing literal passwords:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded existing release keystore |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | Existing signing key alias |
+| `ANDROID_KEY_PASSWORD` | Signing key password |
+
+Set environment variable `ANDROID_SIGNING_CERT_SHA256` to the known certificate SHA-256 from a trusted previously signed APK (`apksigner verify --print-certs`); colons and whitespace are accepted. Missing secrets, an invalid fingerprint, a mismatched certificate or invalid tag/APK metadata fail the workflow. The keystore is decoded into temporary storage and deleted when signing exits; Gradle never receives signing secrets.
+
+After merge, a maintainer creates and pushes the version tag. The workflow creates a **draft**, attaches `InkNest-<version>.apk` and `SHA256SUMS.txt`, and records the commit, version code and certificate fingerprint with generated release notes. Versions with suffixes are marked pre-release. Download that exact APK, verify its checksum/signature and complete [device acceptance](reliability.md) before choosing Publish release.
+
+Runs for the same tag execute serially. A rerun may update an existing draft only when its target commit matches; published releases are never overwritten. Intermediate unsigned/signed artifacts expire after one day and are deleted after successful release upload. Release APKs remain in GitHub Releases, not in Git or long-lived Actions artifacts. If upload fails after draft creation, the draft may be incomplete; rerun the same tag after resolving the error and verify both assets before publishing.
 
 ## Data policy and release gates
 

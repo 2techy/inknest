@@ -1,0 +1,223 @@
+name: Draft release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+      commit: ${{ steps.tag.outputs.commit }}
+      version_code: ${{ steps.apk.outputs.version_code }}
+      unsigned_artifact_id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Validate tag and source commit
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(dev|(alpha|beta|rc)\.[1-9][0-9]*))?$ ]]; then
+            echo 'Unsupported release tag' >&2
+            exit 1
+          fi
+          git fetch --no-tags origin +refs/heads/master:refs/remotes/origin/master
+          commit=$(git rev-parse HEAD)
+          test "$commit" = "$(git rev-parse "refs/tags/$TAG^{commit}")"
+          git merge-base --is-ancestor "$commit" origin/master
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-read-only: true
+          gradle-home-cache-excludes: caches/build-cache-*
+      - name: Check formatting
+        run: bash ./gradlew spotlessCheck --console=plain
+      - name: Run JVM tests
+        run: bash ./gradlew :app:testDebugUnitTest :app:testReleaseUnitTest --console=plain
+      - name: Lint and build release
+        run: bash ./gradlew :app:lintDebug :app:lintRelease :app:assembleRelease --console=plain
+      - name: Verify APK package and version
+        id: apk
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          apk=app/build/outputs/apk/release/app-release-unsigned.apk
+          badging=$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk")
+          package=$(sed -n "s/^package: name='\([^']*\)'.*/\1/p" <<< "$badging")
+          version=$(sed -n "s/^package: .*versionName='\([^']*\)'.*/\1/p" <<< "$badging")
+          code=$(sed -n "s/^package: .*versionCode='\([^']*\)'.*/\1/p" <<< "$badging")
+          test "$package" = dev.twotechy.inknest
+          test "$version" = "$VERSION"
+          [[ "$code" =~ ^[1-9][0-9]*$ ]]
+          echo "version_code=$code" >> "$GITHUB_OUTPUT"
+      - name: Upload unsigned APK for signing
+        id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned-release
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+      - name: Upload failure reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-failure-reports
+          path: |
+            app/build/reports/tests/
+            app/build/test-results/
+            app/build/reports/lint-results-*
+          if-no-files-found: ignore
+          retention-days: 1
+
+  sign:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: release
+    outputs:
+      certificate: ${{ steps.sign.outputs.certificate }}
+      signed_artifact_id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unsigned-release
+          path: ${{ runner.temp }}/unsigned
+      - name: Align APK
+        run: |
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -p -f 4 \
+            "$RUNNER_TEMP/unsigned/app-release-unsigned.apk" "$RUNNER_TEMP/aligned.apk"
+      - name: Sign APK and verify certificate
+        id: sign
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPECTED_CERTIFICATE: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          : "${ANDROID_KEYSTORE_BASE64:?Missing keystore}"
+          : "${ANDROID_KEYSTORE_PASSWORD:?Missing keystore password}"
+          : "${ANDROID_KEY_ALIAS:?Missing key alias}"
+          : "${ANDROID_KEY_PASSWORD:?Missing key password}"
+          : "${EXPECTED_CERTIFICATE:?Missing signing certificate fingerprint}"
+          expected=$(tr -d ':[:space:]' <<< "$EXPECTED_CERTIFICATE" | tr '[:upper:]' '[:lower:]')
+          [[ "$expected" =~ ^[0-9a-f]{64}$ ]]
+          key=$(mktemp "$RUNNER_TEMP/inknest-key.XXXXXX")
+          trap 'rm -f "$key"' EXIT
+          chmod 600 "$key"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$key"
+          mkdir -p "$RUNNER_TEMP/release"
+          apk="$RUNNER_TEMP/release/InkNest-$VERSION.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$key" \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --key-pass env:ANDROID_KEY_PASSWORD --out "$apk" "$RUNNER_TEMP/aligned.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -p 4 "$apk"
+          verification=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk")
+          certificate=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' <<< "$verification" | tr '[:upper:]' '[:lower:]')
+          test "$certificate" = "$expected"
+          echo "certificate=$certificate" >> "$GITHUB_OUTPUT"
+          cd "$RUNNER_TEMP/release"
+          sha256sum "InkNest-$VERSION.apk" > SHA256SUMS.txt
+      - name: Upload signed release assets
+        id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: signed-release
+          path: |
+            ${{ runner.temp }}/release/*.apk
+            ${{ runner.temp }}/release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  draft:
+    needs: [build, sign]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: signed-release
+          path: ${{ runner.temp }}/release
+      - name: Create or update draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.build.outputs.version }}
+          COMMIT: ${{ needs.build.outputs.commit }}
+          VERSION_CODE: ${{ needs.build.outputs.version_code }}
+          CERTIFICATE: ${{ needs.sign.outputs.certificate }}
+        run: |
+          existing="$RUNNER_TEMP/existing-release.json"
+          exists=false
+          if gh api "repos/$GH_REPO/releases/tags/$TAG" > "$existing" 2> "$RUNNER_TEMP/release-query-error"; then
+            jq -e --arg sha "$COMMIT" '.draft == true and .target_commitish == $sha' "$existing" > /dev/null
+            exists=true
+          elif ! grep -q 'HTTP 404' "$RUNNER_TEMP/release-query-error"; then
+            cat "$RUNNER_TEMP/release-query-error" >&2
+            exit 1
+          fi
+          notes="$RUNNER_TEMP/release-notes.md"
+          printf 'Commit: `%s`\n\nVersion code: `%s`\n\nSigning certificate SHA-256: `%s`\n\n' \
+            "$COMMIT" "$VERSION_CODE" "$CERTIFICATE" > "$notes"
+          gh api --method POST "repos/$GH_REPO/releases/generate-notes" \
+            -f tag_name="$TAG" -f target_commitish="$COMMIT" --jq .body >> "$notes"
+          prerelease=false
+          if [[ "$VERSION" == *-* ]]; then prerelease=true; fi
+          if "$exists"; then
+            gh release edit "$TAG" --repo "$GH_REPO" --draft --prerelease="$prerelease" \
+              --title "InkNest $VERSION" --notes-file "$notes"
+          else
+            gh release create "$TAG" --repo "$GH_REPO" --verify-tag --target "$COMMIT" \
+              --draft --prerelease="$prerelease" --title "InkNest $VERSION" --notes-file "$notes"
+          fi
+          gh release upload "$TAG" --repo "$GH_REPO" --clobber \
+            "$RUNNER_TEMP/release/InkNest-$VERSION.apk" "$RUNNER_TEMP/release/SHA256SUMS.txt"
+      - name: Remove intermediate artifacts after upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          UNSIGNED_ID: ${{ needs.build.outputs.unsigned_artifact_id }}
+          SIGNED_ID: ${{ needs.sign.outputs.signed_artifact_id }}
+        run: |
+          for id in "$UNSIGNED_ID" "$SIGNED_ID"; do
+            [[ "$id" =~ ^[0-9]+$ ]]
+            gh api --method DELETE "repos/$GH_REPO/actions/artifacts/$id"
+          done

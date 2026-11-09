@@ -49,3 +49,13 @@ For code changes run formatting, relevant tests, affected debug/release builds a
 Documentation-only changes need link, command and diff validation rather than a device matrix. Report which checks actually ran and any limitations; emulator layout checks do not certify E-Ink hardware. See [benchmarking](benchmarking.md) for isolated fixtures and performance measurements.
 
 JVM repository tests create Preferences DataStore with `OkioStorage` and the real Preferences serializer on disk, so repeated writes work across host operating systems. Android integration tests exercise the production Android storage implementation.
+
+## GitHub Actions
+
+The [CI workflow](../../.github/workflows/ci.yml) runs on every pull request into `master`, including drafts, pushes to `master`, and manual dispatch. Its single `build` check runs formatting, JVM tests for debug/release, Android lint for debug/release, and builds debug/release APKs plus the Android test APK. Documentation-only changes use the same check. No signing secrets are needed for CI.
+
+CI uses standard Ubuntu runners, Temurin 21 and SDK package `platforms;android-37.0`. Gradle cache writes are limited to pushes to `master`; PRs and manual workflows only read it. Failure reports expire after one day. A manual CI run can enable `upload_debug_apk` to retain a debug APK for one day; ordinary PR runs do not upload APKs.
+
+Run the [Android tests workflow](../../.github/workflows/android-tests.yml) manually from Actions → Android tests → Run workflow. It uses one Android 14/API 34 x86_64 emulator and the default integration suite. Real-source/grant-revocation tests remain opt-in and are skipped. Failure reports/logcat expire after one day. Emulator results do not establish Android 8 or physical E-Ink acceptance; benchmarks and profile generation stay in the [device workflow](benchmarking.md).
+
+Release automation is described in [release signing](release.md). Workflows use pinned actions with read-only tokens by default. The repository remains public and uses standard runners; cache stays within the free 10 GB repository limit. Artifact allowances belong to the organization and are not a separate allowance for each repository. Repository log/artifact retention defaults to seven days, with one-day retention for uploaded artifacts. No scheduled nightly builds or paid runners are configured.

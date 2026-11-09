@@ -18,7 +18,28 @@ Trong Android Studio chọn Build → Generate Signed App Bundle or APK → APK,
 
 Kiểm tra APK bằng SDK `apksigner verify --verbose --print-certs <apk>`, ghi SHA-256 bằng `Get-FileHash <apk> -Algorithm SHA256`. Kiểm tra package/phiên bản/quyền trước phân phối. Giữ mapping riêng cùng artifact tương ứng.
 
-Cùng package nhưng khóa khác không thể thay bản đã cài. Ưu tiên thiết bị/profile thử nghiệm riêng; gỡ app xóa cấu hình và ghim. Dự án không tự gỡ app, thay danh tính ký, tag, upload hay xuất bản build.
+Cùng package nhưng khóa khác không thể thay bản đã cài. Ưu tiên thiết bị/profile thử nghiệm riêng; gỡ app xóa cấu hình và ghim. Dự án không tự gỡ app hoặc thay danh tính ký. Tag chọn build cho workflow draft release bên dưới; maintainer vẫn quyết định xuất bản công khai.
+
+## Draft release trên GitHub
+
+[Workflow Draft release](../../.github/workflows/release.yml) bắt đầu với tag `vX.Y.Z`, có thể thêm `-dev`, `-alpha.N`, `-beta.N` hoặc `-rc.N` (N từ 1). Cập nhật `versionName` và tăng `versionCode` qua PR trước khi tạo tag. Package APK phải là `dev.twotechy.inknest`, version khớp tag bỏ `v`, commit của tag thuộc lịch sử `master`.
+
+Build, ký và quản lý draft là ba job riêng. Job build kiểm tra định dạng, JVM tests/lint debug/release rồi build release chưa ký, không nhận signing secrets. Job ký căn chỉnh/ký/xác minh APK qua environment `release` của repo và không checkout code app. Chỉ job draft có quyền ghi release/dọn artifact; job này cũng không checkout code app.
+
+Cấu hình environment `release` trong repository settings với deployment tag rule `v*`. Dùng khóa release hiện có, sao lưu ngoài GitHub. Đặt environment secrets qua GitHub settings hoặc quy trình quản lý secret cục bộ đã xác thực; không dán giá trị vào issue, PR, chat hoặc lệnh chứa mật khẩu trực tiếp:
+
+| Secret | Giá trị |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | Keystore release hiện có mã hóa Base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | Mật khẩu keystore |
+| `ANDROID_KEY_ALIAS` | Alias khóa ký hiện có |
+| `ANDROID_KEY_PASSWORD` | Mật khẩu khóa ký |
+
+Đặt environment variable `ANDROID_SIGNING_CERT_SHA256` bằng SHA-256 chứng chỉ từ APK đã ký đáng tin cậy trước đó (`apksigner verify --print-certs`); chấp nhận dấu hai chấm và khoảng trắng. Thiếu secret, fingerprint sai, chứng chỉ không khớp hoặc tag/metadata APK sai làm workflow thất bại. Keystore chỉ giải mã vào thư mục tạm và bị xóa khi bước ký kết thúc; Gradle không nhận signing secrets.
+
+Sau merge, maintainer tạo và push tag phiên bản. Workflow tạo **draft**, đính kèm `InkNest-<version>.apk`, `SHA256SUMS.txt`, ghi commit/version code/fingerprint cùng release notes tự sinh. Phiên bản có hậu tố được đánh dấu pre-release. Tải đúng APK đó, xác minh checksum/chữ ký và hoàn tất [nghiệm thu thiết bị](reliability.md) trước khi chọn Publish release.
+
+Các run cùng tag chạy tuần tự. Rerun chỉ cập nhật draft có target commit khớp; không ghi đè release đã publish. Artifact chưa ký/đã ký trung chuyển hết hạn sau một ngày, được xóa sau upload thành công. APK release nằm trong GitHub Releases, không lưu trong Git hoặc Actions artifact dài hạn. Nếu upload lỗi sau tạo draft, draft có thể thiếu asset; sửa lỗi rồi rerun cùng tag và xác minh đủ hai asset trước khi publish.
 
 ## Chính sách dữ liệu và điều kiện phát hành
 
