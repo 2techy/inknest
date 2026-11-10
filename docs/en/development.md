@@ -18,6 +18,12 @@ Java/JVM target 21 does not change the minimum Android version: the app still re
 
 ## Build and install
 
+Local builds use version `0.1.0-dev` and code `1`. The [release workflow](release.md) generates
+CalVer and an increasing version code without editing source. To reproduce its metadata
+locally, pass quoted Gradle properties, for example
+`.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
+Use the values recorded by the relevant release run when reproducing a release.
+
 ```powershell
 .\gradlew.bat --version
 .\gradlew.bat :app:assembleDebug

@@ -2,7 +2,7 @@
 
 [English](../en/release.md) · [Mục lục](README.md)
 
-Dùng Gradle wrapper trong repo và Java 21 theo [phát triển](development.md). Phiên bản dependency từ version catalog. `versionName` và `versionCode` trong `app/build.gradle.kts` là nguồn phiên bản duy nhất; Giới thiệu dùng `BuildConfig.VERSION_NAME`.
+Dùng Gradle wrapper trong repo và Java 21 theo [phát triển](development.md). Phiên bản dependency từ version catalog. Build cục bộ mặc định dùng `versionName = "0.1.0-dev"` và `versionCode = 1`; workflow release ghi đè qua Gradle properties `inknestVersionName` và `inknestVersionCode`. Giới thiệu dùng `BuildConfig.VERSION_NAME` của bản build.
 
 ## Build cục bộ
 
@@ -22,9 +22,11 @@ Cùng package nhưng khóa khác không thể thay bản đã cài. Ưu tiên th
 
 ## Draft release trên GitHub
 
-[Workflow Draft release](../../.github/workflows/release.yml) được chạy thủ công từ Actions. Cập nhật `versionName` và tăng `versionCode` qua PR, rồi merge khi CI đạt. Chọn **Actions → Draft release → Run workflow**, chọn `master` và bắt đầu chạy. Nhánh khác và tag bị bỏ qua. Không cần nhập lại phiên bản hoặc tạo tag thủ công.
+[Workflow Draft release](../../.github/workflows/release.yml) được chạy thủ công từ Actions. Merge các thay đổi cần phát hành khi CI đạt, rồi chọn **Actions → Draft release → Run workflow**, chọn `master` và bắt đầu chạy. Nhánh khác và tag bị bỏ qua. Không cần nhập phiên bản, tạo PR đổi phiên bản hoặc tạo tag thủ công.
 
-Run checkout đúng commit trên `master` được chọn khi bắt đầu, kể cả khi có commit mới trong lúc build. Phiên bản được đọc từ APK đã build; package phải là `dev.twotechy.inknest`. Định dạng phiên bản được hỗ trợ là `X.Y.Z`, có thể thêm `-dev`, `-alpha.N`, `-beta.N` hoặc `-rc.N` (N từ 1). Version code phải dương. Tag phiên bản đã tồn tại phải trỏ đến cùng commit; release đã tồn tại phải là draft có target commit tương ứng. Phiên bản đã publish hoặc xung đột làm run dừng.
+Run checkout đúng commit trên `master` được chọn khi bắt đầu, kể cả khi có commit mới trong lúc build. Workflow sinh CalVer `YYYY.M.PATCH` theo thời điểm tạo run ban đầu ở UTC, ví dụ `2026.11.0`. PATCH bắt đầu từ 0 nếu tháng đó chưa có tag khớp; nếu có, lấy PATCH lớn nhất trong các tag của tháng rồi cộng một. Tag của draft cũng được tính; bỏ qua tag phát triển cũ và tag có hậu tố. Workflow truyền phiên bản này cùng `versionCode = 1000000 + github.run_number` vào Gradle, rồi đối chiếu cả hai trong APK đã build và kiểm tra package `dev.twotechy.inknest`. Publish theo thứ tự run number để version code của bản cập nhật luôn tăng. Giữ nguyên chuỗi run number và giá trị cộng thêm của workflow release; nếu đổi phải đối chiếu version code đã phân phối. Code vượt giới hạn Android 2100000000 bị từ chối.
+
+Phiên bản, code, commit và run ID được lưu trong artifact nhỏ `release-version` trong một ngày. Chạy lại toàn bộ job dùng lại các giá trị này, kể cả khi đã sang tháng UTC mới hoặc xuất hiện tag mới. Nếu metadata hết hạn hoặc chưa được upload, tạo run mới; workflow sẽ tính phiên bản theo các tag đang có. Run lỗi trước khi tạo tag không giữ chỗ PATCH. Tag phiên bản đã tồn tại phải trỏ đến cùng commit; release đã tồn tại phải là draft có target commit tương ứng. Phiên bản đã publish hoặc xung đột làm run dừng.
 
 Build, ký và quản lý draft là ba job riêng. Job build kiểm tra định dạng, JVM tests/lint debug/release rồi build release chưa ký, không nhận signing secrets. Job ký căn chỉnh/ký/xác minh APK qua environment `release` của repo và không checkout code app. Chỉ job draft có quyền ghi release/dọn artifact; job này cũng không checkout code app.
 
@@ -39,9 +41,9 @@ Cấu hình environment `release` trong repository settings với deployment **b
 
 Đặt environment variable `ANDROID_SIGNING_CERT_SHA256` bằng SHA-256 chứng chỉ từ APK đã ký đáng tin cậy trước đó (`apksigner verify --print-certs`); chấp nhận dấu hai chấm và khoảng trắng. Thiếu secret, fingerprint sai, chứng chỉ không khớp hoặc tag/metadata APK sai làm workflow thất bại. Keystore chỉ giải mã vào thư mục tạm và bị xóa khi bước ký kết thúc; Gradle không nhận signing secrets.
 
-Sau khi build và ký thành công, job draft tạo tag `v<version>` tại commit đã checkout và tạo **draft**, đính kèm `InkNest-<version>.apk`, `SHA256SUMS.txt`, ghi commit/version code/fingerprint cùng release notes tự sinh. Phiên bản có hậu tố được đánh dấu pre-release. Tải đúng APK đó, xác minh checksum/chữ ký và hoàn tất [nghiệm thu thiết bị](reliability.md) trước khi chọn **Publish release**. Tag được tạo bằng `GITHUB_TOKEN` của workflow; không cần personal access token. Push tag không kích hoạt workflow này.
+Sau khi build và ký thành công, job draft tạo tag `v<version>` tại commit đã checkout và tạo **draft**, đính kèm `InkNest-<version>.apk`, `SHA256SUMS.txt`, ghi commit/version code/fingerprint cùng release notes tự sinh. Các bản CalVer này không được đánh dấu pre-release. Tải đúng APK đó, xác minh checksum/chữ ký và hoàn tất [nghiệm thu thiết bị](reliability.md) trước khi chọn **Publish release**. Tag được tạo bằng `GITHUB_TOKEN` của workflow; không cần personal access token. Push tag không kích hoạt workflow này.
 
-Các run release dùng chung một concurrency group và không hủy run đang chạy. Rerun chỉ dùng lại tag và cập nhật draft khi commit tương ứng khớp; không ghi đè release đã publish. Để thử lại run chưa hoàn tất, chọn **Re-run failed jobs** hoặc **Re-run all jobs** trên run đó để giữ nguyên commit ban đầu. Run mới sau khi `master` thay đổi không thể thay tag của phiên bản cũ. Artifact chưa ký/đã ký trung chuyển hết hạn sau một ngày, được xóa sau upload thành công. Nếu artifact đã hết hạn, chạy lại toàn bộ job. APK release nằm trong GitHub Releases, không lưu trong Git hoặc Actions artifact dài hạn. Nếu tạo draft hoặc upload lỗi sau tạo tag, tag vẫn tồn tại còn draft có thể thiếu hoặc chưa được tạo; sửa lỗi, rerun run ban đầu và xác minh đủ hai asset trước khi publish.
+Các run release dùng chung một concurrency group và không hủy run đang chạy. Rerun chỉ dùng lại tag và cập nhật draft khi commit tương ứng khớp; không ghi đè release đã publish. Để thử lại run chưa hoàn tất, chọn **Re-run failed jobs** hoặc **Re-run all jobs** trên run đó để giữ nguyên commit ban đầu. Run mới tính phiên bản mới theo tag đang có. Artifact chưa ký/đã ký trung chuyển hết hạn sau một ngày, được xóa sau upload thành công; metadata phiên bản cũng hết hạn sau một ngày. Nếu artifact cần dùng đã hết hạn, tạo run mới. APK release nằm trong GitHub Releases, không lưu trong Git hoặc Actions artifact dài hạn. Nếu tạo draft hoặc upload lỗi sau tạo tag, tag vẫn tồn tại còn draft có thể thiếu hoặc chưa được tạo; sửa lỗi, rerun run ban đầu khi artifact còn khả dụng và xác minh đủ hai asset trước khi publish.
 
 ## Chính sách dữ liệu và điều kiện phát hành
 

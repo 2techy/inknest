@@ -18,6 +18,12 @@ Java/JVM target 21 không đổi Android tối thiểu: app vẫn yêu cầu API
 
 ## Build và cài đặt
 
+Build cục bộ dùng phiên bản `0.1.0-dev` và code `1`. [Workflow release](release.md) tự sinh
+CalVer cùng version code tăng dần mà không sửa source. Để tái hiện metadata của workflow
+trên máy, truyền Gradle properties có dấu nháy, ví dụ
+`.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
+Khi tái hiện bản release, dùng đúng các giá trị được ghi lại trong run tương ứng.
+
 ```powershell
 .\gradlew.bat --version
 .\gradlew.bat :app:assembleDebug
