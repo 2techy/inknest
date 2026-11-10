@@ -17,7 +17,7 @@ Không tải lên sách riêng, document URI, database nguồn, khóa ký hoặc
 5. Chạy [kiểm tra](development.md) phù hợp. PR nêu vấn đề, hành vi sau thay đổi, kiểm tra đã chạy và giới hạn còn lại. Với UI, kèm bằng chứng bố cục và phân biệt nghiệm thu E-Ink vật lý.
 6. Rà diff cuối để bỏ thay đổi ngoài phạm vi, dữ liệu riêng tư và output sinh tự động. Dùng Conventional Commits khi tạo commit.
 
-Đóng góp phải giữ khả năng hủy coroutine, báo lỗi ghi và giữ dữ liệu thành công khi đọc gặp lỗi dự kiến. Không tiện thể thêm đồng bộ mạng, telemetry, quyền truy cập bộ nhớ rộng cho production hoặc migration schema. Chính sách nâng cấp cache ổn định phải được quyết định rõ trước bản stable. Không đưa vật liệu ký và artifact build/đo lường vào Git.
+Đóng góp phải giữ khả năng hủy coroutine, báo lỗi ghi và giữ dữ liệu thành công khi đọc gặp lỗi dự kiến. Không tiện thể thêm đồng bộ mạng, telemetry, quyền truy cập bộ nhớ rộng cho production hoặc migration schema. Thay đổi schema cache cần được rà soát rõ về hành vi nâng cấp. Không đưa vật liệu ký và artifact build/đo lường vào Git.
 
 ## Kiểm tra pull request
 
@@ -27,7 +27,7 @@ Mọi PR vào `master`, kể cả draft và thay đổi tài liệu, chạy chec
 
 Mỗi trang trong `docs/en` có bản cùng tên trong `docs/vi`. Tiếng Anh là bản đối chiếu kỹ thuật; cập nhật cả hai cùng lúc và giữ liên kết đổi ngôn ngữ. Không dịch identifier, lệnh, đường dẫn hoặc đơn vị. Nhãn UI khớp Android string resource tương ứng; dùng tiếng Việt tự nhiên và thuật ngữ thống nhất.
 
-Viết hướng dẫn thao tác, hợp đồng tham chiếu hoặc giải thích phục vụ người đọc. Không đưa trao đổi, tiến độ triển khai, nhật ký QA theo ngày, bàn giao hay đường dẫn artifact cục bộ vào docs. Thay bằng giới hạn kỹ thuật còn áp dụng và cách kiểm tra lặp lại được. Kiểm tra link tương đối, anchor và ví dụ lệnh khi chuyển file hoặc đổi tiêu đề.
+Tài liệu mô tả hành vi được hỗ trợ, cách thiết lập, hợp đồng kỹ thuật và các bước kiểm tra có thể tái hiện. Dùng ví dụ người đọc có thể thực hiện trong môi trường của mình. Kiểm tra liên kết tương đối, anchor và ví dụ lệnh khi chuyển tệp hoặc đổi tiêu đề.
 
 ## Giấy phép
 

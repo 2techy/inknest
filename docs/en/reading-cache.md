@@ -64,11 +64,10 @@ ReadingItemDispatcher to dispatch ACTION_VIEW with its URI/MIME, ClipData and re
 Package/intent resolution runs off main; dispatch runs on the injected main dispatcher. Opening
 does not parse or copy the EPUB. Pause/disposal drops pending work; requests are not persisted.
 
-There is no persisted confirmation/version gate or app-only fallback. Missing app/file/grant,
-unsupported handler and changed-source outcomes are explicit. File errors offer refresh; access
+Opening reports distinct outcomes for a missing app, file or grant, an unsupported handler,
+and a changed source. File errors offer refresh; access
 or configuration errors offer Settings. `Dispatched` means Android accepted the intent, not that
 KOReader confirmed opening the file. Progress/history/current-book cache remain source-driven.
-Legacy open-mode/version preference keys are ignored.
 
 On some devices (confirmed on Tango 2), ExternalStorageProvider descriptors resolve inside
 KOReader to `/mnt/user/...`, which its Lua file checks cannot reopen. After validating the SAF
@@ -78,8 +77,9 @@ URI when that authority belongs to the selected reader. Its provider resolves th
 foreign URI-grant flags are removed because the receiving app owns that provider. If unavailable,
 other readers/providers retain the original SAF intent. No `file://` exposure bypass is used.
 
-The mapping rejects invalid/traversal IDs and other volumes. A focused regression covers encoded
-names, exact path/MIME preservation, absent/wrong provider ownership and grant handling. No debug-only opening flow is provided.
+The mapping rejects invalid/traversal IDs and other volumes. Regression tests cover encoded
+names, exact path/MIME preservation, provider ownership and grant handling. Debug and release
+use the same opening flow.
 
 
 ## Refresh and failures

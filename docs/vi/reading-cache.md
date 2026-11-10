@@ -24,11 +24,11 @@ EPUB2/3 dùng adapter ZIP/XML có giới hạn. Tên/tác giả hợp lệ vẫn
 
 ViewModel Trang chủ/Thư viện quản lý state mở. `ReadingOpenRepository` phân giải lại tài liệu gốc, kiểm tra nguồn đã chọn. Route RESUMED nhận từng yêu cầu một lần, dùng `ReadingItemDispatcher` gửi ACTION_VIEW với URI/MIME, ClipData và quyền đọc. Chuẩn bị/kiểm tra trình xử lý chạy ngoài main; gửi intent trên main dispatcher inject được. Mở sách không parse hay sao chép EPUB. Pause/disposal bỏ công việc chờ; yêu cầu không lưu bền.
 
-Không có cổng xác nhận/phiên bản lưu bền hoặc fallback chỉ mở app. Thiếu app/tệp/quyền, handler không hỗ trợ và đổi nguồn là kết quả rõ ràng. Lỗi tệp đề xuất làm mới; lỗi quyền/cấu hình đề xuất Cài đặt. `Dispatched` nghĩa là Android nhận intent, không phải KOReader xác nhận sách. Tiến độ/lịch sử/sách hiện tại vẫn lấy từ nguồn. Bỏ qua khóa tùy chọn open-mode/version cũ.
+Luồng mở phân biệt các trường hợp thiếu ứng dụng, tệp hoặc quyền; trình xử lý không hỗ trợ; và nguồn đã thay đổi. Lỗi tệp đề xuất làm mới; lỗi quyền/cấu hình đề xuất Cài đặt. `Dispatched` nghĩa là Android nhận intent, không phải KOReader xác nhận sách. Tiến độ/lịch sử/sách hiện tại vẫn lấy từ nguồn.
 
 Trên một số thiết bị như Tango 2, descriptor ExternalStorageProvider có thể thành `/mnt/user/...` mà Lua KOReader không mở lại được. Sau kiểm tra SAF, tài liệu bộ nhớ chính dùng URI `content://org.koreader.launcher.provider/external/` của KOReader nếu authority thuộc trình đọc đã chọn. Provider ánh xạ cùng tệp tới `/storage/emulated/0/...`; không sao chép/import. Data và ClipData nhất quán; bỏ cờ cấp quyền URI vì app nhận sở hữu provider. Nếu không áp dụng được thì giữ intent SAF gốc. Không dùng cách lách `file://`.
 
-Ánh xạ từ chối ID sai/traversal và volume khác. Test hồi quy bao gồm tên mã hóa, đường dẫn/MIME chính xác, sai/thiếu chủ sở hữu provider và xử lý quyền. Không có luồng mở riêng cho debug.
+Ánh xạ từ chối ID sai/traversal và volume khác. Test hồi quy bao gồm tên mã hóa, đường dẫn/MIME chính xác, sai/thiếu chủ sở hữu provider và xử lý quyền. Debug và release dùng cùng luồng mở.
 
 ## Làm mới và lỗi
 

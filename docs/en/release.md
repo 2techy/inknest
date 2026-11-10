@@ -1,87 +1,100 @@
-# Build and sign an APK
+# Build and publish a release
 
 [Tiếng Việt](../vi/release.md) · [Documentation](README.md)
 
-Use the checked-in Gradle wrapper and Java 21 as described in [development](development.md). Dependency versions come
-from the version catalog. Local builds default to `versionName = "0.1.0-dev"` and
-`versionCode = 1`; the release workflow overrides them using Gradle properties
-`inknestVersionName` and `inknestVersionCode`. About uses the built `BuildConfig.VERSION_NAME`.
+The [Draft release workflow](../../.github/workflows/release.yml) builds and signs an APK, creates its version tag and prepares a draft on GitHub Releases. A maintainer reviews the APK and release notes before publishing.
 
-## Local builds
+## Configure signing
 
-```powershell
-.\gradlew.bat spotlessCheck :app:assembleDebug :app:assembleRelease :app:lintDebug
-```
-
-The debug APK is `app/build/outputs/apk/debug/app-debug.apk`. The optimized release build
-is `app/build/outputs/apk/release/app-release-unsigned.apk`; it cannot be installed until signed.
-Open source projects also sign installable release APKs. Signing keys are private and are not
-the project's copyright license.
-
-## Release signing
-
-In Android Studio, use Build → Generate Signed App Bundle or APK → APK, select `app`, then
-create/select your own keystore and choose release. Keep the key outside the repository and
-back it up securely: future APK updates must use the same signing certificate. Keystores,
-local signing properties, build output and Studio's `app/release/` output are ignored by Git.
-Do not paste passwords into commands, commit signing files, or use the debug key for publication.
-
-Verify the resulting APK with SDK `apksigner verify --verbose --print-certs <apk>` and record
-its SHA-256 (`Get-FileHash <apk> -Algorithm SHA256`). Inspect the APK's package/version and
-permissions before distribution. Keep mapping files privately with the matching artifact.
-
-The same package signed with another key cannot replace an existing installation. Prefer a
-separate test device/profile; uninstalling deletes local configuration and pins. This project
-does not automatically uninstall or replace signing identities. The draft-release workflow below creates version tags; public release publication remains a maintainer action.
-
-## GitHub draft releases
-
-The [Draft release workflow](../../.github/workflows/release.yml) runs manually from Actions. Merge the intended changes after CI passes, then choose **Actions → Draft release → Run workflow**, select `master`, and start the run. Other branches and tags are skipped. No version input, version-editing PR or manual tag creation is needed.
-
-The run checks out the exact `master` commit selected when it starts, even if newer commits arrive during the build. It generates CalVer `YYYY.M.PATCH` using the original run creation time in UTC, for example `2026.11.0`. PATCH starts at 0 when that month has no matching tags; otherwise it is one more than the largest PATCH in existing tags for that month. Tags from drafts count too; older development tags and suffixes are ignored. The workflow passes this version and `versionCode = 1000000 + github.run_number` to Gradle, then verifies both in the built APK along with package `dev.twotechy.inknest`. Publish versions in run-number order so installed updates keep increasing their version code. Preserve the release workflow's run-number sequence and offset; changing either requires checking previously distributed version codes. Codes above Android's limit of 2100000000 are rejected.
-
-The calculated version, code, commit and run ID are saved as a small `release-version` artifact for one day. Rerunning all jobs reuses these values, including across a UTC month boundary or after newer tags appear. If metadata has expired or was never uploaded, start a new run; it calculates a fresh version from the tags then available. A failed run that never created a tag does not reserve its PATCH. An existing version tag must point to the same commit; an existing release must be a draft targeting that commit. Conflicts and published versions stop the run.
-
-Build, signing and draft management use separate jobs. The build job checks formatting, debug/release JVM tests and lint, then builds the unsigned release without signing secrets. The signing job aligns/signs/verifies the APK using the repository's `release` environment; it does not check out app code. Only the draft job has release-write and artifact-cleanup permissions, and it also does not check out app code.
-
-Configure environment `release` in repository settings with a deployment **branch** rule for `master`. Replace the previous `v*` tag rule if present: manual runs use a branch ref when entering the signing job. Use the existing release key, backed up outside GitHub. Set these environment secrets through GitHub settings or an authenticated local secret-management flow; do not paste values into issues, PRs, chat or commands containing literal passwords:
+Create a repository environment named `release`. Under **Deployment branches and tags**, allow branch `master`. Store these credentials as **environment secrets**:
 
 | Secret | Value |
 | --- | --- |
-| `ANDROID_KEYSTORE_BASE64` | Base64-encoded existing release keystore |
+| `ANDROID_KEYSTORE_BASE64` | Release keystore encoded as Base64 |
 | `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
-| `ANDROID_KEY_ALIAS` | Existing signing key alias |
+| `ANDROID_KEY_ALIAS` | Signing key alias |
 | `ANDROID_KEY_PASSWORD` | Signing key password |
 
-Set environment variable `ANDROID_SIGNING_CERT_SHA256` to the known certificate SHA-256 from a trusted previously signed APK (`apksigner verify --print-certs`); colons and whitespace are accepted. Missing secrets, an invalid fingerprint, a mismatched certificate or invalid tag/APK metadata fail the workflow. The keystore is decoded into temporary storage and deleted when signing exits; Gradle never receives signing secrets.
+Add `ANDROID_SIGNING_CERT_SHA256` under **Environment variables**. Use the signing certificate's SHA-256 fingerprint from `keytool -list -v` on the keystore or `apksigner verify --print-certs` on a trusted signed APK. Colons and whitespace are accepted. The certificate fingerprint and APK checksum identify different things.
 
-After build and signing succeed, the draft job creates tag `v<version>` at the checked-out commit and a **draft**, attaches `InkNest-<version>.apk` and `SHA256SUMS.txt`, and records the commit, version code and certificate fingerprint with generated release notes. These CalVer releases are not marked pre-release. Download that exact APK, verify its checksum/signature and complete [device acceptance](reliability.md) before choosing **Publish release**. Tag creation uses the workflow's `GITHUB_TOKEN`; no personal access token is needed. Pushing a tag does not start this workflow.
+Keep a secure backup of the keystore outside the repository. Updates require the same signing certificate. Enter passwords through secret-management tools or password prompts; keep them out of commands, issues, logs and version control.
 
-Release runs share one concurrency group and do not cancel the active run. A rerun may reuse a tag and update an existing draft only when their commits match; published releases are never overwritten. To retry an incomplete run, use **Re-run failed jobs** or **Re-run all jobs** on that run so it retains the original commit. A new run calculates a new version from existing tags. Intermediate unsigned/signed artifacts expire after one day and are deleted after successful release upload; version metadata expires after one day. If required artifacts have expired, start a new run. Release APKs remain in GitHub Releases, not in Git or long-lived Actions artifacts. If draft creation or upload fails after tag creation, the tag remains and the draft may be missing or incomplete; resolve the error, rerun the original run while its artifacts remain available and verify both assets before publishing.
+## Publish an APK
 
-## Data policy and release gates
+1. Merge the changes to `master` and confirm that CI passes.
+2. Open **Actions → Draft release → Run workflow**, select `master` and start the run.
+3. Wait for the build, signing and draft jobs to complete.
+4. Open the draft in GitHub Releases. Review the title and generated changes, and describe the features, fixes and known limitations relevant to users.
+5. Download `InkNest-<version>.apk` and `SHA256SUMS.txt`. Verify the checksum and signature, then complete [device acceptance](reliability.md) on the signed APK.
+6. Choose **Publish release**.
 
-Reading Room data is disposable during development: schema changes rebuild its cache. Pins,
-preferences and source selections live in DataStore. Stable upgrade compatibility must be
-decided before publishing a stable release. No migration framework is included in dev builds.
+Each draft includes an installable APK, a checksum file and release notes with installation instructions and setup links. CalVer releases are not marked as pre-releases.
 
-Backup and device transfer exclude InkNest data; SAF permissions and cache are device-local.
-There is no network synchronization or telemetry. Developer tools/source probes are absent from both build types. StrictMode
-diagnostics must be absent from the optimized release. Third-party notices remain in About.
-InkNest uses the [MIT license](../../LICENSE); bundled third-party components retain their own licenses.
+The workflow runs only from `master` and builds the commit selected at dispatch. Commits merged during a run are included in a subsequent run. Release runs share a concurrency group; the active run is allowed to finish.
 
-Before a public release, verify the signed artifact on the physical Tango 2: permissions,
-reading source, Home role, app launch, direct book opening, Library, Stats and recovery.
-Check the launcher/source/opening flows on S25 using [device acceptance](reliability.md).
-Check E-Ink contrast/ghosting on the panel; emulator screenshots cannot establish these.
-Include device/firmware versions and known limits in release notes.
+## Versioning
 
-## Known compatibility limits
+Release versions use **`YYYY.M.PATCH`**, for example `2026.11.0`.
 
-Library uses direct document intents without a debug/version unlock. Tango 2 with KOReader
-v2026.07.1 needs its reader-owned FileProvider URI for primary-storage books: generic SAF
-URIs can resolve to an inaccessible `/mnt/user/...` alias and leave the previous book open.
-See [Reading cache](reading-cache.md) for the original-file URI adapter and recovery behavior.
-Verify a newly signed release on Tango; APKs must use the existing release key for in-place updates.
-SD/cloud providers, reader engine, write-back, OEM screen refresh and periodic background sync
-are outside current scope.
+| Field | Rule |
+| --- | --- |
+| Year and month | UTC creation time of the workflow run |
+| PATCH | 0 if the month has no matching tags; otherwise the largest PATCH plus 1 |
+| Tag | `v<version>`, for example `v2026.11.0` |
+| Android version code | `1000000 + github.run_number` |
+
+Only tags matching `vYYYY.M.PATCH` contribute to PATCH calculation, including tags attached to drafts. A failed run that has not created a tag does not reserve a PATCH number.
+
+Publish in run-number order so Android version codes increase between distributed builds. Preserve the workflow's run-number sequence and offset; changing them requires checking the version codes already distributed. Codes above `2100000000` are rejected.
+
+Local builds default to `versionName = "0.1.0-dev"` and `versionCode = 1`. Release builds supply Gradle properties `inknestVersionName` and `inknestVersionCode`. The built APK must match those values and package `dev.twotechy.inknest`. About displays `BuildConfig.VERSION_NAME`. See [development](development.md) for local build overrides.
+
+## Retry a failed run
+
+Use **Re-run failed jobs** to resume a failed stage, or **Re-run all jobs** to rebuild the same source commit. Reruns retain the version and code using the `release-version` artifact, which stores the version, code, commit and run ID for one day.
+
+| Failure | Recovery |
+| --- | --- |
+| Missing signing credentials | Check the secrets and variable in environment `release`. |
+| Certificate mismatch | Verify the keystore, alias and expected fingerprint. |
+| Missing or expired artifacts | Start a new workflow run. |
+| Tag conflict | A tag can be reused only for the same commit. |
+| Release conflict | An existing release must be a draft targeting that commit. Published releases cannot be overwritten. |
+| Draft or asset upload failure | Inspect the draft and retry the original run while its artifacts are available. Confirm both assets before publishing. |
+
+A new run calculates its version from the tags available at that time. Reruns keep existing draft titles and notes. A tag created before a later failure remains in the repository.
+
+Unsigned and signed transfer artifacts expire after one day and are deleted after successful asset upload. Version metadata expires after one day. Published APKs remain in GitHub Releases.
+
+## Build and sign locally
+
+Use Java 21 and the Gradle wrapper as described in [development](development.md):
+
+```powershell
+.\gradlew.bat spotlessCheck :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease
+```
+
+| Build | APK |
+| --- | --- |
+| Debug | `app/build/outputs/apk/debug/app-debug.apk` |
+| Unsigned optimized release | `app/build/outputs/apk/release/app-release-unsigned.apk` |
+
+In Android Studio, choose **Build → Generate Signed App Bundle or APK → APK**, select `app`, choose the release keystore and build the release variant. Verify the APK with `apksigner verify --verbose --print-certs` and calculate its checksum with `Get-FileHash <apk> -Algorithm SHA256`. Keep matching mapping files privately.
+
+An APK signed with another certificate cannot update an installed copy. Use a separate test device or profile when testing a different signing identity; uninstalling removes local settings and pins.
+
+## Workflow isolation
+
+The build job checks formatting, debug/release JVM tests and lint before assembling the unsigned release. It receives no signing secrets. The signing job aligns and signs the APK, verifies the certificate and computes its checksum. The keystore exists only in temporary storage and is deleted when the signing step exits.
+
+The signing and draft jobs do not check out application code. Only the draft job has release-write and artifact-cleanup permissions. Tag creation uses `GITHUB_TOKEN`. Pushing a tag does not trigger the workflow.
+
+## Acceptance and compatibility
+
+Check permissions, reading-source setup, the Home role, app launching, book opening, Library, Statistics and recovery on the signed APK. Verify E-Ink contrast and ghosting on a physical panel; use the [reliability guide](reliability.md) for device-specific checks. Record device, firmware and KOReader versions when describing compatibility or known issues.
+
+Reading integration supports KOReader and primary internal storage. See [reading cache and opening](reading-cache.md) for URI handling and recovery. SD/cloud providers, a reader engine, write-back, OEM display-refresh controls and periodic background synchronization are outside the supported scope.
+
+The reading database is a rebuildable cache. Schema changes can recreate it; pins, preferences and source selections are stored separately in DataStore. App backup and device transfer exclude InkNest data, and SAF grants are device-local.
+
+Runtime diagnostics are enabled only in debug builds. Third-party notices are available in About. InkNest uses the [MIT license](../../LICENSE); bundled components retain their own licenses.

@@ -23,6 +23,6 @@
 - [Benchmarking](benchmarking.md): synthetic fixtures, measurement and profiles.
 - [Release](release.md): signing and artifact validation.
 
-InkNest is a development release requiring Android 8.0+ (API 26). Its production app is offline; initial builds need dependency downloads. See the [project overview](../../README.md), [MIT license](../../LICENSE) and [third-party notices](../../app/src/main/assets/licenses).
+InkNest requires Android 8.0+ (API 26). Download an APK from [GitHub Releases](https://github.com/2techy/inknest/releases/latest). The app works offline and remains in active development; building from source initially requires dependency downloads. See the [project overview](../../README.md), [MIT license](../../LICENSE) and [third-party notices](../../app/src/main/assets/licenses).
 
 Commands and source paths in these guides are relative to the repository root unless stated otherwise.

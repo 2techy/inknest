@@ -2,7 +2,7 @@
 
 [English](../en/setup.md) · [Mục lục](README.md)
 
-Build/cài APK theo [hướng dẫn phát triển](development.md) hoặc [ký bản phát hành](release.md), mở InkNest và chọn E-Ink hoặc Tiêu chuẩn. Thiết lập không bắt buộc; Bỏ qua mở Trang chủ. Có thể mở lại tại **Cài đặt → Giới thiệu → Xem lại thiết lập**.
+Tải và cài APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc tự build theo [hướng dẫn phát triển](development.md) hay [ký bản phát hành](release.md). Mở InkNest và chọn E-Ink hoặc Tiêu chuẩn. Thiết lập không bắt buộc; Bỏ qua mở Trang chủ. Có thể mở lại tại **Cài đặt → Giới thiệu → Xem lại thiết lập**.
 
 ## Kết nối KOReader
 
@@ -16,7 +16,7 @@ Build/cài APK theo [hướng dẫn phát triển](development.md) hoặc [ký b
 
 Thư viện mặc định gộp mọi thư mục sách. Menu thư mục lọc theo một nguồn và kết hợp với tìm kiếm, trạng thái, sắp xếp. Làm mới quét mọi nguồn đã cấu hình; nguồn không truy cập được giữ cache, các nguồn khác vẫn tiếp tục. Khi mất quyền, chọn lại đúng thư mục đó.
 
-Bản phát triển cũ có thể dùng khóa cấu hình thư mục sách trước đây. Khi nâng cấp từ các bản đó, chọn lại thư mục sách; thư mục KOReader, ghim và tùy chọn hiển thị được lưu riêng. Làm mới thất bại giữ nội dung đã lưu.
+Làm mới thất bại giữ nội dung đã lưu.
 
 **Xóa bộ nhớ đệm đọc** tạo lại dữ liệu đọc và bìa mà không đổi ghim/giao diện. **Ngắt kết nối nguồn** xóa cấu hình nguồn và cache đọc, không xóa sách hoặc dữ liệu KOReader.
 

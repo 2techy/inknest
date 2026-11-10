@@ -11,18 +11,18 @@ InkNest dùng luồng dữ liệu một chiều: repository cung cấp dữ li�
 - `ui/settings`: `SettingsViewModel` quản lý một `SettingsUiState` công khai, gồm lỗi đọc tùy chọn ban đầu, thao tác nguồn và tải/thử lại giấy phép. State nội bộ giữ snapshot khi tạm ngừng thu thập. `WhileSubscribed(5_000)` giới hạn upstream theo subscriber UI đang hoạt động.
 - `SettingsRoute`: thu thập theo lifecycle, điều hướng, intent nền tảng và hộp thoại thư mục/xác nhận tạm thời. `SettingsScreen` cùng helper chỉ nhận state/callback, không truy cập repository hay I/O.
 - `ui/onboarding`: Route quản lý state wizard và Back. App cung cấp state/thao tác hiển thị; Route không phụ thuộc ViewModel tính năng khác.
-- Cả debug và release không có route công cụ developer/source probe hay nguồn dữ liệu mẫu runtime. StrictMode chỉ bật ở debug; release dùng runtime diagnostics không thực hiện thao tác.
+- Debug bật StrictMode; release dùng runtime diagnostics không thực hiện thao tác. Dữ liệu mẫu tổng hợp nằm riêng trong source set benchmark/profile.
 - `ui/InkNestApp`: composition root cho theme, điều hướng chính và feature route. `ui/components`, `ui/theme` sở hữu hành vi UI và token dùng chung.
 
 ## Quy mô và lưu trữ
 
-Production có một module `:app`, inject qua constructor thủ công. Database đọc dùng Room schema 6 với destructive cache fallback trong giai đoạn phát triển; tùy chọn, ghim và lựa chọn nguồn nằm trong DataStore. Chưa cam kết nâng cấp ổn định. Graph hiện tại không yêu cầu framework DI, domain layer hay use case chỉ chuyển tiếp. Tác vụ tùy chọn/nguồn đơn giản dùng trực tiếp repository. Lỗi không được thay giá trị lưu bằng thành công giả; nhãn UI là string resource. Xử lý coroutine phải giữ cancellation.
+Ứng dụng production có một module `:app`, dùng dependency injection thủ công qua constructor. Database đọc dùng Room schema 6 với destructive cache fallback trong giai đoạn phát triển; tùy chọn, ghim và lựa chọn nguồn nằm trong DataStore. Chưa cam kết nâng cấp ổn định. ViewModel gọi trực tiếp repository cho các thao tác tùy chọn và cấu hình nguồn. Lỗi không được thay giá trị lưu bằng thành công giả; nhãn UI là string resource. Xử lý coroutine phải giữ cancellation.
 
 Cài đặt có Đọc và dữ liệu, Giao diện, Trình khởi chạy, Giới thiệu. Đây là cách nhóm sản phẩm, không gộp ranh giới lưu tùy chọn với nguồn/cache đọc.
 
 ## Dữ liệu đọc
 
-Room giữ sách hiện tại/lịch sử, danh mục quét thư mục và snapshot thống kê. DataStore giữ ghim/tùy chọn/lựa chọn nguồn; không tạo store thứ hai. Thống kê độc lập với parser sách hiện tại và thành viên thư viện. Route không quét tệp hay tổng hợp thống kê. Xem [thư viện](library.md), [thống kê](statistics.md), [cache đọc](reading-cache.md) về làm mới, hủy và ranh giới nguồn.
+Room giữ sách hiện tại/lịch sử, danh mục quét thư mục và snapshot thống kê. DataStore giữ ghim, tùy chọn và lựa chọn nguồn. Thống kê độc lập với parser sách hiện tại và thành viên thư viện. Route không quét tệp hay tổng hợp thống kê. Xem [thư viện](library.md), [thống kê](statistics.md), [cache đọc](reading-cache.md) về làm mới, hủy và ranh giới nguồn.
 
 ## State và vòng đời công việc
 

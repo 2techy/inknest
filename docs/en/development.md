@@ -14,12 +14,12 @@ Run commands from the repository root in PowerShell. If needed, set `JAVA_HOME` 
 
 Configure Android Studio's Gradle JDK to use JDK 21 as well. The checked-in daemon JVM criteria select Java 21 for the build, even if the wrapper is launched by another compatible JDK. Verify the daemon JVM with `--version`. Android Studio itself can continue using its bundled runtime.
 
-Java/JVM target 21 does not change the minimum Android version: the app still requires API 26. Android runs DEX produced by D8/R8, and available Java library APIs remain constrained by Android SDK support. Check compatibility before introducing newer APIs.
+D8/R8 converts JVM bytecode to DEX for Android 8.0+ (API 26). Java library API availability depends on the device's Android version; check platform compatibility when introducing APIs.
 
 ## Build and install
 
 Local builds use version `0.1.0-dev` and code `1`. The [release workflow](release.md) generates
-CalVer and an increasing version code without editing source. To reproduce its metadata
+CalVer and an increasing version code. To reproduce its metadata
 locally, pass quoted Gradle properties, for example
 `.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
 Use the values recorded by the relevant release run when reproducing a release.
@@ -64,4 +64,4 @@ CI uses standard Ubuntu runners, Temurin 21 and SDK package `platforms;android-3
 
 Run the [Android tests workflow](../../.github/workflows/android-tests.yml) manually from Actions → Android tests → Run workflow. It uses one Android 14/API 34 x86_64 emulator and the default integration suite. Real-source/grant-revocation tests remain opt-in and are skipped. Failure reports/logcat expire after one day. Emulator results do not establish Android 8 or physical E-Ink acceptance; benchmarks and profile generation stay in the [device workflow](benchmarking.md).
 
-Release automation is described in [release signing](release.md). Workflows use pinned actions with read-only tokens by default. The repository remains public and uses standard runners; cache stays within the free 10 GB repository limit. Artifact allowances belong to the organization and are not a separate allowance for each repository. Repository log/artifact retention defaults to seven days, with one-day retention for uploaded artifacts. No scheduled nightly builds or paid runners are configured.
+Release automation is described in [release signing](release.md). Workflows use pinned actions with read-only tokens by default. Repository log/artifact retention defaults to seven days; uploaded artifacts use one-day retention.

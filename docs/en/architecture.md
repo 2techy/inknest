@@ -23,19 +23,17 @@ with lifecycle awareness and connect actions; screens render state and callbacks
   state/callbacks; they do not access repositories or perform IO.
 - `ui/onboarding`: the route owns wizard collection and Back handling. The app supplies
   display preference state/actions; the route does not depend on another feature's ViewModel.
-- Developer-tool and source-probe routes are absent in both debug and release.
-  Runtime sample-data sources are absent. StrictMode policies exist only in debug;
-  release provides no-op runtime diagnostics.
+- Debug builds enable StrictMode policies; release builds provide no-op runtime diagnostics.
+  Synthetic fixtures are confined to benchmark/profile source sets.
 - `ui/InkNestApp`: composition root for theme, top-level navigation and feature routes.
   `ui/components` and `ui/theme` own shared UI behavior and design tokens.
 
 ## Deliberate scope
 
-Keep one `:app` module and manual constructor injection at the current project size. The reading database uses Room schema 6
+The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 6
 with destructive cache fallback during development; preferences, pins and source selections
 remain in DataStore. Stable upgrade compatibility is not promised.
-Additional DI frameworks, domain layers and pass-through use cases are not required
-by the current graph. Use repositories directly for simple preference/source operations.
+ViewModels call repositories directly for preference and source operations.
 Repository failures must not replace saved values with pretend success, and UI labels
 remain Android string resources. Preserve cancellation when handling coroutine failures.
 
@@ -46,7 +44,7 @@ combine preference storage with reading-source/cache storage.
 ## Reading data
 
 Room owns current/history, full-folder inventory and statistics snapshots. DataStore owns
-pins/preferences/source selection; no second store is created. Statistics is independent
+pins, preferences and source selection. Statistics is independent
 of current-book parsing and inventory membership. Routes do not scan files or aggregate
 statistics. See [Library](library.md), [Statistics](statistics.md) and
 [Reading cache](reading-cache.md) for refresh/cancellation and source boundaries.

@@ -44,9 +44,8 @@ an unread state.
 ## Screen and interactions
 
 The shelf uses the shared header/design tokens, a compact horizontally scrollable status strip,
-grid/list mode, search and a static sort/refresh menu. Book covers and titles are the main content;
-there is no permanent diagnostics/count paragraph above them. Grid captions are compact; list
-rows show more metadata. Search matches title/known author ignoring case. Editing/selection stays
+grid/list mode, search and a static sort/refresh menu. Book covers and titles are the main content.
+Grid captions are compact; list rows show more metadata. Search matches title/known author ignoring case. Editing/selection stays
 local so background filtering cannot reorder typed characters; late IME commits after closing are
 ignored. Small query/filter/sort/view choices live in SavedStateHandle; lazy states restore scroll.
 
@@ -57,9 +56,8 @@ explicit KOReader status; 100% alone does not imply Finished.
 Tapping a book opens that original document in the selected KOReader package through
 `ReadingOpenRepository` and `ReadingItemDispatcher`. Long-press opens its details and path; that dialog can also open the book.
 Grid and list share these actions. Background/HOME dismisses details and a pending UI launch;
-query, filters and scroll position are retained. No debug confirmation or version-specific
-unlock is required, and an unsupported request never silently falls back to app-only launch.
-No opening action fabricates reading history or progress.
+query, filters and scroll position are retained. Unsupported opening requests display an error.
+Reading history and progress remain sourced from KOReader.
 
 ## Browsing authors
 
@@ -70,7 +68,7 @@ author counts; book sorting applies within shelves. Authors are normalized for w
 and case without removing accents, splitting creator strings or guessing from filenames.
 Missing metadata is grouped under Unknown author, last in the list.
 
-Browse mode and selected author use SavedStateHandle, not new preferences or database columns.
+Browse mode and selected author are restored through SavedStateHandle.
 Back closes search first, then returns from an author shelf to the author index. Navbar stays
 visible. Browsing uses cached catalog projections and never initiates a source scan.
 

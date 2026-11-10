@@ -23,11 +23,11 @@ Chỉ EPUB được trích xuất metadata và bìa raster bằng adapter có gi
 
 ## Màn hình và thao tác
 
-Kệ dùng header/token chung, dải lọc trạng thái ngang gọn, chế độ lưới/danh sách, tìm kiếm và menu sắp xếp/làm mới tĩnh. Bìa/tên sách là nội dung chính, không có đoạn chẩn đoán/số lượng cố định phía trên. Lưới có chú thích gọn; danh sách có thêm metadata. Tìm theo tên/tác giả đã biết, không phân biệt hoa thường. State chỉnh sửa/chọn chữ ở local để lọc nền không đảo ký tự; bỏ IME commit đến muộn sau đóng tìm kiếm. Query/filter/sort/view lưu trong SavedStateHandle; lazy state khôi phục cuộn.
+Kệ dùng header/token chung, dải lọc trạng thái ngang gọn, chế độ lưới/danh sách, tìm kiếm và menu sắp xếp/làm mới tĩnh. Bìa và tên sách là nội dung chính. Lưới có chú thích gọn; danh sách có thêm metadata. Tìm theo tên/tác giả đã biết, không phân biệt hoa thường. State chỉnh sửa/chọn chữ ở local để lọc nền không đảo ký tự; bỏ IME commit đến muộn sau đóng tìm kiếm. Query/filter/sort/view lưu trong SavedStateHandle; lazy state khôi phục cuộn.
 
 Mặc định sắp thời điểm đọc giảm dần; có tên A–Z và tiến độ giảm dần. Giá trị chưa biết đứng sau đã biết, trường hợp bằng nhau giữ thứ tự/định danh thư mục ổn định. Bộ lọc dùng trạng thái KOReader rõ ràng; 100% không tự thành Đã đọc.
 
-Chạm sách mở tài liệu gốc trong KOReader qua `ReadingOpenRepository` và `ReadingItemDispatcher`. Nhấn giữ mở chi tiết/đường dẫn, có thể mở sách từ hộp thoại. Lưới và danh sách dùng cùng thao tác. Background/HOME đóng chi tiết và yêu cầu mở chờ; giữ query, filter và cuộn. Không cần xác nhận debug hoặc mở khóa theo phiên bản; yêu cầu không hỗ trợ không âm thầm chỉ mở app. Mở sách không tạo lịch sử/tiến độ giả.
+Chạm sách mở tài liệu gốc trong KOReader qua `ReadingOpenRepository` và `ReadingItemDispatcher`. Nhấn giữ mở chi tiết/đường dẫn, có thể mở sách từ hộp thoại. Lưới và danh sách dùng cùng thao tác. Background/HOME đóng chi tiết và yêu cầu mở chờ; giữ query, filter và cuộn. Yêu cầu mở không được hỗ trợ sẽ hiển thị lỗi. Lịch sử và tiến độ đọc được lấy từ KOReader.
 
 ## Duyệt tác giả
 

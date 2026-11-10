@@ -17,7 +17,7 @@ Do not upload private books, document URIs, source databases, signing keys or pa
 5. Run the applicable [checks](development.md). Describe the problem, resulting behavior, checks actually run and remaining limitations in the PR. Include layout evidence for UI changes and identify physical E-Ink acceptance separately.
 6. Review the final diff for unrelated changes, private data and generated output. Use Conventional Commits when creating commits.
 
-A contribution should preserve cancellation, report failed writes and retain successful data when expected reads fail. Do not add network sync, telemetry, broad production storage access or schema migrations incidentally. Stable cache upgrade policy must be decided explicitly before a stable release. Keep signing material and build/measurement artifacts outside version control.
+A contribution should preserve cancellation, report failed writes and retain successful data when expected reads fail. Do not add network sync, telemetry, broad production storage access or schema migrations incidentally. Changes to cache schemas require an explicit review of upgrade behavior. Keep signing material and build/measurement artifacts outside version control.
 
 ## Pull request checks
 
@@ -27,7 +27,7 @@ Every PR into `master`, including drafts and documentation changes, runs the `bu
 
 Each document in `docs/en` has a same-named counterpart in `docs/vi`. English is the technical reference; update both versions together and retain the cross-language link. Keep identifiers, commands, paths and units unchanged. Match UI labels to the corresponding Android string resources and use natural Vietnamese with consistent terminology.
 
-Write task instructions, reference contracts or explanations for readers. Keep conversations, implementation progress, dated QA logs, handoffs and local artifact paths out of documentation. Document durable limits and repeatable checks instead. Verify relative links, anchors and command examples after moves or heading changes.
+Document supported behavior, setup tasks, technical contracts and reproducible checks. Use examples that readers can follow in their own environment. Verify relative links, anchors and command examples after moves or heading changes.
 
 ## License
 

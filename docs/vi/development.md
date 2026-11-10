@@ -14,12 +14,12 @@ Chạy lệnh PowerShell từ gốc repo. Nếu cần, đặt `JAVA_HOME` tới 
 
 Đặt Gradle JDK của Android Studio thành JDK 21. Tiêu chí JVM daemon trong repo chọn Java 21 để build, kể cả khi wrapper khởi chạy bằng JDK tương thích khác. Kiểm tra daemon JVM bằng `--version`. Bản thân Android Studio vẫn có thể dùng runtime đi kèm.
 
-Java/JVM target 21 không đổi Android tối thiểu: app vẫn yêu cầu API 26. Android chạy DEX do D8/R8 tạo ra; API thư viện Java khả dụng vẫn phụ thuộc Android SDK. Kiểm tra tương thích trước khi dùng API mới hơn.
+D8/R8 chuyển JVM bytecode thành DEX cho Android 8.0 trở lên (API 26). API thư viện Java khả dụng phụ thuộc phiên bản Android trên thiết bị; kiểm tra tương thích nền tảng khi dùng API.
 
 ## Build và cài đặt
 
 Build cục bộ dùng phiên bản `0.1.0-dev` và code `1`. [Workflow release](release.md) tự sinh
-CalVer cùng version code tăng dần mà không sửa source. Để tái hiện metadata của workflow
+CalVer cùng version code tăng dần. Để tái hiện metadata của workflow
 trên máy, truyền Gradle properties có dấu nháy, ví dụ
 `.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
 Khi tái hiện bản release, dùng đúng các giá trị được ghi lại trong run tương ứng.
@@ -64,4 +64,4 @@ CI dùng runner Ubuntu tiêu chuẩn, Temurin 21 và SDK package `platforms;andr
 
 Chạy [workflow Android tests](../../.github/workflows/android-tests.yml) thủ công tại Actions → Android tests → Run workflow. Workflow dùng một emulator Android 14/API 34 x86_64 và bộ integration test mặc định. Test dùng nguồn thật/thu hồi quyền vẫn là opt-in và bị skip. Report/logcat khi lỗi hết hạn sau một ngày. Kết quả emulator không xác nhận Android 8 hoặc E-Ink thật; benchmark và tạo profile vẫn theo [quy trình thiết bị](benchmarking.md).
 
-Tự động hóa release được mô tả trong [ký bản phát hành](release.md). Workflow pin action và mặc định dùng token chỉ đọc. Repo giữ public, dùng runner tiêu chuẩn; cache trong giới hạn miễn phí 10 GB của repo. Allowance artifact thuộc organization, không có phần riêng cho mỗi repo. Retention log/artifact mặc định của repo là bảy ngày, artifact upload giữ một ngày. Không cấu hình nightly build hoặc runner trả phí.
+Tự động hóa release được mô tả trong [ký bản phát hành](release.md). Workflow pin action và mặc định dùng token chỉ đọc. Retention log/artifact mặc định của repo là bảy ngày; artifact được tải lên giữ một ngày.
