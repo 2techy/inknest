@@ -1,11 +1,11 @@
 # 📖 InkNest
 
+![InkNest — Your reading starts here.](docs/assets/banner.png)
+
 [![Latest release](https://img.shields.io/github/v/release/2techy/inknest?style=flat&logo=github&color=333333)](https://github.com/2techy/inknest/releases/latest)
 [![CI](https://github.com/2techy/inknest/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/2techy/inknest/actions/workflows/ci.yml)
 [![Android 8.0 or later](https://img.shields.io/badge/Android-8.0%2B-333333?style=flat&logo=android&logoColor=3DDC84)](docs/en/setup.md)
 [![MIT license](https://img.shields.io/badge/License-MIT-333333?style=flat)](LICENSE)
-
-**A quiet home for your books and apps.**
 
 InkNest is an offline Android launcher built around reading on E-Ink devices. Bring your KOReader library, reading progress and favorite apps together on one Home screen.
 
@@ -19,6 +19,23 @@ InkNest is an offline Android launcher built around reading on E-Ink devices. Br
 - **Everyday launcher essentials.** Find and launch installed apps, pin favorites and choose InkNest as your default Home app.
 - **Designed for E-Ink.** A grayscale interface, static transitions and a choice of grayscale or original-color app icons.
 - **English and Vietnamese.** Switch languages in the app, with both available offline.
+
+## 🖼️ Screenshots
+
+| Home | Library | Statistics |
+| --- | --- | --- |
+| <img src="docs/assets/screenshots/home.png" alt="Home with current reading, activity calendar and pinned apps" width="260"> | <img src="docs/assets/screenshots/library.png" alt="Library grid with sample book covers, authors and reading progress" width="260"> | <img src="docs/assets/screenshots/statistics.png" alt="Reading time, daily trend and activity calendar" width="260"> |
+
+<details>
+<summary>Apps and settings</summary>
+
+| Apps | Settings |
+| --- | --- |
+| <img src="docs/assets/screenshots/apps.png" alt="Pinned apps and installed apps in a grayscale grid" width="300"> | <img src="docs/assets/screenshots/settings.png" alt="Settings for reading data, appearance, launcher and About" width="300"> |
+
+</details>
+
+Screenshots captured on an Android 14 emulator in E-Ink mode with synthetic reading data and sample covers.
 
 ## 🚀 Getting started
 
