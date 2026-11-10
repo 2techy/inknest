@@ -2,36 +2,34 @@
 
 [English](../en/setup.md) · [Mục lục](README.md)
 
-Tải và cài APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc tự build theo [hướng dẫn phát triển](development.md) hay [ký bản phát hành](release.md). Mở InkNest và chọn E-Ink hoặc Tiêu chuẩn. Thiết lập không bắt buộc; Bỏ qua mở Trang chủ. Có thể mở lại tại **Cài đặt → Giới thiệu → Xem lại thiết lập**.
+Tải và cài APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc tự biên dịch theo [hướng dẫn phát triển](development.md) hay [ký bản phát hành](release.md). Mở InkNest và chọn chế độ hiển thị E-Ink hoặc Tiêu chuẩn. Bạn có thể bỏ qua thiết lập để vào Trang chủ, rồi mở lại bất cứ lúc nào tại **Cài đặt → Giới thiệu → Xem lại thiết lập**.
 
 ## Kết nối KOReader
 
-1. Cài KOReader riêng và mở sách một lần để tạo thư mục dữ liệu.
-2. Trong InkNest, mở **Cài đặt → Đọc và dữ liệu**, chọn ứng dụng nguồn KOReader.
-3. Chọn **Thư mục dữ liệu KOReader** chứa `settings.reader.lua` hoặc `history.lua`.
-4. Dùng **Thêm thư mục sách** để chọn một hoặc nhiều thư mục; có quét thư mục con. Chạm thư mục đã chọn để thay thế, hoặc xóa khỏi InkNest mà không xóa tệp. Thư mục chồng lấn bị từ chối vì thư mục cha đã bao gồm thư mục con. Android chỉ cấp quyền đọc cho từng cây đã chọn. Các điều khiển này cũng có trong thiết lập ban đầu.
-5. Làm mới dữ liệu. Thư viện gồm cả sách chưa từng mở. Sách đang đọc và trạng thái đến từ KOReader; Thống kê cần `settings/statistics.sqlite3` của KOReader.
+1. Cài KOReader riêng và mở một cuốn sách để KOReader tạo thư mục dữ liệu.
+2. Trong InkNest, mở **Cài đặt → Đọc và dữ liệu**, rồi chọn ứng dụng KOReader.
+3. Chọn **Thư mục dữ liệu KOReader** có chứa `settings.reader.lua` hoặc `history.lua`.
+4. Chọn **Thêm thư mục sách** để thêm một hoặc nhiều thư mục. InkNest sẽ quét cả thư mục con. Chạm thư mục đã chọn để thay bằng thư mục khác; xóa thư mục khỏi InkNest không xóa tệp gốc. Không thể chọn đồng thời các thư mục lồng nhau vì thư mục cha đã bao gồm thư mục con. Android chỉ cấp quyền đọc trong từng cây thư mục bạn chọn. Bạn cũng có thể thực hiện các thao tác này trong thiết lập ban đầu.
+5. Làm mới dữ liệu. Thư viện sẽ có cả các tệp được hỗ trợ chưa từng mở. Sách đang đọc trên Trang chủ và trạng thái đọc lấy từ KOReader; Thống kê cần cơ sở dữ liệu `settings/statistics.sqlite3` của KOReader.
 
-Đường dẫn tùy cách cài đặt; chọn qua trình chọn hệ thống. InkNest không giả định đường dẫn cố định `/koreader`, `/webdav` hoặc Downloads. Chưa hỗ trợ nhà cung cấp tài liệu SD/đám mây. Không chọn cả gốc bộ nhớ để khắc phục thiếu dữ liệu.
+Vị trí thư mục tùy cách cài đặt, nên hãy chọn qua trình chọn thư mục của hệ thống. InkNest không mặc định dữ liệu nằm ở `/koreader`, `/webdav` hay Downloads. Hiện chưa hỗ trợ nhà cung cấp tài liệu trên thẻ SD hoặc đám mây. Không chọn toàn bộ gốc bộ nhớ để khắc phục việc thiếu dữ liệu.
 
-Thư viện mặc định gộp mọi thư mục sách. Menu thư mục lọc theo một nguồn và kết hợp với tìm kiếm, trạng thái, sắp xếp. Làm mới quét mọi nguồn đã cấu hình; nguồn không truy cập được giữ cache, các nguồn khác vẫn tiếp tục. Khi mất quyền, chọn lại đúng thư mục đó.
+Theo mặc định, Thư viện gộp sách từ tất cả thư mục đã chọn. Menu thư mục cho phép lọc theo một nguồn, kết hợp với tìm kiếm, trạng thái đọc và cách sắp xếp. Làm mới sẽ quét tất cả thư mục đã cấu hình. Nếu một thư mục không truy cập được, sách đã lưu của thư mục đó vẫn được giữ, còn các thư mục khác tiếp tục cập nhật. Khi mất quyền, hãy chọn lại đúng thư mục đó.
 
-Làm mới thất bại giữ nội dung đã lưu.
+Làm mới thất bại không xóa nội dung đã lưu. **Xóa bộ nhớ đệm đọc** tạo lại dữ liệu đọc và bìa, giữ nguyên ứng dụng đã ghim cùng tùy chọn giao diện. **Ngắt kết nối nguồn** xóa cấu hình nguồn và bộ nhớ đệm đọc, không xóa sách hoặc dữ liệu KOReader.
 
-**Xóa bộ nhớ đệm đọc** tạo lại dữ liệu đọc và bìa mà không đổi ghim/giao diện. **Ngắt kết nối nguồn** xóa cấu hình nguồn và cache đọc, không xóa sách hoặc dữ liệu KOReader.
+## Đọc sách và dùng trình khởi chạy
 
-## Đọc sách và trình khởi chạy
+Chạm sách trong Thư viện để mở tài liệu gốc bằng KOReader đã chọn; nhấn giữ để xem chi tiết. Trang chủ dùng cùng cách mở sách. Nếu thiếu tệp, mất quyền hoặc không có trình xử lý tương thích, InkNest sẽ báo lỗi. Việc Android nhận intent chưa chứng minh KOReader đã mở đúng sách; dữ liệu đọc được cập nhật lại từ KOReader khi bạn quay về InkNest.
 
-Chạm sách trong Thư viện để mở tài liệu gốc bằng KOReader đã chọn; nhấn giữ để xem chi tiết. Trang chủ dùng cùng luồng mở tài liệu. Thiếu tệp, quyền hoặc trình xử lý thì báo lỗi, không chỉ mở KOReader rồi bỏ qua sách đã chọn. Android nhận intent không chứng minh KOReader đã mở đúng sách; dữ liệu đọc được làm mới khi quay lại.
+Bạn có thể đặt InkNest làm trình khởi chạy mặc định tại **Cài đặt → Trình khởi chạy**. Để đổi lại, mở **Cài đặt Android → Ứng dụng → Ứng dụng mặc định → Ứng dụng Trang chủ** và chọn trình khởi chạy trước đó; tên các mục có thể khác tùy firmware. Khi InkNest là ứng dụng Trang chủ mặc định, nhấn HOME sẽ về Trang chủ InkNest. Danh sách ứng dụng và ứng dụng đã ghim vẫn dùng được khi chưa kết nối nguồn đọc.
 
-Có thể đặt launcher mặc định tại **Cài đặt → Trình khởi chạy**. Để đổi lại, mở Cài đặt Android → Ứng dụng → Ứng dụng mặc định → Ứng dụng Trang chủ và chọn launcher trước đó; tên mục tùy firmware. Khi InkNest giữ vai trò Home, HOME quay về Trang chủ InkNest. Ứng dụng và ghim vẫn hoạt động khi chưa kết nối nguồn đọc.
-
-E-Ink chuyển biểu tượng ứng dụng sang thang xám; Tiêu chuẩn giữ màu gốc. Cả hai dùng chuyển trạng thái tĩnh. Giao diện nhóm Ngôn ngữ và Chế độ hiển thị dưới Chung, mở hộp thoại chọn. Các mục trên Trang chủ có thể ẩn thống kê nhanh và ứng dụng ghim mà không xóa ghim. Cỡ chữ theo hệ thống. Tần suất làm mới màn hình vẫn do firmware quản lý.
+Chế độ E-Ink hiển thị biểu tượng ứng dụng bằng thang xám; Tiêu chuẩn giữ màu gốc. Cả hai đều không dùng hiệu ứng chuyển động khi chuyển trạng thái. Trong Giao diện, phần Chung có Ngôn ngữ và Chế độ hiển thị; chạm để mở hộp thoại lựa chọn. Phần Các mục trên Trang chủ cho phép ẩn thống kê nhanh và ứng dụng đã ghim mà không xóa ghim. Cỡ chữ theo cài đặt hệ thống. Việc làm mới màn hình vẫn do firmware của thiết bị quản lý.
 
 ## Ngôn ngữ ứng dụng
 
-**Cài đặt → Giao diện → Ngôn ngữ** có Theo hệ thống, English và Tiếng Việt. Theo hệ thống dùng danh sách locale Android; ngôn ngữ không hỗ trợ quay về tiếng Anh. Tên English và Tiếng Việt giữ nguyên ngôn ngữ riêng. Thiết lập ban đầu theo ngôn ngữ ứng dụng, không có bước chọn riêng. Đổi ngôn ngữ tái tạo Activity nhưng giữ trang Cài đặt hiện tại và đóng popup.
+**Cài đặt → Giao diện → Ngôn ngữ** có ba lựa chọn: Theo hệ thống, English và Tiếng Việt. Theo hệ thống dùng danh sách ngôn ngữ Android; nếu ngôn ngữ không được hỗ trợ, ứng dụng dùng tiếng Anh. Tên English và Tiếng Việt luôn giữ nguyên cách viết trong ngôn ngữ tương ứng. Thiết lập ban đầu dùng ngôn ngữ của ứng dụng, không có bước chọn ngôn ngữ riêng. Đổi ngôn ngữ sẽ tạo lại Activity, nhưng vẫn giữ trang Cài đặt hiện tại và đóng các menu đang mở.
 
-InkNest dùng locale theo ứng dụng của AndroidX AppCompat, không lưu thêm trong DataStore. Android 13 trở lên chia sẻ lựa chọn với cài đặt ngôn ngữ ứng dụng của hệ thống. Bản Android cũ dùng lưu trữ tự động của AppCompat; cơ chế này có thể tạo chẩn đoán truy cập đĩa StrictMode trên debug ở Android 12 trở xuống, theo [tài liệu Android](https://developer.android.com/guide/topics/resources/app-languages).
+InkNest dùng cơ chế ngôn ngữ riêng cho từng ứng dụng của AndroidX AppCompat, không lưu thêm lựa chọn này trong DataStore. Trên Android 13 trở lên, lựa chọn được dùng chung với cài đặt ngôn ngữ ứng dụng của hệ thống. Các bản Android cũ dùng cơ chế lưu tự động của AppCompat. Trên Android 12 trở xuống, cơ chế này có thể phát sinh thông báo StrictMode về truy cập đĩa trong bản debug, như mô tả trong [tài liệu Android](https://developer.android.com/guide/topics/resources/app-languages).
 
-Resource tiếng Anh là mặc định; tiếng Việt nằm trong `values-vi`. Chỉ đóng gói locale en/vi, kể cả dependency; App Bundle không tách ngôn ngữ để cả hai dùng được ngoại tuyến. Ngày, chú thích biểu đồ và định dạng số theo locale UI. Đổi ngôn ngữ không đổi múi giờ, ngày đọc đã lưu hay cách tính chuỗi ngày. Metadata sách, tên ứng dụng ngoài và văn bản giấy phép giữ nội dung từ nguồn. Metadata ứng dụng đã cài được tải lại khi locale hiệu lực thay đổi; duyệt sách không cần quét lại nguồn.
+Tài nguyên tiếng Anh là mặc định; tiếng Việt nằm trong `values-vi`. Bản phân phối chỉ đóng gói tài nguyên en/vi, kể cả của thư viện phụ thuộc. App Bundle không tách gói ngôn ngữ, nên cả hai luôn có sẵn khi ngoại tuyến. Nhãn ngày, chú thích biểu đồ và định dạng số theo ngôn ngữ giao diện. Đổi ngôn ngữ không đổi múi giờ, ngày đọc đã lưu hoặc cách tính chuỗi ngày đọc. Thông tin sách, tên ứng dụng bên ngoài và nội dung giấy phép giữ nguyên từ nguồn. Thông tin ứng dụng đã cài được tải lại khi ngôn ngữ giao diện thực tế thay đổi; duyệt sách không cần quét lại nguồn.

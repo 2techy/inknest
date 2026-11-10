@@ -2,37 +2,43 @@
 
 [English](../en/library.md) · [Mục lục](README.md)
 
-Thư viện lập danh mục tệp sách nhận diện được trong mọi cây thư mục sách SAF đã chọn, quét đệ quy kể cả sách chưa mở bằng KOReader. Lịch sử KOReader bổ sung trạng thái, tiến độ, thời điểm đọc, không quyết định thành viên thư viện. Sách ngoài thư mục đã chọn không xuất hiện chỉ vì có trong lịch sử.
+Thư viện lập danh mục tất cả tệp sách được nhận diện trong các thư mục sách đã chọn qua SAF, bao gồm thư mục con và cả sách chưa từng mở bằng KOReader. Lịch sử KOReader chỉ bổ sung trạng thái, tiến độ và lần đọc gần nhất; danh sách sách trong Thư viện do các thư mục đã chọn quyết định. Sách nằm ngoài những thư mục này sẽ không xuất hiện dù có trong lịch sử đọc.
 
 ## Luồng dữ liệu và định dạng
 
-`SafBookCatalogSource` liệt kê cây bộ nhớ chính được cấp quyền qua ContentResolver. Mỗi tài liệu phải nằm trong gốc tương ứng; bỏ mục ẩn/thư mục sidecar, ngăn duyệt lặp, hỗ trợ hủy, giới hạn độ sâu 64 và tổng 100.000 entry. Nhận diện EPUB, PDF, DjVu, MOBI/AZW, FB2, văn bản, comic archive và các định dạng tài liệu phổ biến. Không quét thư mục ngoài cấu hình hay yêu cầu quyền bộ nhớ rộng.
+`SafBookCatalogSource` dùng ContentResolver để liệt kê nội dung trong các cây thư mục được cấp quyền trên bộ nhớ chính. Mỗi tài liệu phải nằm trong thư mục gốc tương ứng. Quá trình duyệt bỏ qua thư mục ẩn và thư mục sidecar, tránh duyệt lặp, hỗ trợ hủy tác vụ, giới hạn độ sâu ở 64 cấp và tổng số mục ở 100.000. Các định dạng được nhận diện gồm EPUB, PDF, DjVu, MOBI/AZW, FB2, văn bản, truyện tranh dạng tệp nén và các định dạng tài liệu phổ biến. Ứng dụng không quét thư mục ngoài cấu hình hoặc yêu cầu quyền truy cập bộ nhớ diện rộng.
 
-| Phần mở rộng nhận diện | Metadata và bìa |
+| Phần mở rộng được nhận diện | Thông tin sách và bìa |
 | --- | --- |
-| `epub` | Trích xuất tên, tác giả đầu tiên và bìa raster hỗ trợ nếu có. |
-| `pdf`, `djvu`, `djv`, `mobi`, `azw`, `azw3`, `fb2`, `txt`, `cbz`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Mục theo tên tệp và bìa thay thế. |
+| `epub` | Trích xuất tên sách, tác giả đầu tiên và bìa dạng ảnh raster được hỗ trợ, nếu có. |
+| `pdf`, `djvu`, `djv`, `mobi`, `azw`, `azw3`, `fb2`, `txt`, `cbz`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Hiển thị theo tên tệp, dùng bìa mặc định. |
 
-Nhận diện nghĩa là tệp có thể xuất hiện trong Thư viện; mở sách vẫn cần handler KOReader tương thích. Trạng thái/tiến độ có thể được bổ sung từ KOReader độc lập với hỗ trợ metadata nhúng.
+Tệp được nhận diện có thể xuất hiện trong Thư viện, nhưng chỉ mở được khi KOReader có trình xử lý tương thích. Trạng thái và tiến độ vẫn có thể lấy từ KOReader ngay cả khi InkNest không đọc được thông tin nhúng trong tệp.
 
-`FolderLibraryRepository` quản lý scan chia sẻ cấp ứng dụng và inventory Room theo định danh nguồn/cây sách. Khám phá hoàn chỉnh thay thành viên theo giao dịch; lỗi liệt kê giữ inventory trước. Metadata/bìa được bổ sung theo lô nhỏ, dùng lại fingerprint. Inventory hoàn tất tồn tại sau restart; tác vụ gián đoạn được tiếp tục. Thiết lập đầu, đổi thư mục và reset cache kích hoạt lập danh mục; Làm mới thư viện nhận tệp thêm/xóa. Chuyển tab hay đồng hồ tick không quét.
+`FolderLibraryRepository` quản lý tác vụ quét dùng chung trong toàn ứng dụng và danh mục Room được phân vùng theo định danh nguồn/cây thư mục sách. Sau khi liệt kê đầy đủ, danh sách sách được thay thế trong một giao dịch; nếu liệt kê thất bại, danh mục cũ được giữ nguyên. Thông tin sách và bìa được bổ sung theo từng lô nhỏ, tận dụng thông tin nhận diện tệp (fingerprint) đã biết để tránh đọc lại. Danh mục hoàn chỉnh được giữ qua lần khởi động tiếp theo; quá trình bị gián đoạn sẽ được tiếp tục. Thiết lập lần đầu, đổi thư mục và xóa bộ nhớ đệm đều kích hoạt lập danh mục. Làm mới thư viện cập nhật tệp mới thêm hoặc đã xóa; chuyển tab và đồng hồ chạy không gây quét thư mục.
 
-Bảng thư viện nằm trong database đọc Room schema 6, dùng destructive fallback khi phát triển, chưa có migration. Tùy chọn, ghim và quyền cây tách riêng. Xóa cache đọc xóa inventory/bìa để nguồn hiện tại tạo lại. Đổi nguồn hủy scan cũ; quan sát/ghi kiểm tra thư mục đang hoạt động.
+Các bảng thư viện dùng chung cơ sở dữ liệu đọc Room schema 6. Trong giai đoạn phát triển, khi đổi phiên bản mà không có migration, Room được phép xóa và tạo lại bộ nhớ đệm. Tùy chọn, ứng dụng đã ghim và quyền truy cập thư mục được quản lý riêng. Xóa bộ nhớ đệm đọc cũng xóa danh mục/bìa để tạo lại từ thư mục đang dùng. Đổi nguồn hủy tác vụ quét cũ; cả việc theo dõi dữ liệu lẫn ghi dữ liệu đều kiểm tra thư mục đang có hiệu lực.
 
-Chỉ EPUB được trích xuất metadata và bìa raster bằng adapter có giới hạn. URI đã kiểm tra có thể đọc trực tiếp sau kiểm tra quyền/containment, tránh tìm lại thư mục cho từng sách. Định dạng khác hoặc thiếu bìa dùng hình sách thay thế, tên tệp và định dạng. Không hiện tác giả/tiến độ thiếu bằng nhãn kỹ thuật lặp lại. Sách mới có trạng thái chưa biết; thiếu lịch sử không chứng minh chưa đọc.
+Chỉ EPUB được trích xuất thông tin và bìa raster, thông qua bộ đọc có giới hạn tài nguyên. URI tài liệu đã xác thực có thể được đọc trực tiếp sau khi kiểm tra quyền và bảo đảm tài liệu vẫn nằm trong cây thư mục được cấp quyền, tránh phải tìm lại từng tệp. Định dạng khác hoặc sách thiếu bìa dùng hình bìa mặc định, tên tệp và định dạng. Nếu thiếu tác giả hoặc tiến độ, kệ sách bỏ qua những thông tin đó thay vì lặp lại nhãn kỹ thuật. Sách mới có trạng thái đọc chưa xác định; không có lịch sử chưa đủ để kết luận là chưa đọc.
 
 ## Màn hình và thao tác
 
-Kệ dùng header/token chung, dải lọc trạng thái ngang gọn, chế độ lưới/danh sách, tìm kiếm và menu sắp xếp/làm mới tĩnh. Bìa và tên sách là nội dung chính. Lưới có chú thích gọn; danh sách có thêm metadata. Tìm theo tên/tác giả đã biết, không phân biệt hoa thường. State chỉnh sửa/chọn chữ ở local để lọc nền không đảo ký tự; bỏ IME commit đến muộn sau đóng tìm kiếm. Query/filter/sort/view lưu trong SavedStateHandle; lazy state khôi phục cuộn.
+Kệ sách dùng phần đầu trang và các giá trị thiết kế chung, có dải lọc trạng thái cuộn ngang, chế độ lưới/danh sách, tìm kiếm và menu sắp xếp/làm mới không có hiệu ứng chuyển động. Bìa và tên sách là nội dung chính. Dạng lưới có chú thích ngắn; dạng danh sách hiển thị thêm thông tin sách.
 
-Mặc định sắp thời điểm đọc giảm dần; có tên A–Z và tiến độ giảm dần. Giá trị chưa biết đứng sau đã biết, trường hợp bằng nhau giữ thứ tự/định danh thư mục ổn định. Bộ lọc dùng trạng thái KOReader rõ ràng; 100% không tự thành Đã đọc.
+Tìm kiếm theo tên sách hoặc tác giả đã biết, không phân biệt hoa thường. Trạng thái nhập và chọn văn bản được giữ cục bộ để việc lọc ở nền không làm đảo thứ tự ký tự đang gõ. Nội dung do bộ gõ gửi đến sau khi đã đóng tìm kiếm sẽ bị bỏ qua. Từ khóa, bộ lọc, cách sắp xếp và kiểu hiển thị được lưu trong SavedStateHandle; trạng thái của thành phần lazy giúp khôi phục vị trí cuộn.
 
-Chạm sách mở tài liệu gốc trong KOReader qua `ReadingOpenRepository` và `ReadingItemDispatcher`. Nhấn giữ mở chi tiết/đường dẫn, có thể mở sách từ hộp thoại. Lưới và danh sách dùng cùng thao tác. Background/HOME đóng chi tiết và yêu cầu mở chờ; giữ query, filter và cuộn. Yêu cầu mở không được hỗ trợ sẽ hiển thị lỗi. Lịch sử và tiến độ đọc được lấy từ KOReader.
+Mặc định, sách được xếp theo lần đọc gần nhất, mới trước. Các lựa chọn khác là tên A–Z và tiến độ từ cao xuống thấp. Giá trị chưa biết đứng sau giá trị đã biết; khi bằng nhau, thứ tự thư mục/định danh ổn định được dùng để phân định. Bộ lọc dựa trên trạng thái KOReader ghi rõ; tiến độ 100% không tự động có nghĩa là Đã đọc.
 
-## Duyệt tác giả
+Chạm sách để mở tài liệu gốc trong KOReader đã chọn, thông qua `ReadingOpenRepository` và `ReadingItemDispatcher`. Nhấn giữ để xem thông tin chi tiết và đường dẫn; hộp thoại này cũng có nút mở sách. Dạng lưới và danh sách dùng cùng các thao tác. Khi ứng dụng chuyển xuống nền hoặc người dùng nhấn HOME, hộp thoại chi tiết được đóng và yêu cầu mở đang chờ bị bỏ; từ khóa, bộ lọc và vị trí cuộn vẫn được giữ. Yêu cầu mở không được hỗ trợ sẽ hiển thị lỗi. Lịch sử và tiến độ đọc luôn lấy từ KOReader.
 
-Thư viện có Tất cả sách và Tác giả. Tác giả hiển thị tên/số lượng, dẫn vào kệ sách. Menu nguồn vẫn có khi chỉ cấu hình một gốc; lọc nguồn đã cấu hình, không phải thư mục con filesystem. Tìm kiếm/trạng thái áp dụng trước khi đếm tác giả; sắp sách áp dụng trong kệ. Chuẩn hóa khoảng trắng và hoa/thường, không bỏ dấu, tách chuỗi creator hoặc đoán từ tên tệp. Thiếu metadata vào Không rõ tác giả, ở cuối danh sách.
+## Duyệt theo tác giả
 
-Chế độ duyệt/tác giả chọn nằm trong SavedStateHandle, không tạo preference/cột database. Back đóng tìm kiếm trước, sau đó từ kệ tác giả về danh sách tác giả. Thanh điều hướng vẫn hiện. Duyệt dùng dữ liệu cache, không quét nguồn.
+Thư viện có hai chế độ: Tất cả sách và Tác giả. Chế độ Tác giả hiển thị tên cùng số lượng sách; chọn một tác giả để mở kệ sách tương ứng. Menu thư mục nguồn vẫn có khi chỉ cấu hình một thư mục gốc. Menu này lọc theo các nguồn đã chọn, không duyệt từng thư mục con trong hệ thống tệp. Tìm kiếm và lọc trạng thái được áp dụng trước khi đếm sách theo tác giả; sắp xếp sách được áp dụng trong từng kệ.
 
-Toolbar có tìm kiếm và menu thêm. Menu nhóm duyệt, thư mục, bố cục và sắp xếp thành submenu một cấp; làm mới là thao tác trực tiếp. Danh sách tác giả không hiện tùy chọn bố cục/sắp sách. Submenu có header quay lại và đánh dấu lựa chọn; dismiss/Back đóng popup, background xóa popup. Không có dòng tóm tắt dưới tiêu đề trang. Tìm kiếm dùng chung trường inline với Ứng dụng, placeholder một dòng và vùng chạm 48dp. Thao tác theo ngữ cảnh, không theo ngưỡng chiều rộng.
+Tên tác giả được chuẩn hóa khoảng trắng và chữ hoa/thường, nhưng không bỏ dấu, tách chuỗi tên tác giả hoặc đoán từ tên tệp. Sách thiếu thông tin tác giả được gom vào Không rõ tác giả, nằm cuối danh sách.
+
+Chế độ duyệt và tác giả đang chọn được khôi phục qua SavedStateHandle, không tạo thêm tùy chọn lưu lâu dài hoặc cột cơ sở dữ liệu. Nút Quay lại đóng tìm kiếm trước, sau đó đưa người dùng từ kệ của một tác giả về danh sách tác giả. Thanh điều hướng luôn hiện. Việc duyệt dùng danh mục đã lưu trong bộ nhớ đệm và không quét lại nguồn.
+
+Thanh công cụ có nút tìm kiếm và menu thêm. Menu thêm chia các lựa chọn duyệt thư viện, thư mục, bố cục và sắp xếp thành menu con một cấp; làm mới là thao tác trực tiếp. Danh sách tác giả không hiển thị lựa chọn bố cục/sắp xếp dành cho sách. Menu con có mũi tên quay lại ở đầu và đánh dấu lựa chọn hiện tại. Thao tác đóng hoặc Quay lại sẽ đóng menu; chuyển ứng dụng xuống nền cũng xóa menu đang mở. Không hiển thị dòng tóm tắt dưới tiêu đề trang.
+
+Thư viện và Ứng dụng dùng chung ô tìm kiếm ngay trên thanh công cụ, với gợi ý một dòng và vùng chạm 48dp. Các thao tác hiện ra theo ngữ cảnh, không bị giới hạn bởi ngưỡng chiều rộng màn hình.
