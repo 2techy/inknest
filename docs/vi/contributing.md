@@ -21,7 +21,7 @@ Thay đổi phải giữ khả năng hủy coroutine, báo lỗi khi ghi thất 
 
 ## Kiểm tra pull request
 
-Mọi PR vào `master`, kể cả bản nháp và thay đổi tài liệu, đều chạy bước `build`: kiểm tra định dạng, kiểm thử JVM và lint cho debug/release, biên dịch APK ứng dụng và kiểm thử. Các kiểm tra phải thành công và các trao đổi rà soát phải được giải quyết trước khi squash merge. Không bắt buộc có thêm người duyệt phê duyệt. Kiểm thử trên giả lập Android được chạy thủ công; đo hiệu năng và nghiệm thu thiết bị thật thực hiện riêng. Xem [GitHub Actions](development.md#github-actions) về tệp kết quả và [báo cáo bảo mật](../../SECURITY.md) cho vấn đề nhạy cảm.
+CI bỏ qua PR chỉ thay đổi `docs/**` và các tệp Markdown ở gốc kho mã. Các PR khác vào `master`, kể cả bản nháp, chạy bước `build`: kiểm tra định dạng, kiểm thử JVM và lint cho debug/release, biên dịch APK ứng dụng và kiểm thử. Các kiểm tra áp dụng cho PR phải thành công và các trao đổi rà soát phải được giải quyết trước khi squash merge. Không bắt buộc có thêm người duyệt phê duyệt. Kiểm thử trên giả lập Android được chạy thủ công; đo hiệu năng và nghiệm thu thiết bị thật thực hiện riêng. Xem [GitHub Actions](development.md#github-actions) về tệp kết quả và [báo cáo bảo mật](../../SECURITY.md) cho vấn đề nhạy cảm.
 
 ## Tài liệu và bản dịch
 

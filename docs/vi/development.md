@@ -58,7 +58,7 @@ Các bài kiểm thử JVM cho repository tạo Preferences DataStore bằng `Ok
 
 ## GitHub Actions
 
-[Workflow CI](../../.github/workflows/ci.yml) chạy với mọi pull request vào `master`, kể cả draft, push vào `master` và khi chạy thủ công. Bước kiểm tra duy nhất `build` kiểm tra định dạng, chạy kiểm thử JVM và Android lint cho debug/release, rồi tạo APK debug/release cùng APK kiểm thử Android. Thay đổi chỉ gồm tài liệu vẫn chạy bước này. CI không cần thông tin bí mật dùng để ký.
+[Workflow CI](../../.github/workflows/ci.yml) chạy với pull request vào `master` (kể cả bản nháp), push vào `master` và khi chạy thủ công. Các lần chạy tự động dùng `paths-ignore` để bỏ qua thay đổi chỉ gồm `docs/**` và các tệp Markdown ở gốc kho mã. Các thay đổi khác và lần chạy thủ công thực hiện đầy đủ bước `build`: kiểm tra định dạng, chạy kiểm thử JVM và Android lint cho debug/release, biên dịch APK debug/release cùng APK kiểm thử Android. CI không cần thông tin bí mật dùng để ký.
 
 CI dùng runner Ubuntu tiêu chuẩn, Temurin 21 và SDK package `platforms;android-37.0`. Chỉ push vào `master` được ghi Gradle cache; PR và workflow thủ công chỉ đọc. Báo cáo lỗi được lưu trong một ngày. Khi chạy CI thủ công có thể bật `upload_debug_apk` để giữ APK debug một ngày; PR thông thường không tải APK lên.
 

@@ -58,7 +58,7 @@ JVM repository tests create Preferences DataStore with `OkioStorage` and the rea
 
 ## GitHub Actions
 
-The [CI workflow](../../.github/workflows/ci.yml) runs on every pull request into `master`, including drafts, pushes to `master`, and manual dispatch. Its single `build` check runs formatting, JVM tests for debug/release, Android lint for debug/release, and builds debug/release APKs plus the Android test APK. Documentation-only changes use the same check. No signing secrets are needed for CI.
+The [CI workflow](../../.github/workflows/ci.yml) runs on pull requests into `master` (including drafts), pushes to `master`, and manual dispatch. Automatic runs use `paths-ignore` to skip changes limited to `docs/**` and root-level Markdown files. Other changes and manual runs execute the full `build` check: formatting, debug/release JVM tests and Android lint, and compilation of debug/release APKs plus the Android test APK. No signing secrets are needed for CI.
 
 CI uses standard Ubuntu runners, Temurin 21 and SDK package `platforms;android-37.0`. Gradle cache writes are limited to pushes to `master`; PRs and manual workflows only read it. Failure reports expire after one day. A manual CI run can enable `upload_debug_apk` to retain a debug APK for one day; ordinary PR runs do not upload APKs.
 
