@@ -1,23 +1,23 @@
 name: Draft release
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: draft-release
   cancel-in-progress: false
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     outputs:
-      version: ${{ steps.tag.outputs.version }}
-      commit: ${{ steps.tag.outputs.commit }}
+      version: ${{ steps.apk.outputs.version }}
+      commit: ${{ steps.source.outputs.commit }}
       version_code: ${{ steps.apk.outputs.version_code }}
       unsigned_artifact_id: ${{ steps.upload.outputs.artifact-id }}
     steps:
@@ -25,20 +25,13 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Validate tag and source commit
-        id: tag
-        env:
-          TAG: ${{ github.ref_name }}
+      - name: Validate source commit
+        id: source
         run: |
-          if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(dev|(alpha|beta|rc)\.[1-9][0-9]*))?$ ]]; then
-            echo 'Unsupported release tag' >&2
-            exit 1
-          fi
           git fetch --no-tags origin +refs/heads/master:refs/remotes/origin/master
           commit=$(git rev-parse HEAD)
-          test "$commit" = "$(git rev-parse "refs/tags/$TAG^{commit}")"
+          test "$commit" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$commit" origin/master
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
@@ -61,7 +54,9 @@ jobs:
       - name: Verify APK package and version
         id: apk
         env:
-          VERSION: ${{ steps.tag.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT: ${{ steps.source.outputs.commit }}
         run: |
           apk=app/build/outputs/apk/release/app-release-unsigned.apk
           badging=$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk")
@@ -69,8 +64,19 @@ jobs:
           version=$(sed -n "s/^package: .*versionName='\([^']*\)'.*/\1/p" <<< "$badging")
           code=$(sed -n "s/^package: .*versionCode='\([^']*\)'.*/\1/p" <<< "$badging")
           test "$package" = dev.twotechy.inknest
-          test "$version" = "$VERSION"
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(dev|(alpha|beta|rc)\.[1-9][0-9]*))?$ ]]
           [[ "$code" =~ ^[1-9][0-9]*$ ]]
+          tag="v$version"
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            test "$(git rev-parse "refs/tags/$tag^{commit}")" = "$COMMIT"
+          fi
+          if gh api "repos/$GH_REPO/releases/tags/$tag" > "$RUNNER_TEMP/existing-release.json" 2> "$RUNNER_TEMP/release-query-error"; then
+            jq -e --arg sha "$COMMIT" '.draft == true and .target_commitish == $sha' "$RUNNER_TEMP/existing-release.json" > /dev/null
+          elif ! grep -q 'HTTP 404' "$RUNNER_TEMP/release-query-error"; then
+            cat "$RUNNER_TEMP/release-query-error" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "version_code=$code" >> "$GITHUB_OUTPUT"
       - name: Upload unsigned APK for signing
         id: upload
@@ -179,12 +185,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
           VERSION: ${{ needs.build.outputs.version }}
           COMMIT: ${{ needs.build.outputs.commit }}
           VERSION_CODE: ${{ needs.build.outputs.version_code }}
           CERTIFICATE: ${{ needs.sign.outputs.certificate }}
         run: |
+          TAG="v$VERSION"
           existing="$RUNNER_TEMP/existing-release.json"
           exists=false
           if gh api "repos/$GH_REPO/releases/tags/$TAG" > "$existing" 2> "$RUNNER_TEMP/release-query-error"; then
@@ -192,6 +198,15 @@ jobs:
             exists=true
           elif ! grep -q 'HTTP 404' "$RUNNER_TEMP/release-query-error"; then
             cat "$RUNNER_TEMP/release-query-error" >&2
+            exit 1
+          fi
+          if gh api "repos/$GH_REPO/git/ref/tags/$TAG" > "$RUNNER_TEMP/existing-tag.json" 2> "$RUNNER_TEMP/tag-query-error"; then
+            tag_commit=$(gh api "repos/$GH_REPO/commits/$TAG" --jq .sha)
+            test "$tag_commit" = "$COMMIT"
+          elif grep -q 'HTTP 404' "$RUNNER_TEMP/tag-query-error"; then
+            gh api --method POST "repos/$GH_REPO/git/refs" -f ref="refs/tags/$TAG" -f sha="$COMMIT" > /dev/null
+          else
+            cat "$RUNNER_TEMP/tag-query-error" >&2
             exit 1
           fi
           notes="$RUNNER_TEMP/release-notes.md"

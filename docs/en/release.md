@@ -31,15 +31,17 @@ permissions before distribution. Keep mapping files privately with the matching 
 
 The same package signed with another key cannot replace an existing installation. Prefer a
 separate test device/profile; uninstalling deletes local configuration and pins. This project
-does not automatically uninstall or replace signing identities. Tags select builds for the draft-release workflow below; public release publication remains a maintainer action.
+does not automatically uninstall or replace signing identities. The draft-release workflow below creates version tags; public release publication remains a maintainer action.
 
 ## GitHub draft releases
 
-The [Draft release workflow](../../.github/workflows/release.yml) starts on tags matching `vX.Y.Z`, optionally followed by `-dev`, `-alpha.N`, `-beta.N` or `-rc.N` (N starts at 1). Update `versionName` and increase `versionCode` through a PR before tagging. The APK package must be `dev.twotechy.inknest`, its version must match the tag without `v`, and the tagged commit must belong to the history of `master`.
+The [Draft release workflow](../../.github/workflows/release.yml) runs manually from Actions. Update `versionName` and increase `versionCode` through a PR, then merge after CI passes. Choose **Actions → Draft release → Run workflow**, select `master`, and start the run. Other branches and tags are skipped. No version input or manual tag creation is needed.
+
+The run checks out the exact `master` commit selected when it starts, even if newer commits arrive during the build. It reads the version from the built APK, whose package must be `dev.twotechy.inknest`. Supported versions are `X.Y.Z`, optionally followed by `-dev`, `-alpha.N`, `-beta.N` or `-rc.N` (N starts at 1). The version code must be positive. An existing version tag must point to the same commit; an existing release must be a draft targeting that commit. Conflicts and published versions stop the run.
 
 Build, signing and draft management use separate jobs. The build job checks formatting, debug/release JVM tests and lint, then builds the unsigned release without signing secrets. The signing job aligns/signs/verifies the APK using the repository's `release` environment; it does not check out app code. Only the draft job has release-write and artifact-cleanup permissions, and it also does not check out app code.
 
-Configure environment `release` in repository settings with a deployment tag rule `v*`. Use the existing release key, backed up outside GitHub. Set these environment secrets through GitHub settings or an authenticated local secret-management flow; do not paste values into issues, PRs, chat or commands containing literal passwords:
+Configure environment `release` in repository settings with a deployment **branch** rule for `master`. Replace the previous `v*` tag rule if present: manual runs use a branch ref when entering the signing job. Use the existing release key, backed up outside GitHub. Set these environment secrets through GitHub settings or an authenticated local secret-management flow; do not paste values into issues, PRs, chat or commands containing literal passwords:
 
 | Secret | Value |
 | --- | --- |
@@ -50,9 +52,9 @@ Configure environment `release` in repository settings with a deployment tag rul
 
 Set environment variable `ANDROID_SIGNING_CERT_SHA256` to the known certificate SHA-256 from a trusted previously signed APK (`apksigner verify --print-certs`); colons and whitespace are accepted. Missing secrets, an invalid fingerprint, a mismatched certificate or invalid tag/APK metadata fail the workflow. The keystore is decoded into temporary storage and deleted when signing exits; Gradle never receives signing secrets.
 
-After merge, a maintainer creates and pushes the version tag. The workflow creates a **draft**, attaches `InkNest-<version>.apk` and `SHA256SUMS.txt`, and records the commit, version code and certificate fingerprint with generated release notes. Versions with suffixes are marked pre-release. Download that exact APK, verify its checksum/signature and complete [device acceptance](reliability.md) before choosing Publish release.
+After build and signing succeed, the draft job creates tag `v<version>` at the checked-out commit and a **draft**, attaches `InkNest-<version>.apk` and `SHA256SUMS.txt`, and records the commit, version code and certificate fingerprint with generated release notes. Versions with suffixes are marked pre-release. Download that exact APK, verify its checksum/signature and complete [device acceptance](reliability.md) before choosing **Publish release**. Tag creation uses the workflow's `GITHUB_TOKEN`; no personal access token is needed. Pushing a tag does not start this workflow.
 
-Runs for the same tag execute serially. A rerun may update an existing draft only when its target commit matches; published releases are never overwritten. Intermediate unsigned/signed artifacts expire after one day and are deleted after successful release upload. Release APKs remain in GitHub Releases, not in Git or long-lived Actions artifacts. If upload fails after draft creation, the draft may be incomplete; rerun the same tag after resolving the error and verify both assets before publishing.
+Release runs share one concurrency group and do not cancel the active run. A rerun may reuse a tag and update an existing draft only when their commits match; published releases are never overwritten. To retry an incomplete run, use **Re-run failed jobs** or **Re-run all jobs** on that run so it retains the original commit. Starting a new run after `master` changes cannot replace that version's tag. Intermediate unsigned/signed artifacts expire after one day and are deleted after successful release upload. If artifacts have expired, rerun all jobs. Release APKs remain in GitHub Releases, not in Git or long-lived Actions artifacts. If draft creation or upload fails after tag creation, the tag remains and the draft may be missing or incomplete; resolve the error, rerun the original run and verify both assets before publishing.
 
 ## Data policy and release gates
 
