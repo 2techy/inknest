@@ -4,7 +4,7 @@ agp = "9.5.1"
 kotlin = "2.4.21"
 
 # Source formatting (build-time tools only)
-spotless = "8.10.4"
+spotless = "8.11.0"
 ktlint = "1.8.0"
 
 # AndroidX platform integration
