@@ -42,6 +42,11 @@ internal fun ThirdPartyLicensesContent(openPage: (SettingsPage) -> Unit) {
             stringResource(R.string.license_apache),
             onClick = { openPage(SettingsPage.MaterialSymbolsLicense) },
         )
+        SettingsRow(
+            stringResource(R.string.license_commonmark),
+            stringResource(R.string.license_bsd),
+            onClick = { openPage(SettingsPage.CommonMarkLicense) },
+        )
     }
 }
 

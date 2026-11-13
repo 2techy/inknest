@@ -20,5 +20,9 @@ class LicenseContentTest {
         }
         assertEquals(luaj, repository.read(ThirdPartyLicense.LuaJ))
         assertEquals("$symbols\n\n$apache", repository.read(ThirdPartyLicense.MaterialSymbols))
+        val commonmark = assets.open("licenses/commonmark_license.txt").bufferedReader().use {
+            it.readText()
+        }
+        assertEquals(commonmark, repository.read(ThirdPartyLicense.CommonMark))
     }
 }

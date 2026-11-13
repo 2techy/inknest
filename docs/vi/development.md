@@ -24,6 +24,13 @@ khi biên dịch trên máy, truyền các thuộc tính Gradle trong dấu nhá
 `.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
 Khi tái tạo một bản phát hành, dùng đúng giá trị đã ghi trong lần chạy tương ứng.
 
+Cập nhật thủ công với phiên bản mặc định `0.1.0-dev` dùng cùng luồng tải trong ứng dụng.
+Tên phiên bản không nhận diện được không bị kết luận là cũ hơn, nhưng vẫn có thể tải và xác minh bản
+phát hành mới nhất. Mã phiên bản APK và chữ ký vẫn phải hợp lệ trước khi cài; không có fallback riêng
+sang trang web. Để thử trạng thái có bản mới trên debug, dùng CalVer cũ,
+ví dụ `:app:assembleDebug '-PinknestVersionName=2026.10.0'`. Debug vẫn không tự kiểm tra; APK GitHub
+không thể thay thế bản debug ký bằng khóa khác.
+
 ```powershell
 .\gradlew.bat --version
 .\gradlew.bat :app:assembleDebug

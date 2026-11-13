@@ -30,6 +30,23 @@ with lifecycle awareness and connect actions; screens render state and callbacks
 
 ## Deliberate scope
 
+App updates have a separate `AppUpdateRepository`, GitHub source and keys in the existing DataStore.
+Settings collects update state; root theme and Home preferences do not include it. An independent
+STARTED effect delegates foreground checks through AppViewModel. Release builds check at most every
+24 hours, with persisted attempt/rate-limit times. Backgrounding cancels downloads; verified APKs
+remain in private storage for a later explicit install. Platform helpers verify the APK and share
+only the update directory through FileProvider. No background service, network sync or telemetry is used.
+
+SettingsViewModel parses release-note Markdown with an injected CommonMark parser on a background
+dispatcher. Screens render immutable styled text, lists and code using Compose/theme tokens, without
+a WebView or remote image requests. Link destinations are limited to web URLs and dispatched by the route.
+CommonMark's BSD notice is bundled in the existing third-party acknowledgements flow.
+
+The update UI has one state-driven primary action for check, download, cancellation and installation.
+All build types share download/verification; an unknown version name permits downloading a discovered
+release without claiming it is newer. The platform APK verifier still rejects non-increasing version
+codes and incompatible signatures before installation.
+
 The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 6
 with destructive cache fallback during development; preferences, pins and source selections
 remain in DataStore. Stable upgrade compatibility is not promised.

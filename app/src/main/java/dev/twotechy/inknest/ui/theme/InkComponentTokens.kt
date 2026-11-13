@@ -53,6 +53,9 @@ internal object InkButtonTokens {
     val horizontalPadding = InkSpacing.lg
     val verticalPadding = InkSpacing.md
 }
+internal object InkUpdateTokens {
+    val metadataMinColumnWidth = 160.dp
+}
 internal object InkNavigationTokens {
     val iconSize = 24.dp
     val minHeight = 64.dp

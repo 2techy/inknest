@@ -24,6 +24,13 @@ locally, pass quoted Gradle properties, for example
 `.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
 Use the values recorded by the relevant release run when reproducing a release.
 
+Manual updates work with the default `0.1.0-dev` version through the same in-app download flow.
+An unrecognized version name is not labelled as older, but the latest release can be downloaded and
+verified. APK version-code and signing checks still apply before installation; there is no special
+website fallback. To test the available-update UI in debug, use an older
+CalVer, for example `:app:assembleDebug '-PinknestVersionName=2026.10.0'`. Automatic checks remain
+disabled in debug; GitHub APKs cannot replace a debug installation signed with a different key.
+
 ```powershell
 .\gradlew.bat --version
 .\gradlew.bat :app:assembleDebug

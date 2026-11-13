@@ -26,6 +26,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
@@ -36,6 +40,60 @@ import org.junit.rules.TemporaryFolder
 
 class FolderLibraryRepositoryTest {
     @get:Rule val folder = TemporaryFolder()
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun queuedResumeSkipsFolderCompletedWhileWaitingForScanGate() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        try {
+            val config = ReadingSourceConfigRepository(
+                testPreferencesDataStore(File(folder.newFolder(), "source.preferences_pb"), scope),
+            )
+            val before = config.config.first()
+            config.activateTree(before, config.treeCandidate(before, SourceFolder.Books, "A"))
+            val key = LibraryFolderKey(checkNotNull(config.config.first().sourceId), "A")
+            val inventory = MemoryLibraryInventoryStore()
+            val lockedGate = Mutex(locked = true)
+            val resumeQueued = CompletableDeferred<Unit>()
+            val gate = object : Mutex by lockedGate {
+                override suspend fun lock(owner: Any?) {
+                    resumeQueued.complete(Unit)
+                    lockedGate.lock(owner)
+                }
+            }
+            var scans = 0
+            val reading = object : ReadingRepository {
+                override val reading = flowOf(ReadingState.Empty)
+                override suspend fun refresh() = Unit
+            }
+            val repository = LibraryFolderRepository(
+                config,
+                "A",
+                gate,
+                inventory,
+                BookCatalogSource {
+                    scans++
+                    listOf(catalogBook("A"))
+                },
+                scope,
+                reading,
+            ) { _, _, item -> EnrichedReadingItem(item, null) }
+            resumeQueued.await()
+            inventory.replace(
+                LibraryFolderEntity(key.source, key.tree, 1, true),
+                listOf(LibraryBookEntity(key.source, key.tree, "primary:A/Book.epub", "Book")),
+            )
+            runCurrent()
+            gate.unlock()
+            runCurrent()
+            repository.catalog.first { !it.loading && !it.sync.running }
+            assertEquals(0, scans)
+            repository.refresh()
+            assertEquals("Explicit refresh must still scan a complete folder", 1, scans)
+        } finally {
+            scope.coroutineContext[Job]!!.cancelAndJoin()
+        }
+    }
 
     @Test fun addingRootDoesNotRescanExistingRootAndFailedRootKeepsCache() = runBlocking {
         withTimeout(10000) {

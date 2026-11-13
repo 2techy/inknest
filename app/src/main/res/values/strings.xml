@@ -258,7 +258,38 @@
     <string name="license_material_symbols" translatable="false">Material Symbols</string>
     <string name="license_mit" translatable="false">MIT</string>
     <string name="license_apache" translatable="false">Apache License 2.0</string>
+    <string name="license_commonmark" translatable="false">CommonMark Java</string>
+    <string name="license_bsd" translatable="false">BSD 2-Clause</string>
     <string name="about_tagline">Your reading starts here.</string>
     <string name="check_for_updates">Check for updates</string>
-    <string name="updates_coming_soon">Coming soon</string>
+    <string name="updates_automatic">Automatically check for updates</string>
+    <string name="updates_automatic_description">Check once a day while InkNest is open. Downloads start only when you choose.</string>
+    <string name="updates_title">App updates</string>
+    <string name="updates_current_label">Current version</string>
+    <string name="updates_latest_label">Latest version</string>
+    <string name="updates_size_label">Download size</string>
+    <string name="updates_date_label">Released</string>
+    <string name="updates_latest_found">Latest version</string>
+    <string name="updates_ready">Ready to install</string>
+    <string name="updates_release_notes">What’s new</string>
+    <string name="updates_show_notes">Show what changed</string>
+    <string name="updates_hide_notes">Hide details</string>
+    <string name="updates_loading_notes">Loading changes…</string>
+    <string name="updates_view_release">View on GitHub</string>
+    <string name="updates_checking">Checking for updates…</string>
+    <string name="updates_available">An update is available</string>
+    <string name="updates_current">You are using the latest version</string>
+    <string name="updates_not_checked">Check for a new version of InkNest</string>
+    <string name="updates_last_checked">Last checked: %1$s</string>
+    <string name="updates_download">Download update</string>
+    <string name="updates_install">Install update</string>
+    <string name="updates_progress">Downloading: %1$d%%</string>
+    <string name="updates_verifying">Preparing update…</string>
+    <string name="updates_check_failed">Could not check for updates. Check your connection and try again.</string>
+    <string name="updates_download_failed">Could not download the update. Check your connection and available storage, then try again.</string>
+    <string name="updates_verify_failed">This update cannot be installed. Download it again or use the website.</string>
+    <string name="updates_storage_failed">Update settings are unavailable. Please try again.</string>
+    <string name="updates_rate_limited">Updates are temporarily unavailable. Please try again later.</string>
+    <string name="updates_install_permission">Allow installs from InkNest, then return and tap Install update again.</string>
+    <string name="updates_install_unavailable">Could not open the installer or installation permission settings. You can download the APK from GitHub.</string>
 </resources>

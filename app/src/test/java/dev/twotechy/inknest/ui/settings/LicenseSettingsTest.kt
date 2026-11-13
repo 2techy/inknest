@@ -86,8 +86,10 @@ class LicenseSettingsTest {
     @Test fun licenseDetailsReturnToIndexAndIndexReturnsToAbout() {
         assertEquals(SettingsPage.Notices, SettingsPage.LuaJLicense.parent)
         assertEquals(SettingsPage.Notices, SettingsPage.MaterialSymbolsLicense.parent)
+        assertEquals(SettingsPage.Notices, SettingsPage.CommonMarkLicense.parent)
         assertEquals(SettingsPage.About, SettingsPage.Notices.parent)
         assertEquals(ThirdPartyLicense.LuaJ, SettingsPage.LuaJLicense.license)
         assertEquals(ThirdPartyLicense.MaterialSymbols, SettingsPage.MaterialSymbolsLicense.license)
+        assertEquals(ThirdPartyLicense.CommonMark, SettingsPage.CommonMarkLicense.license)
     }
 }

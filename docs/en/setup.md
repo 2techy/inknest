@@ -47,6 +47,30 @@ Appearance groups Language and Display mode under General; both open a selection
 The Home sections group can hide mini stats and pins without deleting pins. Device-wide font size controls
 text. Firmware refresh settings remain managed by the device, not InkNest.
 
+## App updates
+
+Settings → About → App updates can check GitHub Releases and download an update APK.
+About shows a compact status row. The update page groups version information in a responsive grid.
+It uses the same sections, text and controls as the other Settings pages. Opening it checks for
+updates when no successful result is saved yet; otherwise it keeps the saved result.
+One main button changes from **Check for updates** to **Download update**, then **Install update**;
+during a download it becomes **Cancel**. This control stays above
+expandable **What’s new** content, so the next action stays easy to reach. Headings, lists, emphasis,
+code and links are formatted for reading; tap a link to open it in your browser.
+Official release builds check automatically at most once every 24 hours while InkNest is open;
+you can turn this off or check manually. No update dialog interrupts Home. Reading and launcher
+features continue to work offline; checking and downloading updates require internet access.
+
+Choose **Download update**, keep InkNest open until preparation finishes, then choose **Install update**.
+Leaving the app cancels an unfinished download; a completed APK is retained and checked again before
+installation. If Android asks, allow installs from InkNest, return and tap **Install update** again.
+Android asks you to confirm installation. Cancelling the installer leaves the APK available to retry.
+Checksum, package, version, Android compatibility and signing checks must pass before installation.
+Network failures keep the previous check result, labelled with its check time.
+
+Downloads and installation start from InkNest. The GitHub link is for viewing the release page.
+See [development](development.md) for testing updates in local builds.
+
 ## App language
 
 Settings → Appearance → Language offers System default, English and Tiếng Việt.

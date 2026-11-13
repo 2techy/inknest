@@ -97,6 +97,9 @@ dependencies {
     // KOReader data parser
     implementation(libs.luaj.jse)
 
+    // Parse GitHub release notes for native Compose rendering
+    implementation(libs.commonmark)
+
     // Persistence
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.runtime)

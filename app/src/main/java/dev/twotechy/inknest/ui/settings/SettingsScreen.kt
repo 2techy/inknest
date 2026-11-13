@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -52,18 +53,7 @@ internal fun SettingsScreen(
                         AppearanceSettingsContent(state, actions)
                     }
 
-                    SettingsPage.ReadingData -> {
-                        item {
-                            SettingsSection(stringResource(R.string.reading_source_heading)) {
-                                SourceSettingsContent(state, actions)
-                            }
-                        }
-                        item {
-                            SettingsSection(stringResource(R.string.reading_cache_heading)) {
-                                DataSettingsContent(state, actions)
-                            }
-                        }
-                    }
+                    SettingsPage.ReadingData -> readingDataSettings(state, actions)
 
                     SettingsPage.Launcher -> item {
                         LauncherSettingsContent(
@@ -73,16 +63,34 @@ internal fun SettingsScreen(
                         )
                     }
 
-                    SettingsPage.About -> item { AboutSettingsContent(actions) }
+                    SettingsPage.About -> item { AboutSettingsContent(state.appUpdate, actions) }
+
+                    SettingsPage.Updates -> item {
+                        AppUpdatesContent(state.appUpdate, state.releaseNotes, actions.updates)
+                    }
 
                     SettingsPage.Notices,
                     SettingsPage.LuaJLicense,
                     SettingsPage.MaterialSymbolsLicense,
+                    SettingsPage.CommonMarkLicense,
                     -> item {
                         LicenseSettingsContent(page, state, actions)
                     }
                 }
             }
+        }
+    }
+}
+
+private fun LazyListScope.readingDataSettings(state: SettingsUiState, actions: SettingsActions) {
+    item {
+        SettingsSection(stringResource(R.string.reading_source_heading)) {
+            SourceSettingsContent(state, actions)
+        }
+    }
+    item {
+        SettingsSection(stringResource(R.string.reading_cache_heading)) {
+            DataSettingsContent(state, actions)
         }
     }
 }

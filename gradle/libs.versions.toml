@@ -28,6 +28,9 @@ composeBom = "2026.09.00"
 # KOReader Lua data parsing
 luaj = "3.0.1"
 
+# Release-note Markdown parsing
+commonmark = "0.32.0"
+
 # Testing: local JVM tests and Android instrumentation tests
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -63,6 +66,9 @@ compose-material3 = { module = "androidx.compose.material3:material3" }
 
 # KOReader data parsing (no platform standard globals)
 luaj-jse = { module = "org.luaj:luaj-jse", version.ref = "luaj" }
+
+# Release-note Markdown (no network or image renderer)
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 
 # Local JVM tests
 androidx-datastore-core-okio = { module = "androidx.datastore:datastore-core-okio", version.ref = "datastorePreferences" }

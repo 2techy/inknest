@@ -4,12 +4,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.AppUpdateRepository
 import dev.twotechy.inknest.data.repository.InstalledAppsRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.SourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UnconnectedInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
 import dev.twotechy.inknest.model.AppPreferences
+import dev.twotechy.inknest.model.AppUpdateState
 import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.model.ThirdPartyLicense
 import dev.twotechy.inknest.ui.source.SourceSetupError
@@ -20,7 +22,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,6 +37,8 @@ internal class SettingsViewModel(
     private val acknowledgementsRepository: AcknowledgementsRepository,
     savedState: SavedStateHandle = SavedStateHandle(),
     installedApps: InstalledAppsRepository = UnconnectedInstalledAppsRepository(),
+    private val updates: AppUpdateRepository? = null,
+    notesParser: ReleaseNotesParser = ReleaseNotesParser(),
 ) : ViewModel() {
     private val sourceSetup =
         SourceSetupStateHolder(sources, installedApps, savedState, viewModelScope)
@@ -45,6 +53,18 @@ internal class SettingsViewModel(
     private val action = MutableStateFlow(ActionState())
     private val acknowledgements =
         MutableStateFlow<Map<ThirdPartyLicense, AcknowledgementsUiState>>(emptyMap())
+    private val updateState = updates?.state ?: flowOf(AppUpdateState())
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val releaseNotes = updateState.map { it.snapshot.release }
+        .distinctUntilChanged()
+        .mapLatest { release ->
+            if (release == null) {
+                ReleaseNotesDocument()
+            } else {
+                notesParser.parse(release.notes, release.pageUrl)
+            }
+        }
     private val loadedPreferences: StateFlow<AppPreferences?> = preferences.appPreferences
         .map<AppPreferences, AppPreferences?> { it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -68,7 +88,32 @@ internal class SettingsViewModel(
             },
             acknowledgements = notices,
         )
+    }.combine(updateState) { settings, update ->
+        settings.copy(appUpdate = update)
+    }.combine(releaseNotes) { settings, notes ->
+        settings.copy(releaseNotes = notes)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
+
+    fun checkForUpdates() {
+        viewModelScope.launch { updates?.check() }
+    }
+    fun openUpdates() {
+        viewModelScope.launch {
+            val repository = updates ?: return@launch
+            val snapshot = repository.state.first { it.loaded }.snapshot
+            if (snapshot.checkedAt == null) repository.check()
+        }
+    }
+    fun setAutomaticUpdates(enabled: Boolean) {
+        viewModelScope.launch { updates?.setAutomatic(enabled) }
+    }
+    fun downloadUpdate() {
+        updates?.download()
+    }
+    fun cancelUpdateDownload() {
+        updates?.cancelDownload()
+    }
+    suspend fun prepareUpdateInstall(): String? = updates?.prepareInstall()
 
     fun loadAcknowledgements(license: ThirdPartyLicense) {
         val current = acknowledgements.value[license]
