@@ -161,18 +161,22 @@ internal class LibraryFolderRepository(
         }
         scope.launch {
             if (config.config.first().key() != active) return@launch
-            if (inventory.first { it.first == active }.third?.complete != true) refresh()
+            refresh(onlyIncomplete = true)
         }
     }
 
-    override suspend fun refresh() {
+    override suspend fun refresh() = refresh(onlyIncomplete = false)
+
+    private suspend fun refresh(onlyIncomplete: Boolean) {
         observationRetry.retry()
         config.retryRead()
         val selected = config.config.first()
         val active = selected.key() ?: return
         val request = requests.withLock {
             job?.takeIf { it.first == active && it.second.isActive }?.second
-                ?: scope.async { scanGate.withLock { scan(selected, active) } }.also {
+                ?: scope.async {
+                    scanGate.withLock { scan(selected, active, onlyIncomplete) }
+                }.also {
                     job =
                         active to it
                 }
@@ -180,10 +184,16 @@ internal class LibraryFolderRepository(
         request.await()
     }
 
-    private suspend fun scan(selected: ReadingSourceConfig, active: LibraryFolderKey) {
+    private suspend fun scan(
+        selected: ReadingSourceConfig,
+        active: LibraryFolderKey,
+        onlyIncomplete: Boolean,
+    ) {
         val token = Any()
         running.value = active to token
         try {
+            // A queued resume may outlive the scan that completed this folder.
+            if (!scanRequired(active, onlyIncomplete)) return
             val found = source.scan(active.tree)
             replaceInventory(active, found)
             enrichBooks(selected, active, found)
@@ -207,6 +217,9 @@ internal class LibraryFolderRepository(
             if (running.value?.second === token) running.value = null
         }
     }
+
+    private suspend fun scanRequired(active: LibraryFolderKey, onlyIncomplete: Boolean): Boolean =
+        !onlyIncomplete || inventoryStore.observeFolder(active).first()?.complete != true
 
     private suspend fun replaceInventory(active: LibraryFolderKey, found: List<CatalogBook>) {
         val old = inventoryStore.books(active).associateBy { it.path }
