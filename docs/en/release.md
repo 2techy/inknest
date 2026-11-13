@@ -30,6 +30,10 @@ Keep a secure backup of the keystore outside the repository. Updates require the
 
 Each draft includes an installable APK, a checksum file and release notes with installation instructions and setup links. CalVer releases are not marked as pre-releases.
 
+The in-app updater reads the latest published stable GitHub release. Preserve the exact asset names
+`InkNest-<version>.apk` and `SHA256SUMS.txt`; the checksum entry must name that APK once. Publish both
+assets together. Updater checks are optional and do not affect offline launcher/reading features.
+
 The workflow runs only from `master` and builds the commit selected at dispatch. Commits merged during a run are included in a subsequent run. Release runs share a concurrency group; the active run is allowed to finish.
 
 ## Versioning

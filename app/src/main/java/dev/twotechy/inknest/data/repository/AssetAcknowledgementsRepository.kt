@@ -14,6 +14,8 @@ internal class AssetAcknowledgementsRepository(
         val paths = when (license) {
             ThirdPartyLicense.LuaJ -> listOf("licenses/luaj_notice.txt")
 
+            ThirdPartyLicense.CommonMark -> listOf("licenses/commonmark_license.txt")
+
             ThirdPartyLicense.MaterialSymbols -> listOf(
                 "licenses/material_symbols_notice.txt",
                 "licenses/material_symbols_license.txt",

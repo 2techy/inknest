@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.platform.AppLanguageController
+import dev.twotechy.inknest.platform.AppUpdateInstaller
 import dev.twotechy.inknest.ui.components.ConfirmationDialog
 import dev.twotechy.inknest.ui.components.LauncherActions
 
@@ -30,6 +31,7 @@ internal data class SettingsEnvironment(
     val launcher: LauncherActions,
     val language: AppLanguageController,
     val isDefaultLauncher: Boolean,
+    val updateInstaller: AppUpdateInstaller? = null,
 )
 
 @Composable
@@ -54,6 +56,7 @@ internal fun SettingsRoute(
     )
     LaunchedEffect(page) {
         page.license?.let(viewModel::loadAcknowledgements)
+        if (page == SettingsPage.Updates) viewModel.openUpdates()
     }
     val back = { openPage(page.parent) }
     BackHandler(page != SettingsPage.Overview, back)
@@ -68,18 +71,23 @@ internal fun SettingsRoute(
         connect = viewModel::requestFolder,
         replaceBookFolder = viewModel::replaceBookFolder,
         removeBookFolder = viewModel::removeBookFolder,
-        sourceApp = viewModel::selectSourceApp, disconnect = {
-            confirmation =
-                Confirmation.Disconnect
-        },
-        refresh = viewModel::refresh, clearCache = { confirmation = Confirmation.ClearCache },
+        sourceApp = viewModel::selectSourceApp,
+        disconnect = { confirmation = Confirmation.Disconnect },
+        refresh = viewModel::refresh,
+        clearCache = { confirmation = Confirmation.ClearCache },
         requestLauncher = environment.launcher.request,
         systemSettings = environment.launcher.openSettings,
         reviewSetup = onReviewSetup,
-        website = {
-            openDeveloperWebsite(context)
-        }, retry = viewModel::retryRead, dismiss = viewModel::dismissError,
+        website = { openWebsite(context, "https://2techy.dev") },
+        retry = viewModel::retryRead,
+        dismiss = viewModel::dismissError,
         retryAcknowledgements = { page.license?.let(viewModel::loadAcknowledgements) },
+        updates = rememberUpdateSettingsActions(
+            viewModel,
+            environment.updateInstaller,
+            page,
+            state.appUpdate,
+        ),
     )
     key(page) {
         SettingsScreen(
@@ -91,12 +99,9 @@ internal fun SettingsRoute(
             contentPadding = contentPadding,
         )
     }
-    SettingsConfirmation(
-        confirmation,
-        viewModel::disconnect,
-        viewModel::clearCache,
-        onDismiss = { confirmation = null },
-    )
+    SettingsConfirmation(confirmation, viewModel::disconnect, viewModel::clearCache) {
+        confirmation = null
+    }
 }
 
 @Composable
@@ -130,9 +135,9 @@ private fun SettingsConfirmation(
     )
 }
 
-private fun openDeveloperWebsite(context: Context) {
+internal fun openWebsite(context: Context, url: String) {
     try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://2techy.dev")))
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (_: ActivityNotFoundException) {
         Toast.makeText(context, R.string.website_unavailable, Toast.LENGTH_SHORT).show()
     } catch (_: SecurityException) {

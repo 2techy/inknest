@@ -30,6 +30,10 @@ Sao lưu keystore ở nơi an toàn ngoài kho mã. Các bản cập nhật ph�
 
 Mỗi bản nháp có APK cài đặt được, tệp checksum và ghi chú phát hành kèm hướng dẫn cài đặt cùng liên kết thiết lập. Các bản dùng phiên bản theo lịch (CalVer) không được đánh dấu là bản tiền phát hành (pre-release).
 
+Bộ cập nhật trong ứng dụng đọc bản stable mới nhất đã xuất bản trên GitHub. Giữ đúng tên asset
+`InkNest-<version>.apk` và `SHA256SUMS.txt`; checksum chỉ có một dòng cho APK tương ứng. Xuất bản cả hai
+asset cùng nhau. Kiểm tra cập nhật là tùy chọn, không ảnh hưởng các tính năng đọc/trình khởi chạy ngoại tuyến.
+
 Workflow chỉ chạy từ `master` và biên dịch commit được chọn khi bắt đầu lần chạy. Commit được hợp nhất trong lúc đó sẽ thuộc lần chạy sau. Các lần chạy phát hành dùng chung nhóm kiểm soát chạy đồng thời; lần đang chạy được phép hoàn tất.
 
 ## Đánh phiên bản

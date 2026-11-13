@@ -12,7 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
 import dev.twotechy.inknest.model.AppPreferences
@@ -35,6 +37,10 @@ import dev.twotechy.inknest.ui.theme.InkNestTheme
 internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewModel) {
     val app: AppViewModel = viewModel(factory = container.appViewModelFactory)
     LifecycleEventEffect(Lifecycle.Event.ON_START) { app.onForeground() }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(app, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { app.runUpdateChecks() }
+    }
     val locales = LocalConfiguration.current.locales.toLanguageTags()
     LaunchedEffect(locales) { app.onLocalesChanged(locales) }
     val settings: SettingsViewModel = viewModel(factory = container.settingsViewModelFactory)
@@ -112,6 +118,7 @@ private fun InkNestContent(
                             launcher,
                             container.appLanguageController,
                             isDefaultLauncher,
+                            container.appUpdateInstaller,
                         ),
                         onReviewSetup = {
                             onboarding.restart()

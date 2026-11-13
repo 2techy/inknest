@@ -1,3 +1,3 @@
 package dev.twotechy.inknest.model
 
-internal enum class ThirdPartyLicense { LuaJ, MaterialSymbols }
+internal enum class ThirdPartyLicense { LuaJ, MaterialSymbols, CommonMark }

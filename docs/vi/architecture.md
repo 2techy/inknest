@@ -16,6 +16,23 @@ InkNest dùng luồng dữ liệu một chiều: repository cung cấp dữ li�
 
 ## Phạm vi kiến trúc và lưu trữ
 
+Cập nhật ứng dụng có `AppUpdateRepository`, nguồn GitHub và khóa riêng trong DataStore hiện có.
+Cài đặt theo dõi trạng thái cập nhật; tùy chọn chủ đề/Trang chủ không chứa trạng thái này. Effect STARTED
+riêng gọi AppViewModel để kiểm tra ở foreground. Bản release kiểm tra tối đa mỗi 24 giờ, lưu mốc thử và
+giới hạn yêu cầu của GitHub. Xuống background sẽ hủy tải dở; APK đã xác minh được giữ trong bộ nhớ riêng
+để người dùng chủ động cài sau. Lớp nền tảng xác minh APK và FileProvider chỉ chia sẻ thư mục cập nhật.
+Không dùng dịch vụ nền, đồng bộ mạng hoặc telemetry.
+
+SettingsViewModel phân tích Markdown của ghi chú bằng CommonMark với dispatcher truyền vào, chạy ngoài
+luồng chính. Screen nhận văn bản có định dạng bất biến để hiển thị bằng Compose/token giao diện, không
+dùng WebView hoặc tải ảnh từ xa. Route mở liên kết web; thông báo BSD của CommonMark có trong giấy phép
+bên thứ ba hiện có.
+
+Giao diện cập nhật có một nút chính đổi theo trạng thái kiểm tra, tải, hủy và cài.
+Các loại bản dựng dùng chung luồng tải/xác minh. Tên phiên bản không nhận diện được vẫn cho tải bản đã
+tìm thấy, không kết luận là bản mới hơn. Bộ xác minh nền tảng vẫn chặn mã phiên bản APK không tăng
+và chữ ký không tương thích trước khi cài.
+
 Ứng dụng chính chỉ có một module `:app`, dùng cơ chế tiêm phụ thuộc thủ công qua hàm khởi tạo. Cơ sở dữ liệu đọc dùng Room schema 6. Trong giai đoạn phát triển, nếu không có migration phù hợp, Room được phép xóa và tạo lại bộ nhớ đệm; tùy chọn, ứng dụng đã ghim và lựa chọn nguồn vẫn nằm riêng trong DataStore. Dự án chưa cam kết giữ nguyên dữ liệu qua các lần nâng cấp.
 
 ViewModel gọi trực tiếp repository để thay đổi tùy chọn và cấu hình nguồn. Khi repository gặp lỗi, ứng dụng không được thay giá trị đã lưu hoặc báo thành công giả. Nhãn giao diện dùng tài nguyên chuỗi của Android. Khi xử lý lỗi coroutine, phải tiếp tục truyền tín hiệu hủy tác vụ.
