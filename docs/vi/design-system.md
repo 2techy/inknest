@@ -42,6 +42,7 @@ Phần đầu trang cách nội dung 8dp; các phần cách nhau 24dp; tiêu đ�
 | Thành phần | Kích thước cơ sở |
 | --- | --- |
 | Phần đầu trang / vùng chạm thao tác | tối thiểu 48dp / 48×48dp |
+| Vùng bố trí / biểu tượng Quay lại ở đầu trang | 24 / 24dp |
 | Nút thao tác | tối thiểu 112×48dp; khoảng đệm ngang 16dp, dọc 12dp |
 | Hàng cài đặt / lựa chọn đơn / công tắc | tối thiểu 64 / 56 / 64dp |
 | Vùng đầu hàng cài đặt / biểu tượng / mũi tên điều hướng / dấu chọn | 32 / 24 / 20 / 24dp |
@@ -59,7 +60,9 @@ Các thành phần tăng chiều cao khi chữ xuống dòng hoặc được ph�
 
 `AppScaffold` quản lý khoảng chừa cho giao diện hệ thống, lề trang, chiều rộng nội dung và điều hướng thích ứng. `ScreenScaffold` quản lý phần đầu trang, vùng cuộn và phần chân trang nếu có. Route không thêm khoảng đệm trang lần nữa.
 
-Lề trang là 12dp khi chiều rộng nội dung dưới 360dp, 16dp từ 360dp đến dưới 600dp và 32dp từ 600dp trở lên. Nội dung rộng tối đa 800dp. Khoảng đệm trên/dưới lần lượt là 4/16dp. Phần đầu trang căn trái và căn giữa theo chiều dọc; nút Quay lại chiếm trọn vùng 48dp. Các trang chính không có nút Quay lại.
+Lề trang là 12dp khi chiều rộng nội dung dưới 360dp, 16dp từ 360dp đến dưới 600dp và 32dp từ 600dp trở lên. Nội dung rộng tối đa 800dp. Khoảng đệm trên/dưới lần lượt là 4/16dp.
+
+Tiêu đề và các nút ở đầu trang được căn giữa theo chiều dọc. Tiêu đề trang chính và mũi tên Quay lại của trang chi tiết thẳng hàng với mép đầu nội dung. Tiêu đề trang chi tiết nằm ngay sau vùng bố trí nút Quay lại, không thêm khoảng cách. Các trang chính không có nút Quay lại.
 
 Các trang chính dùng thanh điều hướng dưới; từ chiều rộng cửa sổ 600dp, thanh này chuyển thành thanh điều hướng dọc có thể cuộn. Trang chi tiết Cài đặt và thiết lập ban đầu ẩn thanh điều hướng. Nhấn HOME về Trang chủ và đóng các thành phần giao diện tạm thời. Mỗi mục điều hướng dùng biểu tượng 24dp, nhãn cỡ 12sp / chiều cao dòng 16sp, khoảng cách 4dp và chiều cao tối thiểu 64dp. Mục đang chọn dùng biểu tượng đặc và vạch đánh dấu 32×3dp phía trên, không đổi nền. Khi không đủ chỗ cho nhãn, các biểu tượng có mô tả trợ năng, kèm chú thích cho trang đang chọn. Bố cục thích ứng theo chiều rộng cửa sổ và cỡ chữ, không theo mẫu thiết bị.
 
