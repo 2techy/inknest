@@ -42,6 +42,7 @@ Header/content gap is 8dp; section gap 24dp; heading/content gap 12dp. Cards use
 | Component | Baseline |
 | --- | --- |
 | Header / action touch target | min 48dp / 48×48dp |
+| Header Back slot / icon | 24 / 24dp |
 | Action button | min 112×48dp; padding 16dp horizontal, 12dp vertical |
 | Settings / radio / toggle row | min 64 / 56 / 64dp |
 | Settings leading slot / icon / chevron / selection mark | 32 / 24 / 20 / 24dp |
@@ -59,7 +60,9 @@ Minimum heights grow for wrapping/font scale. App labels wrap to two lines; Home
 
 `AppScaffold` owns safe-area insets, page gutters, content width and adaptive navigation. `ScreenScaffold` owns headers, scrolling and an optional footer. Routes do not add page padding again.
 
-Gutters are 12dp below 360dp content width, 16dp below 600dp and 32dp above; content width caps at 800dp. Top/bottom padding is 4/16dp. Headers are left-aligned and vertically centered, with a full 48dp slot for Back. Main pages have no Back action.
+Gutters are 12dp below 360dp content width, 16dp below 600dp and 32dp above; content width caps at 800dp. Top/bottom padding is 4/16dp.
+
+Headers vertically center titles and actions. Main-page titles and detail-page Back arrows align with the content's leading edge. Detail titles follow the Back slot without additional spacing. Main pages have no Back action.
 
 Main destinations use bottom navigation, switching to a scrollable rail at window width 600dp. Settings details and onboarding hide navigation. HOME returns to Home and closes transient UI. Navigation uses 24dp icons, 12/16sp labels, a 4dp gap and min 64dp item height. Selection uses a filled icon and one 32×3dp top marker; there is no selected background. When labels cannot fit, accessible icons share a selected-destination caption. Layout adapts to window width and font scale, never device model.
 

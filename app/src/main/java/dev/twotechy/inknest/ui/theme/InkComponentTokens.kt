@@ -8,6 +8,9 @@ internal object InkHeaderTokens {
     val minHeight = 48.dp
     val iconSize = 24.dp
     val touchTarget = 48.dp
+
+    // ic_back's leftmost path point is x=8, with a 1.5-wide round stroke.
+    val backIconStartInset = 7.25.dp
 }
 internal object InkLayoutTokens {
     val narrowBreakpoint = 360.dp

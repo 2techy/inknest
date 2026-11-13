@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +33,12 @@ internal fun ScreenHeader(
         horizontalArrangement = Arrangement.Start,
     ) {
         if (onBack != null) {
-            HeaderIconButton(R.drawable.ic_back, stringResource(R.string.back), onBack)
+            HeaderButton(
+                R.drawable.ic_back,
+                stringResource(R.string.back),
+                onBack,
+                alignToContent = true,
+            )
         }
         Text(
             title,
@@ -46,14 +51,35 @@ internal fun ScreenHeader(
 
 @Composable
 internal fun HeaderIconButton(icon: Int, description: String, onClick: () -> Unit) {
+    HeaderButton(icon, description, onClick)
+}
+
+@Composable
+private fun HeaderButton(
+    icon: Int,
+    description: String,
+    onClick: () -> Unit,
+    alignToContent: Boolean = false,
+) {
+    val width = if (alignToContent) {
+        InkHeaderTokens.iconSize
+    } else {
+        InkHeaderTokens.touchTarget
+    }
     Box(
-        Modifier.requiredSize(InkHeaderTokens.touchTarget).quietClick(onClick),
-        contentAlignment = Alignment.Center,
+        Modifier.size(width = width, height = InkHeaderTokens.touchTarget).quietClick(onClick),
+        contentAlignment = if (alignToContent) Alignment.CenterStart else Alignment.Center,
     ) {
         Icon(
             painterResource(icon),
             description,
-            Modifier.size(InkHeaderTokens.iconSize),
+            (
+                if (alignToContent) {
+                    Modifier.offset(x = -InkHeaderTokens.backIconStartInset)
+                } else {
+                    Modifier
+                }
+                ).size(InkHeaderTokens.iconSize),
             tint = MaterialTheme.colorScheme.onSurface,
         )
     }
