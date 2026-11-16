@@ -6,7 +6,7 @@
 
 Definitions live in [ui/theme](../../app/src/main/java/dev/twotechy/inknest/ui/theme). Foundation tokens (`InkSpacing`, `InkRadius`, `InkBorder`, `InkPalette`, `InkTextStyles`) feed semantic component/layout tokens, then shared scaffolds and controls. Material typography, colors and shapes derive from these definitions; screens reuse them rather than duplicating dimensions.
 
-All text uses system sans-serif with zero letter spacing. Sizes and line heights use sp and follow system font scale.
+Home branding (28/34sp bold) and clock (60/68sp bold) use system serif; other text uses system sans-serif with zero letter spacing. The Home logo reuses the original InkNest launcher mark with a cropped viewport, without adaptive-icon padding. Sizes and line heights use sp and follow system font scale.
 
 | Text token | Size / line height (sp) | Weight |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Gutters are 12dp below 360dp content width, 16dp below 600dp and 32dp above; con
 
 Headers vertically center titles and actions. Main-page titles and detail-page Back arrows align with the content's leading edge. Detail titles follow the Back slot without additional spacing. Main pages have no Back action.
 
-Main destinations use bottom navigation, switching to a scrollable rail at window width 600dp. Settings details and onboarding hide navigation. HOME returns to Home and closes transient UI. Navigation uses 24dp icons, 12/16sp labels, a 4dp gap and min 64dp item height. Selection uses a filled icon and one 32×3dp top marker; there is no selected background. When labels cannot fit, accessible icons share a selected-destination caption. Layout adapts to window width and font scale, never device model.
+The four main destinations are Home → Library → Stats → Apps. Settings opens separately from the Home header or configuration actions; it hides navigation, has a Back action and returns to the originating tab. Main destinations use bottom navigation, switching to a scrollable rail at window width 600dp. Settings details and onboarding hide navigation. HOME returns to Home and closes transient UI. Navigation uses 24dp icons, 12/16sp labels, a 4dp gap and min 64dp item height. Selection uses a filled icon and one 32×3dp top marker; there is no selected background. When labels cannot fit, accessible icons share a selected-destination caption. Layout adapts to window width and font scale, never device model.
 
 ## Color and images
 
@@ -83,7 +83,7 @@ Icons use a shared RAM cache of 100 icons at 128px, keyed by component/version a
 
 ## Feature hierarchy
 
-Home orders clock overview, current book, optional reading rhythm and pins. Clock stats move below the clock when space is insufficient; hidden stats reserve no column. A structural rule separates the overview. Notices use a compact outlined row. Current reading has one outline and a full-width progress track. Home shows the first pin row in saved order; View all opens Apps with all pins accessible.
+Home has the InkNest logo/name, Search and Settings in its header. Search opens a fresh, focused Library search across all books, preserving sort and layout. Home orders clock overview, current book, optional reading rhythm and Quick access pins. Mini stats stack beside the clock with a vertical separator and move below it when space is insufficient; hidden stats reserve no column. Notices use a compact outlined row. A horizontal divider separates the clock overview from reading content. The date retains full weekday and month names for the locale. Now reading sits above the card; one outline contains the cover/details, a compact Continue affordance and a full-width progress track at the bottom. The whole card opens the book, including the cover; Continue uses a 36dp minimum visible height and grows with text while the card supplies the accessible touch target. Progress includes current/total pages calculated from the same sidecar when available. Quick access uses a 4dp heading-row gap with no top padding on app cells. Home shows the first pin row in saved order; See all opens Apps with all pins accessible. Home uses pull-to-refresh without a trailing Refresh button; error notices retain their retry actions.
 
 Settings has Reading & data, Appearance, Launcher and About. Rows use 16sp regular titles, 12sp summaries and 4dp separation. Section headings use 14sp medium text without decorative rules; gaps are 24/12dp. Navigation/toggle rows share thin dividers and align to page gutters. Folder name/path form one target; each Books root has a separate 48dp remove action with confirmation. Read-only metadata has no chevron. Outlined buttons perform commands.
 
@@ -97,6 +97,6 @@ Stats has Today, daily average and streak in three equal columns, then trend, ac
 
 `InkGestureTokens` defines 40dp tab-swipe and 56dp pull-refresh thresholds. After system touch slop, direction locks when one axis exceeds the other by 1.5×. Actions fire on release; cancellation and multi-touch do not fire. System Back edge insets and child-consumed horizontal scrolling take priority.
 
-Tab swipes follow Library → Stats → Home → Apps → Settings without wrapping. They apply only to top-level content, excluding navigation, Settings details, onboarding, search/IME and modal surfaces. Existing saveable state restores destinations; HOME invalidates active gestures.
+Tab swipes follow Home → Library → Stats → Apps, wrapping in both directions between Apps and Home. Each gesture moves at most one tab. They apply only to main-tab content, excluding navigation, all Settings pages, onboarding, search/IME and modal surfaces. Existing saveable state restores destinations; HOME invalidates active gestures.
 
 Home, Library, Stats and Apps expose `RefreshAction` through `ScreenScaffold`. Pulling begins at the top, including empty/short content. The monochrome running indicator overlays below the header without shifting content or animating. Buttons/retry remain available. Reading refresh is disabled without sources; tab changes do not refresh. Feature content retains cache/error notices without a duplicate running label. Judge E-Ink sharpness and ghosting on physical hardware using [reliability checks](reliability.md).

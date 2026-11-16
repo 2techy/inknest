@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+    <!-- Original launcher mark, cropped to its visible bounds for in-app branding. -->
+    <group android:translateX="-27" android:translateY="-30">
+    <path
+        android:fillColor="#000000"
+        android:fillType="evenOdd"
+        android:pathData="M32,34 Q44,33 54,41 Q64,33 76,34 L76,56 Q64,56 54,64 Q44,56 32,56 Z M36,38 L36,52 Q44,53 52,58 L52,45 Q44,39 36,38 Z M56,45 L56,58 Q64,53 72,52 L72,38 Q64,39 56,45 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M30,62 Q54,82 78,62 M36,72 Q54,86 72,72"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:strokeWidth="3.5" />
+    </group>
+</vector>
