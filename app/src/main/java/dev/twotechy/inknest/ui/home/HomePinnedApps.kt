@@ -80,11 +80,9 @@ private fun HomePinItem(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.quietClick(onClick).padding(
-            horizontal = InkAppGridTokens.cellPadding,
-            vertical = InkSpacing.sm,
-        ),
-
+        modifier.quietClick(onClick)
+            .padding(horizontal = InkAppGridTokens.cellPadding)
+            .padding(bottom = InkSpacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(InkAppGridTokens.iconLabelGap),
     ) {

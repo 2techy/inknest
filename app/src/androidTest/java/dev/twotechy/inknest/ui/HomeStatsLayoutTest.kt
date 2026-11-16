@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -161,7 +162,9 @@ class HomeStatsLayoutTest {
             activity.setContent {
                 CompositionLocalProvider(LocalDensity provides Density(density, font)) {
                     InkNestTheme(preferences) {
-                        Column(Modifier.fillMaxWidth()) { content() }
+                        key(width, font) {
+                            Column(Modifier.fillMaxWidth()) { content() }
+                        }
                         SideEffect { composed.countDown() }
                     }
                 }
@@ -194,10 +197,15 @@ class HomeStatsLayoutTest {
         assertEquals(text, present, hasText(text))
     }
 
-    private fun hasText(text: String) = nodes().any { it.text?.toString()?.contains(text) == true }
+    private fun hasText(text: String) = nodes().any {
+        it.text?.toString()?.contains(text) == true ||
+            it.contentDescription?.toString()?.contains(text) == true
+    }
 
     private fun click(text: String) {
-        var node = nodes().first { it.text?.toString()?.contains(text) == true }
+        val candidates = nodes()
+        var node = candidates.firstOrNull { it.text?.toString() == text }
+            ?: candidates.first { it.text?.toString()?.contains(text) == true }
         while (!node.isClickable) node = checkNotNull(node.parent)
         assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))
         instrumentation.waitForIdleSync()

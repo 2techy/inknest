@@ -104,7 +104,7 @@
     <string name="home_connect_reader">Connect KOReader</string>
     <string name="home_connect_reader_detail">Set up your reading source in Settings.</string>
     <string name="home_reading_error">Reading source unavailable</string>
-    <string name="home_pinned_apps">Pinned apps</string>
+    <string name="home_pinned_apps">Quick access</string>
     <string name="home_choose_apps">Pin your favorite apps</string>
     <string name="home_choose_apps_detail">Choose apps for quick access from Home.</string>
     <string name="home_today">Today</string>
@@ -292,4 +292,7 @@
     <string name="updates_rate_limited">Updates are temporarily unavailable. Please try again later.</string>
     <string name="updates_install_permission">Allow installs from InkNest, then return and tap Install update again.</string>
     <string name="updates_install_unavailable">Could not open the installer or installation permission settings. You can download the APK from GitHub.</string>
+    <string name="home_continue">Continue</string>
+    <string name="home_reading_pages">%1$d / %2$d pages</string>
+    <string name="home_view_all">See all</string>
 </resources>

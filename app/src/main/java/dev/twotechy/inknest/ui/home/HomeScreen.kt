@@ -10,9 +10,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.clock.rememberMinuteClock
-import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.components.RefreshAction
-import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.LocalAppPreferences
@@ -35,14 +33,7 @@ internal fun HomeScreen(
             actions.refresh,
         ),
         header = {
-            ScreenHeader(stringResource(R.string.brand_name)) {
-                HeaderIconButton(
-                    R.drawable.ic_settings_sync,
-                    stringResource(R.string.refresh_reading),
-                ) {
-                    if (loaded?.isRefreshing != true) actions.refresh()
-                }
-            }
+            HomeHeader(actions)
         },
     ) {
         LazyColumn(

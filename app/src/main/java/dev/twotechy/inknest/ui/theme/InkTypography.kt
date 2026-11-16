@@ -6,8 +6,22 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Use the system sans-serif throughout the launcher for a consistent visual hierarchy.
+// Home identity uses system serif; other launcher text uses system sans-serif.
 internal object InkTextStyles {
+    val homeBrand = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontSize = 28.sp,
+        lineHeight = 34.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.sp,
+    )
+    val homeClock = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontSize = 60.sp,
+        lineHeight = 68.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.sp,
+    )
     val displayClock = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontSize = 44.sp,

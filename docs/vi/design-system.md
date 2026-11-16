@@ -6,7 +6,7 @@
 
 Các giá trị thiết kế dùng chung (design token) được định nghĩa trong [ui/theme](../../app/src/main/java/dev/twotechy/inknest/ui/theme). Các token nền tảng (`InkSpacing`, `InkRadius`, `InkBorder`, `InkPalette`, `InkTextStyles`) là cơ sở cho token bố cục/thành phần, rồi đến khung trang và điều khiển dùng chung. Kiểu chữ, màu và hình dạng của Material được suy ra từ các định nghĩa này; màn hình dùng lại để tránh khai báo trùng kích thước.
 
-Toàn bộ văn bản dùng phông sans-serif của hệ thống, không tăng khoảng cách ký tự. Cỡ chữ và chiều cao dòng tính bằng sp, thay đổi theo mức phóng to chữ của hệ thống.
+Tên thương hiệu và đồng hồ Home dùng serif hệ thống; văn bản còn lại dùng sans-serif hệ thống, không tăng khoảng cách ký tự. Cỡ chữ và chiều cao dòng tính bằng sp, thay đổi theo mức phóng to chữ của hệ thống.
 
 | Token kiểu chữ | Cỡ chữ / chiều cao dòng (sp) | Độ đậm |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Lề trang là 12dp khi chiều rộng nội dung dưới 360dp, 16dp từ 360dp
 
 Tiêu đề và các nút ở đầu trang được căn giữa theo chiều dọc. Tiêu đề trang chính và mũi tên Quay lại của trang chi tiết thẳng hàng với mép đầu nội dung. Tiêu đề trang chi tiết nằm ngay sau vùng bố trí nút Quay lại, không thêm khoảng cách. Các trang chính không có nút Quay lại.
 
-Các trang chính dùng thanh điều hướng dưới; từ chiều rộng cửa sổ 600dp, thanh này chuyển thành thanh điều hướng dọc có thể cuộn. Trang chi tiết Cài đặt và thiết lập ban đầu ẩn thanh điều hướng. Nhấn HOME về Trang chủ và đóng các thành phần giao diện tạm thời. Mỗi mục điều hướng dùng biểu tượng 24dp, nhãn cỡ 12sp / chiều cao dòng 16sp, khoảng cách 4dp và chiều cao tối thiểu 64dp. Mục đang chọn dùng biểu tượng đặc và vạch đánh dấu 32×3dp phía trên, không đổi nền. Khi không đủ chỗ cho nhãn, các biểu tượng có mô tả trợ năng, kèm chú thích cho trang đang chọn. Bố cục thích ứng theo chiều rộng cửa sổ và cỡ chữ, không theo mẫu thiết bị.
+Các trang chính dùng thanh điều hướng dưới; từ chiều rộng cửa sổ 600dp, thanh này chuyển thành thanh điều hướng dọc có thể cuộn. Toàn bộ Cài đặt và thiết lập ban đầu ẩn thanh điều hướng. Nhấn HOME về Trang chủ và đóng các thành phần giao diện tạm thời. Mỗi mục điều hướng dùng biểu tượng 24dp, nhãn cỡ 12sp / chiều cao dòng 16sp, khoảng cách 4dp và chiều cao tối thiểu 64dp. Mục đang chọn dùng biểu tượng đặc và vạch đánh dấu 32×3dp phía trên, không đổi nền. Khi không đủ chỗ cho nhãn, các biểu tượng có mô tả trợ năng, kèm chú thích cho trang đang chọn. Bố cục thích ứng theo chiều rộng cửa sổ và cỡ chữ, không theo mẫu thiết bị.
 
 ## Màu và hình ảnh
 
@@ -97,6 +97,22 @@ Thống kê hiển thị Hôm nay, trung bình ngày và chuỗi ngày đọc tr
 
 `InkGestureTokens` định nghĩa ngưỡng vuốt tab 40dp, kéo làm mới 56dp. Sau khi vượt ngưỡng di chuyển tối thiểu của hệ thống (touch slop), cử chỉ được khóa hướng nếu khoảng di chuyển theo một trục lớn hơn 1.5× trục kia. Thao tác chỉ thực hiện khi thả tay; hủy cử chỉ hoặc đa chạm không kích hoạt thao tác. Vùng vuốt Quay lại ở cạnh màn hình và thao tác cuộn ngang đã được thành phần con tiếp nhận được ưu tiên.
 
-Vuốt tab theo Thư viện → Thống kê → Trang chủ → Ứng dụng → Cài đặt, không quay vòng. Cử chỉ chỉ áp dụng cho nội dung trang chính, không áp dụng cho thanh điều hướng, chi tiết Cài đặt, thiết lập ban đầu, tìm kiếm/bộ gõ hoặc hộp thoại và các lớp giao diện modal. Trạng thái có thể lưu giúp khôi phục trang đang mở; HOME hủy hiệu lực của cử chỉ đang thực hiện.
+Vuốt tab theo Trang chủ → Thư viện → Thống kê → Ứng dụng, nối vòng hai chiều giữa Ứng dụng và Trang chủ. Cử chỉ chỉ áp dụng cho nội dung trang chính, không áp dụng cho thanh điều hướng, toàn bộ Cài đặt, thiết lập ban đầu, tìm kiếm/bộ gõ hoặc hộp thoại và các lớp giao diện modal. Trạng thái có thể lưu giúp khôi phục trang đang mở; HOME hủy hiệu lực của cử chỉ đang thực hiện.
 
-Trang chủ, Thư viện, Thống kê và Ứng dụng cung cấp `RefreshAction` qua `ScreenScaffold`. Có thể bắt đầu kéo khi đang ở đầu trang, kể cả nội dung ngắn hoặc rỗng. Chỉ báo đang làm mới có màu đơn sắc, hiển thị đè bên dưới phần đầu trang, không đẩy nội dung hoặc chạy hiệu ứng chuyển động. Vẫn có nút làm mới/thử lại. Chưa có nguồn thì vô hiệu làm mới dữ liệu đọc; chuyển tab không làm mới. Các thông báo về dữ liệu đệm/lỗi vẫn được giữ trong nội dung, không hiển thị thêm nhãn đang làm mới trùng lặp. Đánh giá độ nét và bóng mờ E-Ink trên phần cứng thật theo [kiểm tra độ tin cậy](reliability.md).
+Trang chủ, Thư viện, Thống kê và Ứng dụng cung cấp `RefreshAction` qua `ScreenScaffold`. Có thể bắt đầu kéo khi đang ở đầu trang, kể cả nội dung ngắn hoặc rỗng. Chỉ báo đang làm mới có màu đơn sắc, hiển thị đè bên dưới phần đầu trang, không đẩy nội dung hoặc chạy hiệu ứng chuyển động. Home làm mới bằng thao tác kéo xuống, không có nút làm mới ở cuối trang; thông báo lỗi vẫn có thao tác thử lại. Chưa có nguồn thì vô hiệu làm mới dữ liệu đọc; chuyển tab không làm mới. Các thông báo về dữ liệu đệm/lỗi vẫn được giữ trong nội dung, không hiển thị thêm nhãn đang làm mới trùng lặp. Đánh giá độ nét và bóng mờ E-Ink trên phần cứng thật theo [kiểm tra độ tin cậy](reliability.md).
+
+
+## Home và điều hướng
+
+Header Home dùng logo InkNest chuẩn với viewport ôm sát nét logo, tên serif đậm
+28/34sp và nút Search/Settings. Đồng hồ serif đậm 60/68sp; các chữ khác giữ sans-serif.
+Search mở tìm kiếm Library trống trên toàn thư viện, giữ sort/kiểu hiển thị.
+Mini stats xếp dọc bên phải với đường phân cách, thiếu chỗ chuyển xuống dưới.
+Ngày giữ tên thứ/tháng đầy đủ theo ngôn ngữ. Divider ngang ngăn phần đồng hồ với nội dung đọc.
+Heading Đang đọc nằm ngoài card; toàn bộ card (kể cả bìa) mở sách. Thanh tiến độ chạy hết chiều rộng ở đáy card; nhãn tiến độ có số trang tính từ tiến độ gốc trong cùng sidecar khi đủ dữ liệu. Continue cao hiển thị tối thiểu 36dp, tăng theo cỡ chữ; card cung cấp vùng chạm trợ năng.
+Heatmap giữ giữa card và Truy cập nhanh; ứng dụng ghim giữ thứ tự đã lưu. Khoảng cách từ hàng tiêu đề Truy cập nhanh đến hàng app là 4dp; ô app không thêm padding phía trên.
+
+Bottom bar/rail chỉ có Home → Library → Stats → Apps, vuốt nối vòng hai chiều
+giữa Apps và Home, mỗi gesture một tab. Settings là màn riêng, ẩn navigation và
+không tham gia vòng vuốt; Back từ trang con về cha, từ overview về tab xuất phát.
+HOME luôn về Home. Giữ ngưỡng gesture và ưu tiên Back hệ thống, search/IME, modal.

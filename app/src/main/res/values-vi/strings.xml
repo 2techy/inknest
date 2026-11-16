@@ -104,7 +104,7 @@
     <string name="home_connect_reader">Kết nối KOReader</string>
     <string name="home_connect_reader_detail">Thiết lập nguồn đọc trong Cài đặt.</string>
     <string name="home_reading_error">Nguồn đọc không khả dụng</string>
-    <string name="home_pinned_apps">Ứng dụng đã ghim</string>
+    <string name="home_pinned_apps">Truy cập nhanh</string>
     <string name="home_choose_apps">Ghim ứng dụng yêu thích</string>
     <string name="home_choose_apps_detail">Chọn ứng dụng để mở nhanh từ Trang chủ.</string>
     <string name="home_today">Hôm nay</string>
@@ -286,4 +286,7 @@
     <string name="updates_rate_limited">Cập nhật tạm thời không khả dụng. Hãy thử lại sau.</string>
     <string name="updates_install_permission">Cho phép cài ứng dụng từ InkNest, sau đó quay lại và bấm Cài đặt bản cập nhật.</string>
     <string name="updates_install_unavailable">Không thể mở trình cài hoặc trang cấp quyền cài đặt. Bạn có thể tải APK từ GitHub.</string>
+    <string name="home_continue">Đọc tiếp</string>
+    <string name="home_reading_pages">%1$d / %2$d trang</string>
+    <string name="home_view_all">Xem tất cả</string>
 </resources>

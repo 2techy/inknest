@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +33,8 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.BookCover
 import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.theme.InkBorder
-import dev.twotechy.inknest.ui.theme.InkHeaderTokens
+import dev.twotechy.inknest.ui.theme.InkButtonTokens
+import dev.twotechy.inknest.ui.theme.InkHomeTokens
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkRadius
 import dev.twotechy.inknest.ui.theme.InkReadingTokens
@@ -41,7 +44,7 @@ import dev.twotechy.inknest.ui.theme.InkTextStyles
 @Composable
 internal fun ContinueReadingCard(book: BookUiModel, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.quietClick(onClick),
+        modifier = Modifier.fillMaxWidth().quietClick(onClick),
         shape = RoundedCornerShape(InkRadius.large),
         border = BorderStroke(InkBorder.default, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -93,29 +96,53 @@ private fun CurrentBookDetails(book: BookUiModel, modifier: Modifier = Modifier)
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        ProgressLabel(book.progress)
-        val action = R.string.reading_continue
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(action),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.weight(1f),
-            )
+        ProgressLabel(book)
+        ContinueButton()
+    }
+}
+
+// The entire card owns the opening action, including the cover and this visual affordance.
+@Composable
+private fun ContinueButton() {
+    Surface(
+        modifier = Modifier.widthIn(min = InkButtonTokens.minWidth)
+            .heightIn(min = InkHomeTokens.continueMinHeight),
+        shape = RoundedCornerShape(InkRadius.medium),
+        color = MaterialTheme.colorScheme.onSurface,
+        contentColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Row(
+            Modifier.padding(
+                horizontal = InkButtonTokens.horizontalPadding,
+                vertical = InkSpacing.xs,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(InkSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Icon(
-                painterResource(R.drawable.ic_chevron_right),
+                painterResource(R.drawable.ic_play),
                 null,
-                Modifier.size(InkHeaderTokens.iconSize),
+                Modifier.size(InkHomeTokens.continueIconSize),
             )
+            Text(stringResource(R.string.home_continue), style = InkTextStyles.labelLarge)
         }
     }
 }
 
 @Composable
-private fun ProgressLabel(progress: Int?) {
+private fun ProgressLabel(book: BookUiModel) {
+    val percent = book.progress?.let {
+        stringResource(R.string.reading_progress_percent, it)
+    }
+    val pages = if (book.currentPage != null && book.totalPages != null) {
+        stringResource(R.string.home_reading_pages, book.currentPage, book.totalPages)
+    } else {
+        null
+    }
     Text(
-        progress?.let {
-            stringResource(R.string.reading_progress_percent, it)
-        } ?: stringResource(R.string.reading_progress_unknown),
+        listOfNotNull(percent, pages).joinToString(" · ").ifEmpty {
+            stringResource(R.string.reading_progress_unknown)
+        },
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
