@@ -81,6 +81,7 @@ internal class KoreaderStatisticsRepository(
                         generation = snapshot?.source?.generation,
                         zone = snapshot?.source?.zone?.let(ZoneId::of),
                         configured = true,
+                        sourceTree = selected,
                         updatedAt = snapshot?.source?.updatedAt,
                     )
                 },

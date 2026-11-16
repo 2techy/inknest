@@ -56,6 +56,7 @@ private fun CachedReading.readingState(): ReadingState {
 internal fun ReadingBookEntity.toReadingItem() = ReadingItem(
     id = ReadingItemId(sourceId, path),
     title = title,
+    description = description,
     author = author,
     progress = progress,
     currentPage = currentPage,

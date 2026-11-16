@@ -51,6 +51,7 @@ internal class ReadingCache(private val dao: ReadingDao) {
                 it.title,
                 it.author,
                 it.coverUri,
+                it.description,
             )
         }
     }
@@ -66,6 +67,7 @@ internal class ReadingCache(private val dao: ReadingDao) {
                     snapshotKey = key.snapshotKey,
                     path = it.id.path,
                     title = it.title,
+                    description = it.description,
                     availability = it.availability.name,
                     author = it.author,
                     progress = it.progress,

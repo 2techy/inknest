@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.twotechy.inknest.data.repository.LibraryRepository
 import dev.twotechy.inknest.data.repository.ReadingOpenRepository
+import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.ui.reading.ReadingOpenStateHolder
 import java.io.IOException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,6 +27,13 @@ internal class LibraryViewModel(
     private val queryDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     val bookOpening = ReadingOpenStateHolder(openingRepository, viewModelScope)
+    val selectedBook = savedState.getStateFlow<ArrayList<String>?>("libraryDetails", null)
+    fun details(book: ReadingItem) {
+        savedState["libraryDetails"] = arrayListOf(book.id.sourceId, book.id.path)
+    }
+    fun closeDetails() {
+        savedState["libraryDetails"] = null
+    }
     private var refreshJob: Job? = null
     private val options = combine(
         savedState.getStateFlow("libraryQuery", ""),

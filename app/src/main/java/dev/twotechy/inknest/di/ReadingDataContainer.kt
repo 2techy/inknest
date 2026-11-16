@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.RoomLibraryInventoryStore
 import dev.twotechy.inknest.data.local.userPreferencesDataStore
+import dev.twotechy.inknest.data.repository.CachedBookDetailsRepository
 import dev.twotechy.inknest.data.repository.CachedReadingRepository
 import dev.twotechy.inknest.data.repository.FolderLibraryRepository
 import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
@@ -44,7 +45,7 @@ internal class ReadingDataContainer(
     val config = ReadingSourceConfigRepository(appContext.userPreferencesDataStore)
     val access = SafSourceAccess(appContext.contentResolver)
     private val files = SafTreeReader(appContext.contentResolver)
-    private val books = BookProbeDataSource(files, appContext.cacheDir)
+    private val books = BookProbeDataSource(files, appContext.cacheDir, ioDispatcher)
     private val database = ReadingDatabase.create(appContext)
     private val cache = ReadingCache(database.readingDao())
     private val coverDirectory = File(appContext.filesDir, "reading-covers")
@@ -81,6 +82,16 @@ internal class ReadingDataContainer(
         statisticsClock,
         defaultDispatcher,
     )
+    val bookDetails = CachedBookDetailsRepository(
+        library,
+        config,
+        libraryDao,
+        database.statisticsDao(),
+        statistics,
+        books,
+        statisticsClock,
+        ioDispatcher,
+    )
     val settings = SafSourceSettingsRepository(
         config,
         access,
@@ -106,7 +117,9 @@ internal class ReadingDataContainer(
         val saved = config.booksTreeUris.sorted().firstNotNullOfOrNull { tree ->
             libraryDao.book(source, tree, path)?.takeIf { it.fingerprint != null }
         }
-        return saved?.let { BookMetadata(it.fingerprint, it.title, it.author, it.coverUri) }
+        return saved?.let {
+            BookMetadata(it.fingerprint, it.title, it.author, it.coverUri, it.description)
+        }
             ?: cache.metadata(config, path)
     }
 }

@@ -9,6 +9,7 @@ import dev.twotechy.inknest.data.source.BookCatalogSource
 import dev.twotechy.inknest.data.source.CatalogBook
 import dev.twotechy.inknest.data.source.EnrichedReadingItem
 import dev.twotechy.inknest.data.source.ResolvedBook
+import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -110,6 +111,12 @@ internal class LibraryFolderRepository(
                         status?.status
                             ?: ReadingStatus.valueOf(book.status),
                     lastReadAt = status?.lastReadAt,
+                    currentPage = status?.currentPage,
+                    totalPages = status?.totalPages,
+                    availability =
+                        status?.availability
+                            ?: BookAvailability.Available,
+                    description = book.description,
                 )
             }
             val updated = inventory.third?.takeIf { inventory.first == active }?.updatedAt
@@ -261,6 +268,7 @@ internal class LibraryFolderRepository(
                     active.source, active.tree, file.path,
                     book.item.title, book.item.author, book.item.coverUri,
                     book.metadata?.fingerprint, book.item.progress, book.item.status.name,
+                    description = book.metadata?.description,
                 )
             }
             commit(active) { inventoryStore.putBooks(rows) }

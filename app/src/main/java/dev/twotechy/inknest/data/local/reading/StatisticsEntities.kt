@@ -46,3 +46,24 @@ internal data class StatisticsSnapshot(
     @Relation(parentColumns = ["generation"], entityColumns = ["generation"])
     val days: List<StatisticsDayEntity>,
 )
+
+@Entity(
+    tableName = "statistics_books",
+    primaryKeys = ["generation", "bookId"],
+    indices = [Index(value = ["generation", "checksum"])],
+)
+internal data class StatisticsBookEntity(
+    val generation: String,
+    val bookId: Long,
+    val checksum: String,
+)
+
+internal data class BookStatisticsTotals(
+    val seconds: Long,
+    val pages: Long?,
+    val days: Int,
+    val firstDay: Long?,
+    val lastDay: Long?,
+)
+
+internal data class BookStatisticsDay(val day: Long, val seconds: Long, val pages: Long?)

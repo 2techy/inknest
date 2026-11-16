@@ -1,14 +1,23 @@
 package dev.twotechy.inknest.data.source.epub
 
 import android.graphics.BitmapFactory
+import android.text.Html
 import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.UnsupportedBookFormat
 import dev.twotechy.inknest.data.source.copyBounded
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.util.zip.ZipFile
 
-internal data class EpubProbeResult(val title: String?, val author: String?, val cover: Boolean)
+internal data class EpubProbeResult(
+    val title: String?,
+    val author: String?,
+    val cover: Boolean,
+    val description: String? = null,
+)
 
 internal class EpubProbe {
     suspend fun read(file: File, onCover: suspend (ByteArray) -> Unit = {}): EpubProbeResult =
@@ -36,7 +45,10 @@ internal class EpubProbe {
                 val path = archivePath(opfName, href) ?: throw IOException("Invalid cover path")
                 readCover(zip, path, onCover)
             } ?: false
-            EpubProbeResult(title, author, cover)
+            val description = metadata.descendants(
+                "description",
+            ).firstOrNull()?.let(::epubDescription)
+            EpubProbeResult(title, author, cover, description)
         }
 
     private suspend fun readCover(
@@ -73,4 +85,24 @@ internal class EpubProbe {
         const val XML_LIMIT = 2L * 1024 * 1024
         const val COVER_LIMIT = 8L * 1024 * 1024
     }
+}
+
+// Render only text; never load EPUB markup, links or resources into a WebView.
+internal fun epubDescription(node: XmlNode): String? {
+    val markup = node.text.toString().replace("\r\n", "\n").replace("\n", "<br>")
+    val text = Html.fromHtml(markup, Html.FROM_HTML_MODE_LEGACY).toString()
+        .replace('\u00a0', ' ')
+        .lineSequence().map(String::trim).joinToString("\n")
+        .replace(Regex("\n{3,}"), "\n\n").trim()
+    val bytes = text.toByteArray(Charsets.UTF_8)
+    val bounded = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.IGNORE)
+        .decode(ByteBuffer.wrap(bytes, 0, bytes.size.coerceAtMost(32 * 1024))).toString()
+    return bounded.takeIf(String::isNotBlank)
+}
+
+internal const val MAX_EPUB_BYTES = 256L * 1024 * 1024
+
+internal fun validateEpubSource(name: String, size: Long?) {
+    if (!name.endsWith(".epub", ignoreCase = true)) throw UnsupportedBookFormat()
+    if (size != null && size > MAX_EPUB_BYTES) throw SourceLimitExceeded()
 }

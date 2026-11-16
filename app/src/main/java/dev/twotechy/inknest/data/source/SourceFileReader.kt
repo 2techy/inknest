@@ -17,3 +17,10 @@ internal interface SourceDocumentReader : SourceFileReader {
 internal interface DirectSourceDocumentReader : SourceDocumentReader {
     suspend fun <T> readDocument(document: SourceDocument, parse: suspend (InputStream) -> T): T
 }
+
+internal fun SourceDocument.fingerprint(): String? {
+    val size = size ?: return null
+    val modified = modified ?: return null
+    if (modified <= 0) return null
+    return "$size:$modified"
+}

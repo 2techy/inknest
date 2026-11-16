@@ -12,6 +12,7 @@ import dev.twotechy.inknest.ui.apps.AppsViewModel
 import dev.twotechy.inknest.ui.home.HomeNavigation
 import dev.twotechy.inknest.ui.home.HomeRoute
 import dev.twotechy.inknest.ui.home.HomeViewModel
+import dev.twotechy.inknest.ui.library.BookDetailsViewModel
 import dev.twotechy.inknest.ui.library.LibraryRoute
 import dev.twotechy.inknest.ui.library.LibraryViewModel
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
@@ -75,11 +76,14 @@ internal fun LibraryDestination(
     padding: PaddingValues,
 ) {
     val library: LibraryViewModel = viewModel(factory = container.libraryViewModelFactory)
+    val details: BookDetailsViewModel =
+        viewModel(factory = container.bookDetailsViewModelFactory)
     LaunchedEffect(navigation, library) {
         if (navigation.consumeLibrarySearch()) library.startHomeSearch()
     }
     LibraryRoute(
         viewModel = library,
+        detailsViewModel = details,
         dispatcher = container.readingItemDispatcher,
         onSettings = {
             navigation.select(TopLevelDestination.Settings)

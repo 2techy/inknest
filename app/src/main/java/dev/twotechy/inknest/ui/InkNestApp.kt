@@ -23,6 +23,7 @@ import dev.twotechy.inknest.ui.components.LocalBookCoverLoader
 import dev.twotechy.inknest.ui.components.LocalContentGestureSession
 import dev.twotechy.inknest.ui.components.rememberDefaultLauncher
 import dev.twotechy.inknest.ui.components.rememberLauncherActions
+import dev.twotechy.inknest.ui.library.LibraryViewModel
 import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
@@ -82,13 +83,15 @@ private fun InkNestContent(
     val pageName by navigation.settingsPage.collectAsStateWithLifecycle()
     val page = SettingsPage.entries.find { it.name == pageName } ?: SettingsPage.Overview
     val setupVisible by navigation.onboardingVisible.collectAsStateWithLifecycle()
+    val detailsVisible = libraryDetailsVisible(container, tab, setupVisible)
     val saveableStateHolder = rememberSaveableStateHolder()
     val isDefaultLauncher by rememberDefaultLauncher(container.launcherModeController)
     val launcher = rememberLauncherActions(container.launcherModeController)
     val openPage = { value: SettingsPage -> navigation.openSettingsPage(value.name) }
     HomeBackHandler(tab, isDefaultLauncher, navigation::goHome)
 
-    val showNavigation = !setupVisible && tab != TopLevelDestination.Settings
+    val showNavigation = !setupVisible && tab != TopLevelDestination.Settings &&
+        !detailsVisible
     AppScaffold(tab, navigation::select, showNavigation) { padding ->
         if (setupVisible) {
             OnboardingRoute(
@@ -144,4 +147,18 @@ private fun HomeBackHandler(
     BackHandler(enabled = tab != TopLevelDestination.Home || isDefaultLauncher) {
         if (tab != TopLevelDestination.Home) goHome()
     }
+}
+
+@Composable
+private fun libraryDetailsVisible(
+    container: AppContainer,
+    tab: TopLevelDestination,
+    setupVisible: Boolean,
+): Boolean {
+    val library: LibraryViewModel = viewModel(factory = container.libraryViewModelFactory)
+    val selectedBook by library.selectedBook.collectAsStateWithLifecycle()
+    LaunchedEffect(tab, setupVisible) {
+        if (tab != TopLevelDestination.Library || setupVisible) library.closeDetails()
+    }
+    return tab == TopLevelDestination.Library && selectedBook != null
 }

@@ -52,7 +52,13 @@ internal class BoundedXmlReader(bytes: ByteArray) {
 
     private fun endNode() {
         if (stack.size <= 1) throw IOException("Invalid XML")
-        stack.removeAt(stack.lastIndex)
+        val child = stack.removeAt(stack.lastIndex)
+        // Keep nested description text in document order, including paragraph breaks.
+        if (stack.any { it.name == "description" }) {
+            if (child.name in setOf("p", "div", "br")) stack.last().text.append('\n')
+            stack.last().text.append(child.text)
+            if (child.name in setOf("p", "div", "br")) stack.last().text.append('\n')
+        }
     }
 
     private fun appendEntity() {

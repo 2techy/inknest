@@ -14,7 +14,8 @@ private const val CURRENT_QUERY = """
         b.author AS book_author, b.progress AS book_progress, b.coverUri AS book_coverUri,
         b.status AS book_status, b.lastReadAt AS book_lastReadAt, b.historyOrder AS book_historyOrder,
         b.fingerprint AS book_fingerprint,
-        b.currentPage AS book_currentPage, b.totalPages AS book_totalPages
+        b.currentPage AS book_currentPage, b.totalPages AS book_totalPages,
+        b.description AS book_description
     FROM reading_sources s LEFT JOIN reading_items b
         ON s.sourceId=b.sourceId AND s.snapshotKey=b.snapshotKey AND s.currentPath=b.path
     WHERE s.sourceId=:sourceId AND s.snapshotKey=:snapshotKey
@@ -164,6 +165,7 @@ internal interface ReadingDao {
 
     @Transaction suspend fun clearAll() {
         clearStatisticsImports()
+        clearStatisticsBooks()
         clearStatisticsDays()
         clearStatisticsEvents()
         clearStatisticsSources()
@@ -175,6 +177,9 @@ internal interface ReadingDao {
 
     @Query("DELETE FROM statistics_imports")
     suspend fun clearStatisticsImports()
+
+    @Query("DELETE FROM statistics_books")
+    suspend fun clearStatisticsBooks()
 
     @Query("DELETE FROM statistics_days")
     suspend fun clearStatisticsDays()

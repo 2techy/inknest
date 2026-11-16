@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,9 +19,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ContextMenu
+import dev.twotechy.inknest.ui.components.ContextMenuEntry
+import dev.twotechy.inknest.ui.components.ContextMenuEntryRow
 import dev.twotechy.inknest.ui.components.ContextMenuItem
 import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.settings.sourceFolderLabel
+import dev.twotechy.inknest.ui.theme.InkLibraryTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 private enum class LibraryMenuPage(val title: Int) {
@@ -46,7 +50,16 @@ internal fun LibraryOptionsMenu(state: LibraryUiState, actions: LibraryActions) 
                 LibraryMenuPage.Root
         }
         page?.let { current ->
-            ContextMenu(onDismiss = { page = null }) {
+            ContextMenu(
+                onDismiss = {
+                    page = null
+                },
+                modifier = Modifier.widthIn(
+                    min = InkLibraryTokens.menuWidth,
+                    max = InkLibraryTokens.menuWidth,
+                ),
+                alignToEnd = true,
+            ) {
                 if (current == LibraryMenuPage.Root) {
                     LibraryMenuSections(state) { page = it }
                     ContextMenuItem(
@@ -60,15 +73,12 @@ internal fun LibraryOptionsMenu(state: LibraryUiState, actions: LibraryActions) 
                 } else {
                     LibrarySubmenuHeader(current) { page = LibraryMenuPage.Root }
                     LibraryMenuChoices(current, state, actions).forEach { choice ->
-                        ContextMenuItem(
-                            if (choice.selected) {
-                                stringResource(
-                                    R.string.library_selected_option,
-                                    choice.label,
-                                )
-                            } else {
-                                choice.label
-                            },
+                        ContextMenuEntryRow(
+                            ContextMenuEntry(
+                                choice.label,
+                                selected = choice.selected,
+                                trailingIcon = if (choice.selected) R.drawable.ic_check else null,
+                            ),
                         ) {
                             page = null
                             choice.action()
@@ -108,9 +118,12 @@ private fun LibraryMenuSections(state: LibraryUiState, select: (LibraryMenuPage)
         )
     }
     pages.forEach { page ->
-        ContextMenuItem(
-            stringResource(R.string.library_submenu, stringResource(page.title)),
-            enabled = state.folders.isNotEmpty(),
+        ContextMenuEntryRow(
+            ContextMenuEntry(
+                stringResource(page.title),
+                trailingIcon = R.drawable.ic_chevron_right,
+                enabled = state.folders.isNotEmpty(),
+            ),
         ) {
             select(page)
         }

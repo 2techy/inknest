@@ -65,6 +65,7 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
         libraryRepository = readerData.library,
         readingOpenRepository = readerData.opening,
         readingItemDispatcher = readerData.dispatcher,
+        bookDetailsRepository = readerData.bookDetails,
         installedAppsRepository = apps,
         readingStatsRepository = readerData.statistics,
         statisticsRepository = readerData.statistics,

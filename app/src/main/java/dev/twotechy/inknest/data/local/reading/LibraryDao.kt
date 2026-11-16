@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 internal interface LibraryDao {
+    @Query(
+        "SELECT fingerprint FROM library_books WHERE sourceId=:source AND path=:path ORDER BY folderKey LIMIT 1",
+    )
+    fun observeFingerprint(source: String, path: String): Flow<String?>
+
     @Query("SELECT * FROM library_books WHERE sourceId=:source AND folderKey=:folder ORDER BY path")
     fun observe(source: String, folder: String): Flow<List<LibraryBookEntity>>
 
@@ -21,6 +26,22 @@ internal interface LibraryDao {
         "SELECT * FROM library_books WHERE sourceId=:source AND folderKey=:folder AND path=:path",
     )
     suspend fun book(source: String, folder: String, path: String): LibraryBookEntity?
+
+    @Query(
+        "SELECT checksum FROM library_books WHERE sourceId=:source AND folderKey=:folder AND path=:path AND fingerprint=:fingerprint",
+    )
+    suspend fun checksum(source: String, folder: String, path: String, fingerprint: String): String?
+
+    @Query(
+        "UPDATE library_books SET checksum=:checksum WHERE sourceId=:source AND folderKey=:folder AND path=:path AND fingerprint=:fingerprint",
+    )
+    suspend fun saveChecksum(
+        source: String,
+        folder: String,
+        path: String,
+        fingerprint: String,
+        checksum: String,
+    )
 
     @Upsert suspend fun putBooks(books: List<LibraryBookEntity>)
 

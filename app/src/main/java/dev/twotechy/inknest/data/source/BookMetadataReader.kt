@@ -13,6 +13,7 @@ internal data class BookMetadata(
     val title: String,
     val author: String?,
     val coverUri: String?,
+    val description: String? = null,
 )
 internal data class EnrichedReadingItem(val item: ReadingItem, val metadata: BookMetadata?)
 
@@ -31,6 +32,7 @@ internal class BookMetadataReader(
         return EnrichedReadingItem(
             item.copy(
                 title = metadata.title,
+                description = metadata.description,
                 author = metadata.author,
                 coverUri = metadata.coverUri,
                 progress = sidecar?.percent?.let { (it * 100).roundToInt() },
@@ -51,6 +53,7 @@ internal class BookMetadataReader(
         return EnrichedReadingItem(
             item.copy(
                 title = metadata.title,
+                description = metadata.description,
                 author = metadata.author,
                 coverUri = metadata.coverUri,
             ),
@@ -78,6 +81,7 @@ internal class BookMetadataReader(
             title = epub?.title ?: item.title,
             author = epub?.author,
             coverUri = cover,
+            description = epub?.description,
         )
     }
 
@@ -87,13 +91,6 @@ internal class BookMetadataReader(
         if (old.fingerprint != fingerprint) return false
         return covers.exists(old.coverUri)
     }
-}
-
-private fun SourceDocument.fingerprint(): String? {
-    val size = size ?: return null
-    val modified = modified ?: return null
-    if (modified <= 0) return null
-    return "$size:$modified"
 }
 
 private fun readingStatus(status: String?): ReadingStatus = when (status) {

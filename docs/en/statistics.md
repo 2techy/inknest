@@ -82,7 +82,7 @@ Unflushed reading is absent. At most one million rows and 256 MiB of source file
 Malformed numeric/time values are rejected; missing page metadata does not discard valid time.
 
 The reader streams at most 500 events per batch into a private Room staging generation.
-Room schema 7 keeps raw page/layout events on disk and precomputes daily seconds/page counts
+Room schema 8 keeps raw page/layout events on disk and precomputes daily seconds/page counts
 in SQL. UI state exposes only daily summaries, the generation, timezone and snapshot timestamp;
 it never retains the full event list or per-event page sets.
 
@@ -133,3 +133,11 @@ Default dispatcher and observes the shared StatisticsClock. No snapshot hides th
 a successfully imported empty snapshot shows an empty calendar. Refresh errors retain the
 cached calendar and expose the stale-data notice. Opening Stats preserves its selected unit.
 Appearance has an independent, default-enabled Reading rhythm toggle in DataStore.
+
+## Per-book statistics in Library
+
+Book details queries the same raw events in Room through a generation-scoped book-ID/checksum
+index. Importing that index is bounded and atomic with snapshot activation; rebinning copies it,
+and cache clear/pruning removes it. Daily history is paginated newest first. The existing daily
+book/page/layout deduplication and unknown-page semantics apply unchanged. The main dashboard
+continues to observe only daily summaries and does not retain per-book raw events in UI state.

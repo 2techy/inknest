@@ -8,7 +8,7 @@ Cả bản debug và release đều dùng `CachedReadingRepository`. Trang chủ
 
 `KoreaderCurrentSource` dùng lại các bộ đọc Lua/SAF có giới hạn tài nguyên. Giá trị `lastfile` hợp lệ được ưu tiên. Nếu cấu hình sách hiện tại thiếu hoặc sai, ứng dụng chọn đường dẫn hợp lệ đầu tiên theo thứ tự mảng lịch sử. Thiếu cả hai nguồn hoặc dữ liệu bị hỏng phải được phân biệt với trường hợp đọc thành công nhưng không có sách. Nếu sách hiện tại bị mất tệp hoặc nằm ngoài phạm vi được cấp quyền, ứng dụng vẫn giữ định danh và tên tệp, kèm cảnh báo không thể truy cập. Không suy đoán sách hiện tại từ thống kê hoặc từ tên sách/tên tệp trùng nhau.
 
-Room schema 7 được xuất trong `app/schemas`. Trong giai đoạn phát triển, thay đổi schema phải tăng phiên bản Room; nếu không có migration, Room được phép xóa và tạo lại cơ sở dữ liệu đọc. Tùy chọn, ứng dụng đã ghim và cấu hình SAF nằm riêng trong DataStore nên không bị ảnh hưởng. Khi ứng dụng trở lại hoạt động, việc làm mới sẽ tạo lại dữ liệu đọc từ nguồn đã cấu hình.
+Room schema 8 được xuất trong `app/schemas`. Trong giai đoạn phát triển, thay đổi schema phải tăng phiên bản Room; nếu không có migration, Room được phép xóa và tạo lại cơ sở dữ liệu đọc. Tùy chọn, ứng dụng đã ghim và cấu hình SAF nằm riêng trong DataStore nên không bị ảnh hưởng. Khi ứng dụng trở lại hoạt động, việc làm mới sẽ tạo lại dữ liệu đọc từ nguồn đã cấu hình.
 
 `reading_items` lưu định danh nguồn/đường dẫn, khả năng truy cập, thông tin sách, tiến độ/trạng thái, thời điểm đọc từ nguồn và thứ tự lịch sử có thể để trống. `reading_sources` lưu con trỏ tới sách hiện tại, thời điểm thử cập nhật/cập nhật thành công, lỗi và số mục lịch sử bị bỏ qua. Định danh nguồn/đường dẫn ở tầng mô hình không đổi khi dùng các bí danh đường dẫn của cùng bộ nhớ chính. Mỗi hàng trong bộ nhớ đệm còn có fingerprint của cây KOReader và danh sách cây sách đã sắp xếp, để lựa chọn thư mục mới chưa được kích hoạt không ghi đè phân vùng đang dùng.
 
@@ -44,7 +44,7 @@ Lỗi nguồn cập nhật thông tin đồng bộ nhưng không xóa con trỏ 
 
 Ngắt kết nối xóa dữ liệu đọc, khóa nguồn và quyền truy cập, giữ ứng dụng đã ghim cùng tùy chọn. Xóa bộ nhớ đệm xóa dữ liệu đọc, danh mục sách và bìa rồi tải lại các nguồn đã cấu hình. Cấu hình chỉ có thư mục sách cũng có thể xóa và tạo lại danh mục. Dung lượng bộ nhớ đệm bao gồm ảnh thu nhỏ. Chuyển tab hoặc đồng hồ chạy không kích hoạt phân tích nguồn.
 
-Thống kê dùng chung schema 7 nhưng có định danh nguồn và repository riêng. Xóa bộ nhớ đệm/ngắt kết nối bao gồm sự kiện gốc, tổng theo ngày, token nhập dữ liệu và thời điểm chụp dữ liệu. Xem [thống kê](statistics.md) và [kiểm tra độ tin cậy](reliability.md).
+Thống kê dùng chung schema 8 nhưng có định danh nguồn và repository riêng. Xóa bộ nhớ đệm/ngắt kết nối bao gồm sự kiện gốc, tổng theo ngày, token nhập dữ liệu và thời điểm chụp dữ liệu. Xem [thống kê](statistics.md) và [kiểm tra độ tin cậy](reliability.md).
 
 
 ## Vị trí trang đã lưu
