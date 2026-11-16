@@ -13,6 +13,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.twotechy.inknest.ui.navigation.MainDestinations
 import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.theme.InkGestureTokens
 
@@ -50,8 +51,11 @@ internal fun Modifier.tabSwipe(
     }
 }
 
-internal fun adjacentTab(selected: TopLevelDestination, offset: Int): TopLevelDestination? =
-    if (offset == 0) null else TopLevelDestination.entries.getOrNull(selected.ordinal + offset)
+internal fun adjacentTab(selected: TopLevelDestination, offset: Int): TopLevelDestination? {
+    val index = MainDestinations.indexOf(selected)
+    if (offset == 0 || index < 0) return null
+    return MainDestinations[Math.floorMod(index + offset.coerceIn(-1, 1), MainDestinations.size)]
+}
 
 private suspend fun AwaitPointerEventScope.awaitTabOffset(
     threshold: Float,

@@ -46,6 +46,7 @@ internal fun HomeRoute(
             openStats = navigation.stats,
             openApps = navigation.apps,
             settings = navigation.settings,
+            searchLibrary = navigation.searchLibrary,
         ),
         modifier = modifier.padding(contentPadding),
         iconLoader = appIconLoader,

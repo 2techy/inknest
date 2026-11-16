@@ -34,16 +34,27 @@ internal data class SettingsEnvironment(
     val updateInstaller: AppUpdateInstaller? = null,
 )
 
+internal data class SettingsNavigation(
+    val page: SettingsPage,
+    val openPage: (SettingsPage) -> Unit,
+    val exit: () -> Unit,
+) {
+    fun back() {
+        if (page == SettingsPage.Overview) exit() else openPage(page.parent)
+    }
+}
+
 @Composable
 internal fun SettingsRoute(
     viewModel: SettingsViewModel,
-    page: SettingsPage,
-    openPage: (SettingsPage) -> Unit,
+    navigation: SettingsNavigation,
     environment: SettingsEnvironment,
     onReviewSetup: () -> Unit,
     modifier: Modifier,
     contentPadding: PaddingValues,
 ) {
+    val page = navigation.page
+    val openPage = navigation.openPage
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val language = rememberLanguageSelection(environment.language, page)
@@ -58,8 +69,8 @@ internal fun SettingsRoute(
         page.license?.let(viewModel::loadAcknowledgements)
         if (page == SettingsPage.Updates) viewModel.openUpdates()
     }
-    val back = { openPage(page.parent) }
-    BackHandler(page != SettingsPage.Overview, back)
+    val back = navigation::back
+    BackHandler(onBack = back)
     val actions = SettingsActions(
         openPage = openPage,
         back = back,

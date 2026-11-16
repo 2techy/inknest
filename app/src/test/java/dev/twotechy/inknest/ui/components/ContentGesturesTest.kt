@@ -10,7 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ContentGesturesTest {
-    @Test fun directionLockThresholdAndTabBoundaries() {
+    @Test fun horizontalDirectionLockSurvivesLaterVerticalMovement() {
         val drag = ContentDrag(8f)
         drag.move(20f, 20f)
         assertEquals(0, drag.tabOffset(64f))
@@ -18,9 +18,20 @@ class ContentGesturesTest {
         assertEquals(1, drag.tabOffset(64f))
         drag.move(0f, 200f)
         assertEquals(DragDirection.Horizontal, drag.direction)
-        assertNull(adjacentTab(TopLevelDestination.Library, -1))
-        assertNull(adjacentTab(TopLevelDestination.Settings, 1))
-        assertEquals(TopLevelDestination.Apps, adjacentTab(TopLevelDestination.Home, 1))
+    }
+
+    @Test fun allTabsWrapInBothDirectionsAndSettingsIsExcluded() {
+        val tabs = listOf(
+            TopLevelDestination.Home,
+            TopLevelDestination.Library,
+            TopLevelDestination.Stats,
+            TopLevelDestination.Apps,
+        )
+        tabs.forEachIndexed { index, tab ->
+            assertEquals(tabs[(index + 1) % tabs.size], adjacentTab(tab, 1))
+            assertEquals(tabs[(index + tabs.size - 1) % tabs.size], adjacentTab(tab, -1))
+        }
+        assertNull(adjacentTab(TopLevelDestination.Settings, -1))
         assertNull(adjacentTab(TopLevelDestination.Home, 0))
     }
 

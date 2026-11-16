@@ -49,6 +49,13 @@ import dev.twotechy.inknest.ui.theme.InkTextStyles
 
 internal enum class TopLevelDestination { Library, Stats, Home, Apps, Settings }
 
+internal val MainDestinations = listOf(
+    TopLevelDestination.Home,
+    TopLevelDestination.Library,
+    TopLevelDestination.Stats,
+    TopLevelDestination.Apps,
+)
+
 // Icon standard: Google Material Symbols Outlined, weight 300, optical size 24.
 // Keep weight constant; selection changes only FILL (0 -> 1), plus the bar marker.
 // Use local vectors with theme tint, without an icon background or extra icon library.
@@ -72,19 +79,23 @@ internal fun InkNestBottomBar(
                 drawContent()
                 // Draw on the separator itself, centered over the selected destination.
                 drawRect(lineColor, size = Size(size.width, InkBorder.thin.toPx()))
-                val tabWidth = size.width / TopLevelDestination.entries.size
+                val tabWidth = size.width / MainDestinations.size
                 val markerWidth = minOf(InkNavigationTokens.markerWidth.toPx(), tabWidth * 0.7f)
                 drawRect(
                     selectedColor,
-                    topLeft = Offset(tabWidth * (selected.ordinal + 0.5f) - markerWidth / 2, 0f),
+                    topLeft = Offset(
+                        tabWidth * (MainDestinations.indexOf(selected) + 0.5f) - markerWidth / 2,
+                        0f,
+                    ),
                     size = Size(markerWidth, InkNavigationTokens.markerHeight.toPx()),
                 )
             },
         ) {
             val density = LocalDensity.current
             val measurer = rememberTextMeasurer()
-            val labelWidth = with(density) { (maxWidth / 5 - InkSpacing.sm).toPx() }
-            val labelsFit = TopLevelDestination.entries.all {
+            val labelWidth =
+                with(density) { (maxWidth / MainDestinations.size - InkSpacing.sm).toPx() }
+            val labelsFit = MainDestinations.all {
                 measurer.measure(
                     stringResource(it.label()),
                     NavigationLabelStyle.copy(fontWeight = FontWeight.SemiBold),
@@ -96,7 +107,7 @@ internal fun InkNestBottomBar(
                     Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    TopLevelDestination.entries.forEach { tab ->
+                    MainDestinations.forEach { tab ->
                         NavigationEntry(
                             tab,
                             selected,
@@ -135,7 +146,7 @@ internal fun InkNestNavigationRail(
             Modifier.width(railWidth).fillMaxHeight(),
             contentPadding = PaddingValues(vertical = InkSpacing.md),
         ) {
-            items(TopLevelDestination.entries) { tab ->
+            items(MainDestinations) { tab ->
                 NavigationEntry(tab, selected, Modifier.fillMaxWidth(), onSelect)
             }
         }

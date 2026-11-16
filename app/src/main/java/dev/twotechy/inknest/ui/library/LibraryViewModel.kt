@@ -82,6 +82,12 @@ internal class LibraryViewModel(
             content.copy(opening = opening)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryUiState())
 
+    fun startHomeSearch() {
+        clearFilters()
+        browse(LibraryBrowse.Books)
+        searching(true)
+    }
+
     fun query(value: String) {
         // An IME can finish composing after the search field has already been closed.
         if (savedState.get<Boolean>("librarySearching") != true) return
