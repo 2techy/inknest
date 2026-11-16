@@ -80,6 +80,11 @@ internal object InkReadingTokens {
 }
 
 internal object InkMenuTokens {
+    val defaultWidth = 240.dp
+    val iconSize = InkHeaderTokens.iconSize
+    val horizontalPadding = InkSpacing.lg
+    val verticalPadding = InkSpacing.sm
+    val iconGap = InkSpacing.md
     val minWidth = 160.dp
     val maxWidth = 280.dp
 }
@@ -92,7 +97,6 @@ internal object InkHomeTokens {
 }
 
 internal object InkLibraryTokens {
-    val menuWidth = 240.dp
     val minCellWidth = 112.dp
     val maxCoverWidth = 144.dp
     val listCoverWidth = 48.dp
@@ -104,7 +108,6 @@ internal object InkStatsTokens {
     val chartDayWidth = 32.dp
     val chartRangeWidth = 48.dp
     val chartMonthWidth = 28.dp
-    val menuWidth = 168.dp
     val maxBarWidth = 24.dp
     val heatmapLabelWidth = 48.dp
     val heatmapHorizontalGap = 3.dp

@@ -1,6 +1,7 @@
 package dev.twotechy.inknest.ui
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
@@ -22,6 +23,12 @@ import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
+import dev.twotechy.inknest.ui.components.ChoiceTabGroup
+import dev.twotechy.inknest.ui.components.ContextMenu
+import dev.twotechy.inknest.ui.components.ContextMenuEntry
+import dev.twotechy.inknest.ui.components.ContextMenuEntryRow
+import dev.twotechy.inknest.ui.components.ContextMenuHeader
+import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.home.HomeActions
 import dev.twotechy.inknest.ui.home.HomeActivity
 import dev.twotechy.inknest.ui.home.HomeActivitySection
@@ -34,6 +41,7 @@ import dev.twotechy.inknest.ui.home.ReadingSectionState
 import dev.twotechy.inknest.ui.stats.StatsHighlights
 import dev.twotechy.inknest.ui.stats.StatsOverview
 import dev.twotechy.inknest.ui.theme.InkNestTheme
+import java.io.File
 import java.time.LocalDate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -137,6 +145,56 @@ class HomeStatsLayoutTest {
         awaitText(context.getString(R.string.stats_days_value, 7), true)
     }
 
+    @Test fun sharedFiltersAndPopupKeepSelectionAndDisabledActions() {
+        val selected = mutableStateOf(0)
+        val menu = mutableStateOf(false)
+        val submenu = mutableStateOf(false)
+        val disabledClicks = AtomicInteger()
+        show(320f, 2f) {
+            ChoiceTabGroup(listOf("All", "Reading", "Finished", "Unknown"), selected.value) {
+                selected.value = it
+            }
+            HeaderIconButton(R.drawable.ic_more, "Options") { menu.value = true }
+            if (menu.value) {
+                ContextMenu(onDismiss = { menu.value = false }) {
+                    if (submenu.value) {
+                        ContextMenuHeader("Layout") { submenu.value = false }
+                        ContextMenuEntryRow(ContextMenuEntry("Grid", selected = true)) {
+                            menu.value = false
+                        }
+                    } else {
+                        ContextMenuEntryRow(
+                            ContextMenuEntry("Layout", trailingIcon = R.drawable.ic_chevron_right),
+                        ) {
+                            submenu.value = true
+                        }
+                        ContextMenuEntryRow(ContextMenuEntry("Refresh", enabled = false)) {
+                            disabledClicks.incrementAndGet()
+                        }
+                    }
+                }
+            }
+        }
+        screenshot("shared-filters-large-font.png")
+        click("Reading")
+        assertEquals(1, selected.value)
+        awaitSelected("Reading")
+        click("Options")
+        awaitText("Refresh", true)
+        screenshot("shared-popup-large-font.png")
+        assertTrue(!actionNode("Refresh").isEnabled)
+        assertEquals(0, disabledClicks.get())
+        click("Layout")
+        awaitText("Grid", true)
+        awaitSelected("Grid")
+        click(context.getString(R.string.back))
+        awaitText("Refresh", true)
+        click("Layout")
+        click("Grid")
+        awaitText("Grid", false)
+        assertEquals(1, selected.value)
+    }
+
     private fun show(
         width: Float,
         font: Float,
@@ -189,12 +247,53 @@ class HomeStatsLayoutTest {
             it.contentDescription?.toString()?.contains(text) == true
     }
 
-    private fun click(text: String) {
+    private fun awaitSelected(text: String) {
+        fun selected(): Boolean = nodes().filter {
+            it.text?.toString()?.contains(text) == true
+        }.any {
+            var node: AccessibilityNodeInfo? = it
+            while (node != null) {
+                if (node.isSelected ||
+                    node.stateDescription?.toString() == "Selected"
+                ) {
+                    return@any true
+                }
+                node = node.parent
+            }
+            false
+        }
+        val deadline = SystemClock.uptimeMillis() + 5_000
+        while (!selected() && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(50)
+        assertTrue(
+            nodes().joinToString {
+                "${it.text}/${it.contentDescription}/${it.isSelected}/${it.stateDescription}"
+            },
+            selected(),
+        )
+    }
+
+    private fun screenshot(name: String) {
+        val image = instrumentation.uiAutomation.takeScreenshot()
+        File(context.getExternalFilesDir(null), name).outputStream().use {
+            image.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+        image.recycle()
+    }
+
+    private fun actionNode(text: String): AccessibilityNodeInfo {
         val candidates = nodes()
-        var node = candidates.firstOrNull { it.text?.toString() == text }
-            ?: candidates.first { it.text?.toString()?.contains(text) == true }
-        while (!node.isClickable) node = checkNotNull(node.parent)
-        assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+        var node = candidates.firstOrNull {
+            it.text?.toString() == text || it.contentDescription?.toString() == text
+        } ?: candidates.first {
+            it.text?.toString()?.contains(text) == true ||
+                it.contentDescription?.toString()?.contains(text) == true
+        }
+        while (!node.isClickable && node.isEnabled) node = checkNotNull(node.parent)
+        return node
+    }
+
+    private fun click(text: String) {
+        assertTrue(actionNode(text).performAction(AccessibilityNodeInfo.ACTION_CLICK))
         instrumentation.waitForIdleSync()
         instrumentation.uiAutomation.waitForIdle(100, 5_000)
     }

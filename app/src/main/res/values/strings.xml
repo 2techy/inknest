@@ -184,7 +184,6 @@
     <string name="stats_refresh">Refresh</string>
     <string name="stats_chart_total">Total: %1$s</string>
     <string name="stats_options">Statistics options</string>
-    <string name="stats_selected_option">✓ %1$s</string>
     <string name="stats_current_streak">Current streak</string>
     <string name="stats_period_week">Week</string>
     <string name="stats_period_month">Month</string>

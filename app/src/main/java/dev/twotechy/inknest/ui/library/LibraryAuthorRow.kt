@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -35,7 +36,8 @@ internal fun LibraryAuthorRow(author: LibraryAuthor, click: () -> Unit) {
             indication = null,
             onClick = click,
         ).padding(vertical = InkSpacing.sm),
-        horizontalArrangement = Arrangement.spacedBy(InkSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             author.name ?: stringResource(R.string.library_unknown_author),

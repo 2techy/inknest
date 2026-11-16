@@ -1,10 +1,8 @@
 package dev.twotechy.inknest.ui.library
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,7 +14,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
-import dev.twotechy.inknest.ui.components.ChoiceTab
+import dev.twotechy.inknest.ui.components.ChoiceTabGroup
 import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
@@ -132,19 +130,17 @@ private fun LibraryEmptyState(filtered: Boolean, actions: LibraryActions) {
 
 @Composable
 private fun LibraryFilters(selected: LibraryFilter, total: Int, onFilter: (LibraryFilter) -> Unit) {
-    Row(
-        Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(InkSpacing.sm),
-    ) {
-        LibraryFilter.entries.forEach { filter ->
-            val label = if (filter == LibraryFilter.All) {
+    ChoiceTabGroup(
+        LibraryFilter.entries.map { filter ->
+            if (filter == LibraryFilter.All) {
                 stringResource(R.string.library_all_count, total)
             } else {
                 stringResource(filter.label())
             }
-            ChoiceTab(label, selected == filter, { onFilter(filter) })
-        }
-    }
+        },
+        LibraryFilter.entries.indexOf(selected),
+        { onFilter(LibraryFilter.entries[it]) },
+    )
 }
 
 private fun LibraryFilter.label(): Int = when (this) {

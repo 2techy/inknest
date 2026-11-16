@@ -42,6 +42,8 @@ Trang chủ/Thư viện dùng chung bìa mặc định tĩnh và giải mã IO. 
 
 Dùng header, điều khiển và token chung. Giữ thao tác chính dễ tới, nội dung tùy chọn có thể thu gọn, lỗi/retry hiển thị mà không thay dữ liệu thành công. Hàng điều hướng/toggle Cài đặt dùng divider; metadata chỉ đọc không có chevron. Thiết lập cuộn trên footer cố định, có ngữ nghĩa bước/tiến độ và thông báo lỗi lưu; đang lưu khóa điều hướng/hoàn tất.
 
+Bộ lọc trạng thái Thư viện và khoảng thời gian Thống kê dùng chung nhóm tab có chiều rộng bằng nhau, viền gọn và nền đặc cho lựa chọn. Nhóm cuộn ngang khi nhãn hoặc cỡ chữ cần thêm chỗ. Menu header dùng chung `ContextMenu`: bề mặt trong giới hạn cửa sổ, cột icon/chữ căn theo `InkMenuTokens` và vùng chạm theo chuẩn trợ năng. Lựa chọn có icon check riêng cùng trạng thái trợ năng. Header submenu căn cùng cột chữ; Làm mới nằm sau divider.
+
 Hành vi tính năng nằm ở [thiết lập](setup.md), [Thư viện](library.md) và [Thống kê](statistics.md), không mô tả màn hình lần hai ở đây.
 
 ## Cử chỉ và làm mới

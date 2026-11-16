@@ -1,19 +1,12 @@
 package dev.twotechy.inknest.ui.library
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -21,11 +14,9 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ContextMenu
 import dev.twotechy.inknest.ui.components.ContextMenuEntry
 import dev.twotechy.inknest.ui.components.ContextMenuEntryRow
-import dev.twotechy.inknest.ui.components.ContextMenuItem
+import dev.twotechy.inknest.ui.components.ContextMenuHeader
 import dev.twotechy.inknest.ui.components.HeaderIconButton
 import dev.twotechy.inknest.ui.settings.sourceFolderLabel
-import dev.twotechy.inknest.ui.theme.InkLibraryTokens
-import dev.twotechy.inknest.ui.theme.InkSpacing
 
 private enum class LibraryMenuPage(val title: Int) {
     Root(R.string.library_options),
@@ -54,30 +45,29 @@ internal fun LibraryOptionsMenu(state: LibraryUiState, actions: LibraryActions) 
                 onDismiss = {
                     page = null
                 },
-                modifier = Modifier.widthIn(
-                    min = InkLibraryTokens.menuWidth,
-                    max = InkLibraryTokens.menuWidth,
-                ),
                 alignToEnd = true,
             ) {
                 if (current == LibraryMenuPage.Root) {
                     LibraryMenuSections(state) { page = it }
-                    ContextMenuItem(
-                        stringResource(R.string.library_refresh),
-                        enabled =
-                            !state.notConfigured && !state.isRefreshing,
+                    HorizontalDivider()
+                    ContextMenuEntryRow(
+                        ContextMenuEntry(
+                            stringResource(R.string.library_refresh),
+                            enabled = !state.notConfigured && !state.isRefreshing,
+                            leadingIcon = R.drawable.ic_settings_sync,
+                        ),
                     ) {
                         page = null
                         actions.refresh()
                     }
                 } else {
-                    LibrarySubmenuHeader(current) { page = LibraryMenuPage.Root }
+                    ContextMenuHeader(stringResource(current.title)) { page = LibraryMenuPage.Root }
                     LibraryMenuChoices(current, state, actions).forEach { choice ->
                         ContextMenuEntryRow(
                             ContextMenuEntry(
                                 choice.label,
                                 selected = choice.selected,
-                                trailingIcon = if (choice.selected) R.drawable.ic_check else null,
+                                leadingIcon = current.icon(),
                             ),
                         ) {
                             page = null
@@ -87,21 +77,6 @@ internal fun LibraryOptionsMenu(state: LibraryUiState, actions: LibraryActions) 
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LibrarySubmenuHeader(page: LibraryMenuPage, onBack: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(end = InkSpacing.lg),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HeaderIconButton(R.drawable.ic_back, stringResource(R.string.back), onBack)
-        Text(
-            stringResource(page.title),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
     }
 }
 
@@ -121,6 +96,7 @@ private fun LibraryMenuSections(state: LibraryUiState, select: (LibraryMenuPage)
         ContextMenuEntryRow(
             ContextMenuEntry(
                 stringResource(page.title),
+                leadingIcon = page.icon(),
                 trailingIcon = R.drawable.ic_chevron_right,
                 enabled = state.folders.isNotEmpty(),
             ),
@@ -188,4 +164,11 @@ private fun LibrarySort.label() = when (this) {
     LibrarySort.Recent -> R.string.library_sort_recent
     LibrarySort.Title -> R.string.library_sort_title
     LibrarySort.Progress -> R.string.library_sort_progress
+}
+
+private fun LibraryMenuPage.icon(): Int = when (this) {
+    LibraryMenuPage.Root, LibraryMenuPage.Browse -> R.drawable.ic_nav_library_outline
+    LibraryMenuPage.Folders -> R.drawable.ic_book_folders
+    LibraryMenuPage.Layout -> R.drawable.ic_view_grid
+    LibraryMenuPage.Sort -> R.drawable.ic_library_sort
 }
