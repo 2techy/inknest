@@ -2,6 +2,7 @@ package dev.twotechy.inknest.ui
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
@@ -12,9 +13,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.InkNestApplication
 import dev.twotechy.inknest.MainActivity
@@ -29,9 +34,13 @@ import dev.twotechy.inknest.ui.components.ContextMenuEntry
 import dev.twotechy.inknest.ui.components.ContextMenuEntryRow
 import dev.twotechy.inknest.ui.components.ContextMenuHeader
 import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.HeaderIconPlacement
+import dev.twotechy.inknest.ui.components.ScreenHeader
+import dev.twotechy.inknest.ui.components.SearchField
 import dev.twotechy.inknest.ui.home.HomeActions
 import dev.twotechy.inknest.ui.home.HomeActivity
 import dev.twotechy.inknest.ui.home.HomeActivitySection
+import dev.twotechy.inknest.ui.home.HomeHeader
 import dev.twotechy.inknest.ui.home.HomePinUiModel
 import dev.twotechy.inknest.ui.home.HomePinnedApps
 import dev.twotechy.inknest.ui.home.HomeReadingStats
@@ -154,7 +163,14 @@ class HomeStatsLayoutTest {
             ChoiceTabGroup(listOf("All", "Reading", "Finished", "Unknown"), selected.value) {
                 selected.value = it
             }
-            HeaderIconButton(R.drawable.ic_more, "Options") { menu.value = true }
+            HeaderIconButton(
+                R.drawable.ic_options,
+                "Options",
+                placement = HeaderIconPlacement.Centered,
+            ) {
+                menu.value =
+                    true
+            }
             if (menu.value) {
                 ContextMenu(onDismiss = { menu.value = false }) {
                     if (submenu.value) {
@@ -195,17 +211,105 @@ class HomeStatsLayoutTest {
         assertEquals(1, selected.value)
     }
 
+    @Test fun pageHeaderTargetsMatchHomeAcrossDirectionAndFontScale() {
+        for (direction in LayoutDirection.entries) {
+            for (layout in listOf(
+                HeaderLayout(320f, 1f, direction),
+                HeaderLayout(320f, 2f, direction),
+                HeaderLayout(600f, 1f, direction),
+            )) {
+                checkHeaderTargets(layout)
+            }
+        }
+    }
+
+    private data class HeaderLayout(
+        val width: Float,
+        val font: Float,
+        val direction: LayoutDirection,
+    )
+
+    private fun checkHeaderTargets(layout: HeaderLayout) {
+        val (width, font, direction) = layout
+        val search = context.getString(R.string.library_search)
+        val settings = context.getString(R.string.settings_title)
+        val clicked = AtomicInteger()
+        show(width, font, direction = direction) {
+            HomeHeader(HomeActions({}, {}, {}, {}, {}, { clicked.incrementAndGet() }))
+        }
+        screenshot("header-home-$width-$font-$direction.png")
+        val homeSearch = bounds(actionNode(search))
+        val homeEnd = bounds(actionNode(settings))
+        click(settings)
+        assertEquals(1, clicked.get())
+        show(width, font, direction = direction) {
+            ScreenHeader("Thư viện / Library") {
+                HeaderIconButton(R.drawable.ic_search, search) {}
+                HeaderIconButton(
+                    R.drawable.ic_options,
+                    "Options",
+                    placement = HeaderIconPlacement.Centered,
+                ) {
+                    clicked.incrementAndGet()
+                }
+            }
+        }
+        screenshot("header-page-$width-$font-$direction.png")
+        val pageSearch = bounds(actionNode(search))
+        val pageEnd = bounds(actionNode("Options"))
+        assertEquals(homeSearch.left, pageSearch.left)
+        assertEquals(homeSearch.right, pageSearch.right)
+        assertEquals(homeEnd.left, pageEnd.left)
+        assertEquals(homeEnd.right, pageEnd.right)
+        assertTrue(!Rect.intersects(pageSearch, pageEnd))
+        click("Options")
+        assertEquals(2, clicked.get())
+        show(width, font, direction = direction) {
+            ScreenHeader("Chi tiết sách / Book details", {
+                clicked.incrementAndGet()
+            }, true)
+        }
+        screenshot("header-back-$width-$font-$direction.png")
+        val back = bounds(actionNode(context.getString(R.string.back)))
+        val title = bounds(
+            nodes().first {
+                it.text?.toString()?.contains("Book details") ==
+                    true
+            },
+        )
+        assertEquals(homeEnd.width(), back.width())
+        assertEquals(homeEnd.height(), back.height())
+        assertTrue(!Rect.intersects(back, title))
+        click(context.getString(R.string.back))
+        assertEquals(3, clicked.get())
+        show(width, font, direction = direction) {
+            val focus = remember { FocusRequester() }
+            SearchField("", "Search", focus, {}, { clicked.incrementAndGet() })
+        }
+        val close = bounds(actionNode(context.getString(R.string.close_search)))
+        assertEquals(homeEnd.left, close.left)
+        assertEquals(homeEnd.right, close.right)
+        click(context.getString(R.string.close_search))
+        assertEquals(4, clicked.get())
+    }
+
+    private fun bounds(node: AccessibilityNodeInfo): Rect = Rect().also(node::getBoundsInScreen)
+
     private fun show(
         width: Float,
         font: Float,
         preferences: AppPreferences = AppPreferences(),
+        direction: LayoutDirection = LayoutDirection.Ltr,
         content: @Composable () -> Unit,
     ) {
         val composed = CountDownLatch(1)
         instrumentation.runOnMainSync {
             val density = activity.resources.displayMetrics.widthPixels / width
             activity.setContent {
-                CompositionLocalProvider(LocalDensity provides Density(density, font)) {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(density, font),
+                    LocalLayoutDirection provides direction,
+                ) {
                     InkNestTheme(preferences) {
                         key(width, font) {
                             Column(Modifier.fillMaxWidth()) { content() }
@@ -273,6 +377,15 @@ class HomeStatsLayoutTest {
     }
 
     private fun screenshot(name: String) {
+        // Wait for the replacement content to reach the rendering surface, not only semantics.
+        val frame = CountDownLatch(1)
+        instrumentation.runOnMainSync {
+            activity.window.decorView.postOnAnimation {
+                activity.window.decorView.postOnAnimation { frame.countDown() }
+            }
+        }
+        assertTrue("frame rendered", frame.await(5, TimeUnit.SECONDS))
+        instrumentation.waitForIdleSync()
         val image = instrumentation.uiAutomation.takeScreenshot()
         File(context.getExternalFilesDir(null), name).outputStream().use {
             image.compress(Bitmap.CompressFormat.PNG, 100, it)

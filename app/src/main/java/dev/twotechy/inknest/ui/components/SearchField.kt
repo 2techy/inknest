@@ -94,6 +94,11 @@ internal fun SearchField(
                 }
             },
         )
-        HeaderIconButton(R.drawable.ic_close, stringResource(R.string.close_search), onClose)
+        HeaderIconButton(
+            R.drawable.ic_close,
+            stringResource(R.string.close_search),
+            placement = HeaderIconPlacement.Centered,
+            onClick = onClose,
+        )
     }
 }

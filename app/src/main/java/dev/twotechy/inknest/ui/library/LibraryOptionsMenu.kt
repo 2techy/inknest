@@ -16,6 +16,7 @@ import dev.twotechy.inknest.ui.components.ContextMenuEntry
 import dev.twotechy.inknest.ui.components.ContextMenuEntryRow
 import dev.twotechy.inknest.ui.components.ContextMenuHeader
 import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.HeaderIconPlacement
 import dev.twotechy.inknest.ui.settings.sourceFolderLabel
 
 private enum class LibraryMenuPage(val title: Int) {
@@ -36,7 +37,11 @@ internal fun LibraryOptionsMenu(state: LibraryUiState, actions: LibraryActions) 
     var page by remember { mutableStateOf<LibraryMenuPage?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { page = null }
     Box {
-        HeaderIconButton(R.drawable.ic_more, stringResource(R.string.library_options)) {
+        HeaderIconButton(
+            R.drawable.ic_options,
+            stringResource(R.string.library_options),
+            placement = HeaderIconPlacement.Centered,
+        ) {
             page =
                 LibraryMenuPage.Root
         }

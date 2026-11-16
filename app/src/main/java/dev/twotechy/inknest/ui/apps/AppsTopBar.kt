@@ -5,6 +5,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.HeaderIconPlacement
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.SearchField
 
@@ -33,7 +34,8 @@ internal fun AppsTopBar(
             HeaderIconButton(
                 if (grid) R.drawable.ic_view_list else R.drawable.ic_view_grid,
                 stringResource(if (grid) R.string.switch_to_list else R.string.switch_to_grid),
-                onToggleViewMode,
+                placement = HeaderIconPlacement.Centered,
+                onClick = onToggleViewMode,
             )
         }
     }

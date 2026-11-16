@@ -144,7 +144,12 @@ internal fun ContextMenuHeader(title: String, onBack: () -> Unit) {
         Modifier.fillMaxWidth().padding(horizontal = InkSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        HeaderIconButton(R.drawable.ic_back, stringResource(R.string.back), onBack)
+        HeaderIconButton(
+            R.drawable.ic_back,
+            stringResource(R.string.back),
+            placement = HeaderIconPlacement.Centered,
+            onClick = onBack,
+        )
         Text(
             title,
             Modifier.weight(

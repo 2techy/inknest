@@ -18,13 +18,18 @@ import dev.twotechy.inknest.ui.components.ContextMenu
 import dev.twotechy.inknest.ui.components.ContextMenuEntry
 import dev.twotechy.inknest.ui.components.ContextMenuEntryRow
 import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.HeaderIconPlacement
 
 @Composable
 internal fun StatsOptionsMenu(state: StatsUiState, actions: StatsActions) {
     var expanded by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { expanded = false }
     Box {
-        HeaderIconButton(R.drawable.ic_more, stringResource(R.string.stats_options)) {
+        HeaderIconButton(
+            R.drawable.ic_options,
+            stringResource(R.string.stats_options),
+            placement = HeaderIconPlacement.Centered,
+        ) {
             expanded = true
         }
         if (expanded) {

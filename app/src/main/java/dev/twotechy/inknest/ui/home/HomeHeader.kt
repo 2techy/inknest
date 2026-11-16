@@ -1,7 +1,6 @@
 package dev.twotechy.inknest.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +17,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.ui.components.quietClick
+import dev.twotechy.inknest.ui.components.HeaderIconButton
+import dev.twotechy.inknest.ui.components.HeaderIconPlacement
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
 import dev.twotechy.inknest.ui.theme.InkHomeTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
@@ -74,25 +74,16 @@ private fun HomeIdentity(brand: String, modifier: Modifier = Modifier) {
 @Composable
 private fun HomeHeaderActions(actions: HomeActions) {
     Row {
-        HomeHeaderAction(
+        HeaderIconButton(
             R.drawable.ic_search,
             stringResource(R.string.library_search),
-            actions.searchLibrary,
+            onClick = actions.searchLibrary,
         )
-        HomeHeaderAction(
+        HeaderIconButton(
             R.drawable.ic_settings_outline,
             stringResource(R.string.settings_title),
-            actions.settings,
+            placement = HeaderIconPlacement.Centered,
+            onClick = actions.settings,
         )
-    }
-}
-
-@Composable
-private fun HomeHeaderAction(icon: Int, description: String, onClick: () -> Unit) {
-    Box(
-        Modifier.size(InkHeaderTokens.touchTarget).quietClick(onClick),
-        contentAlignment = Alignment.CenterEnd,
-    ) {
-        Icon(painterResource(icon), description, Modifier.size(InkHeaderTokens.iconSize))
     }
 }
