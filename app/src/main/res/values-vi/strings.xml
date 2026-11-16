@@ -156,7 +156,6 @@
     <string name="library_sort_recent">Đọc gần đây nhất</string>
     <string name="library_sort_title">Tên sách, A–Z</string>
     <string name="library_sort_progress">Tiến độ cao nhất</string>
-    <string name="library_selected_option">Đã chọn: %1$s</string>
     <string name="library_count">Sách đã theo dõi · %1$d / %2$d</string>
     <string name="library_filter_all">Tất cả</string>
     <string name="library_filter_reading">Đang đọc</string>
@@ -245,7 +244,6 @@
     <string name="library_menu_sort">Sắp xếp theo</string>
     <string name="library_layout_grid">Lưới</string>
     <string name="library_layout_list">Danh sách</string>
-    <string name="library_submenu">%1$s ›</string>
     <string name="language_title">Ngôn ngữ</string>
     <string name="language_system">Theo hệ thống</string>
     <string name="apps_refresh_failed">Không thể làm mới ứng dụng. Hãy thử lại.</string>
@@ -295,4 +293,26 @@
     <string name="home_continue">Đọc tiếp</string>
     <string name="home_reading_pages">%1$d / %2$d trang</string>
     <string name="home_view_all">Xem tất cả</string>
+    <string name="book_details_removed">Sách này không còn trong thư viện.</string>
+    <string name="book_details_retry">Thử lại</string>
+    <string name="book_details_read_again">Đọc lại</string>
+    <string name="book_details_available">Có thể truy cập</string>
+    <string name="book_details_description">Giới thiệu</string>
+    <string name="book_details_history">Lịch sử đọc</string>
+    <string name="book_details_file">Thông tin tệp</string>
+    <string name="book_details_statistics">Thống kê đọc</string>
+    <string name="book_details_time">Thời gian đọc</string>
+    <string name="book_details_pages">Trang ghi nhận</string>
+    <string name="book_details_days">Số ngày đọc</string>
+    <string name="book_details_last_read_value">Đọc gần nhất: %1$s</string>
+    <string name="book_details_first_read_value">Đọc lần đầu: %1$s</string>
+    <string name="book_details_show_more">Xem thêm</string>
+    <string name="book_details_show_less">Thu gọn</string>
+    <string name="book_details_expanded">Đã mở rộng</string>
+    <string name="book_details_collapsed">Đã thu gọn</string>
+    <string name="book_details_more_days">Xem thêm ngày</string>
+    <string name="book_details_stats_loading">Đang tải thống kê đọc…</string>
+    <string name="book_details_stats_unavailable">Chưa có thống kê đọc. Kết nối nguồn KOReader và làm mới để tải dữ liệu đã ghi nhận.</string>
+    <string name="book_details_stats_unlinked">Chưa tìm thấy thống kê đọc khớp với sách này.</string>
+    <string name="book_details_no_history">Chưa có ngày đọc được ghi nhận.</string>
 </resources>

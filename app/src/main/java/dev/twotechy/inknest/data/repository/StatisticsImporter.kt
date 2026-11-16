@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
+import dev.twotechy.inknest.data.local.reading.StatisticsBookEntity
 import dev.twotechy.inknest.data.local.reading.StatisticsDao
 import dev.twotechy.inknest.data.local.reading.StatisticsEventEntity
 import dev.twotechy.inknest.data.local.reading.StatisticsImportEntity
@@ -35,6 +36,19 @@ internal class StatisticsImporter(
         stage(tree, zone) { operation, generations ->
             source.withEvents(tree) { reader ->
                 val generation = newGeneration(generations)
+                reader.forEachBookBatch { books ->
+                    require(books.size <= StatisticsEventReader.BATCH_SIZE)
+                    dao.appendBooks(
+                        operation,
+                        books.map {
+                            StatisticsBookEntity(
+                                generation,
+                                it.bookId,
+                                it.checksum,
+                            )
+                        },
+                    )
+                }
                 var position = 0
                 reader.forEachBatch { events ->
                     require(events.size <= StatisticsEventReader.BATCH_SIZE)
@@ -51,6 +65,7 @@ internal class StatisticsImporter(
         if (previous.zone == zone.id) return@withLock
         stage(tree, zone, previous.generation) { operation, generations ->
             val generation = newGeneration(generations)
+            dao.copyBooks(previous.generation, generation)
             var position = -1
             while (true) {
                 currentCoroutineContext().ensureActive()

@@ -18,6 +18,7 @@ data class StatisticsData(
     val configured: Boolean = false,
     val updatedAt: Long? = null,
     val sync: ReadingSyncStatus = ReadingSyncStatus(),
+    val sourceTree: String? = null,
 )
 
 enum class StatisticsUnit { Time, Pages }

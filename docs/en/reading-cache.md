@@ -17,7 +17,7 @@ Missing both sources or corrupt data cannot masquerade as a successfully empty s
 file missing/outside grants retains its identity and filename with an availability warning.
 No current-book choice is inferred from statistics or basename/title matches.
 
-Room schema 7 is exported in `app/schemas`. During development, schema changes do not carry
+Room schema 8 is exported in `app/schemas`. During development, schema changes do not carry
 migration code: increment the Room version when changing the schema, and allow Room to recreate
 the disposable reading database when no migration exists. Preferences, pins and SAF configuration
 live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
@@ -112,4 +112,4 @@ Books-only configurations can also clear/rebuild their inventory; cache size inc
 source parsing.
 
 
-Statistics shares schema 7 but owns its source identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps. See [statistics](statistics.md) and [reliability checks](reliability.md).
+Statistics shares schema 8 but owns its source identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps. See [statistics](statistics.md) and [reliability checks](reliability.md).

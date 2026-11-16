@@ -21,6 +21,7 @@ internal data class ReadingBookEntity(
     val fingerprint: String? = null,
     val currentPage: Int? = null,
     val totalPages: Int? = null,
+    val description: String? = null,
 )
 
 @Entity(tableName = "reading_sources", primaryKeys = ["sourceId", "snapshotKey"])

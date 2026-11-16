@@ -12,20 +12,43 @@ internal suspend fun readStatisticsEvents(
     db: SQLiteDatabase,
     consume: suspend (List<ReadingEvent>) -> Unit,
 ) {
+    val layout = if (hasColumn(db, "page_stat_data", "total_pages")) {
+        "total_pages"
+    } else {
+        "NULL AS total_pages"
+    }
+    readStatisticsRows(
+        db,
+        "SELECT start_time, duration, id_book, page, $layout FROM page_stat_data",
+        Cursor::readEvent,
+        consume,
+    )
+}
+
+internal suspend fun readStatisticsBooks(
+    db: SQLiteDatabase,
+    consume: suspend (List<StatisticsBookIdentity>) -> Unit,
+) {
+    if (!hasColumn(db, "book", "md5")) return
+    readStatisticsRows(db, "SELECT id, md5 FROM book", Cursor::bookIdentity, consume)
+}
+
+// Both tables share cancellation, row limits and bounded batch ownership.
+private suspend fun <T> readStatisticsRows(
+    db: SQLiteDatabase,
+    sql: String,
+    read: Cursor.() -> T?,
+    consume: suspend (List<T>) -> Unit,
+) {
     val context = currentCoroutineContext()
     withCancellableSignal { signal ->
-        val layout = if (hasLayoutColumn(db)) "total_pages" else "NULL AS total_pages"
-        db.rawQuery(
-            "SELECT start_time, duration, id_book, page, $layout FROM page_stat_data",
-            null,
-            signal,
-        ).use { cursor ->
-            val batch = ArrayList<ReadingEvent>(StatisticsEventReader.BATCH_SIZE)
+        db.rawQuery(sql, null, signal).use { cursor ->
+            val batch = ArrayList<T>(StatisticsEventReader.BATCH_SIZE)
             var visited = 0
             while (cursor.moveToNext()) {
                 context.ensureActive()
                 if (++visited > 1_000_000) throw SourceLimitExceeded()
-                cursor.readEvent()?.let { batch.add(it) }
+                cursor.read()?.let(batch::add)
                 if (batch.size == StatisticsEventReader.BATCH_SIZE) {
                     consume(batch.toList())
                     batch.clear()
@@ -35,6 +58,13 @@ internal suspend fun readStatisticsEvents(
         }
     }
 }
+
+private fun hasColumn(db: SQLiteDatabase, table: String, column: String): Boolean =
+    db.rawQuery("PRAGMA table_info($table)", null).use { cursor ->
+        var found = false
+        while (cursor.moveToNext()) if (cursor.getString(1) == column) found = true
+        found
+    }
 
 private fun Cursor.readEvent(): ReadingEvent? {
     // SQLite is dynamically typed. Never coerce text/null into a successful zero-duration record.
@@ -54,13 +84,6 @@ private fun Cursor.readEvent(): ReadingEvent? {
     )
 }
 
-private fun hasLayoutColumn(db: SQLiteDatabase): Boolean =
-    db.rawQuery("PRAGMA table_info(page_stat_data)", null).use { cursor ->
-        var found = false
-        while (cursor.moveToNext()) if (cursor.getString(1) == "total_pages") found = true
-        found
-    }
-
 private fun Cursor.positivePage(index: Int): Long? {
     if (!numericColumn(index)) return null
     val value = getDouble(index)
@@ -72,3 +95,10 @@ private fun Cursor.numericColumn(index: Int) =
 
 private fun validInteger(value: Double, max: Double): Boolean =
     value.isFinite() && value >= 0 && value <= max && value == value.toLong().toDouble()
+
+private fun Cursor.bookIdentity(): StatisticsBookIdentity? {
+    if (getType(0) != Cursor.FIELD_TYPE_INTEGER) return null
+    val checksum = getString(1)?.lowercase() ?: return null
+    if (!checksum.matches(Regex("[0-9a-f]{32}"))) return null
+    return StatisticsBookIdentity(getLong(0), checksum)
+}

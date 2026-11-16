@@ -13,6 +13,8 @@ internal data class LibraryBookEntity(
     val fingerprint: String? = null,
     val progress: Int? = null,
     val status: String = "Unknown",
+    val description: String? = null,
+    val checksum: String? = null,
 )
 
 @Entity(tableName = "library_folders", primaryKeys = ["sourceId", "folderKey"])

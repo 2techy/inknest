@@ -33,7 +33,7 @@ Các loại bản dựng dùng chung luồng tải/xác minh. Tên phiên bản 
 tìm thấy, không kết luận là bản mới hơn. Bộ xác minh nền tảng vẫn chặn mã phiên bản APK không tăng
 và chữ ký không tương thích trước khi cài.
 
-Ứng dụng chính chỉ có một module `:app`, dùng cơ chế tiêm phụ thuộc thủ công qua hàm khởi tạo. Cơ sở dữ liệu đọc dùng Room schema 7. Trong giai đoạn phát triển, nếu không có migration phù hợp, Room được phép xóa và tạo lại bộ nhớ đệm; tùy chọn, ứng dụng đã ghim và lựa chọn nguồn vẫn nằm riêng trong DataStore. Dự án chưa cam kết giữ nguyên dữ liệu qua các lần nâng cấp.
+Ứng dụng chính chỉ có một module `:app`, dùng cơ chế tiêm phụ thuộc thủ công qua hàm khởi tạo. Cơ sở dữ liệu đọc dùng Room schema 8. Trong giai đoạn phát triển, nếu không có migration phù hợp, Room được phép xóa và tạo lại bộ nhớ đệm; tùy chọn, ứng dụng đã ghim và lựa chọn nguồn vẫn nằm riêng trong DataStore. Dự án chưa cam kết giữ nguyên dữ liệu qua các lần nâng cấp.
 
 ViewModel gọi trực tiếp repository để thay đổi tùy chọn và cấu hình nguồn. Khi repository gặp lỗi, ứng dụng không được thay giá trị đã lưu hoặc báo thành công giả. Nhãn giao diện dùng tài nguyên chuỗi của Android. Khi xử lý lỗi coroutine, phải tiếp tục truyền tín hiệu hủy tác vụ.
 
@@ -60,3 +60,9 @@ Kết quả kiểm tra khả năng truy cập nguồn và việc ánh xạ ngo�
 Đồ thị phụ thuộc của ứng dụng chính nằm trong `:app`. Module instrumentation riêng `:benchmark` kiểm thử biến thể benchmark có cấu hình gần với release và biến thể profile chưa rút gọn mã, thông qua giao diện và SAF thật. Thiết lập dữ liệu mẫu chỉ có trong các source set tương ứng; bản release chứa profile ứng dụng nhưng không chứa dữ liệu kiểm thử hay điểm truy cập thiết lập đó. Xem [đo hiệu năng](benchmarking.md).
 
 Ngôn ngữ ứng dụng do nền tảng quản lý. AppLanguageController dùng AppCompat: Android 13 trở lên lưu ngôn ngữ riêng cho ứng dụng bằng cơ chế hệ thống; các bản cũ dùng cơ chế lưu tự động của AppCompat. SettingsRoute kết hợp lựa chọn này vào trạng thái màn hình và quản lý hộp thoại chọn ngôn ngữ tạm thời. Không lưu locale trong Room hoặc DataStore tùy chọn ứng dụng. Việc tạo lại Activity giữ nguyên điều hướng và ViewModel; đổi ngôn ngữ không thực hiện lại thao tác chọn trước đó.
+
+Chi tiết sách đặt contract và implementation repository cạnh nhau; các model sách nằm cùng
+`ReadingItem`, các section riêng của tính năng nằm trong `BookDetailsScreen`. Dùng lại
+`BookProbeDataSource` làm bộ đọc tài liệu chung cho resolve, EPUB/sidecar và checksum, với I/O
+dispatcher được inject. Làm sạch/kiểm tra EPUB nằm cạnh parser; các bảng statistics dùng chung
+helper đọc batch có giới hạn và hỗ trợ hủy. Helper nguồn không truy cập repository hoặc UI state.

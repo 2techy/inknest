@@ -108,3 +108,13 @@ Stats orders three outlined icon cards (Today, daily average, current streak), t
 Tab swipes follow Home → Library → Stats → Apps, wrapping in both directions between Apps and Home. Each gesture moves at most one tab. They apply only to main-tab content, excluding navigation, all Settings pages, onboarding, search/IME and modal surfaces. Existing saveable state restores destinations; HOME invalidates active gestures.
 
 Home, Library, Stats and Apps expose `RefreshAction` through `ScreenScaffold`. Pulling begins at the top, including empty/short content. The monochrome running indicator overlays below the header without shifting content or animating. Buttons/retry remain available. Reading refresh is disabled without sources; tab changes do not refresh. Feature content retains cache/error notices without a duplicate running label. Judge E-Ink sharpness and ghosting on physical hardware using [reliability checks](reliability.md).
+
+Library Book details reuses the unframed cover/details row with Home cover bounds, 18/24sp title,
+14/20sp author, 8dp text spacing and 16dp cover gap. The full-width reading button uses Home's
+filled ink/paper colors and play icon with a minimum 48dp touch height. Progress stays beside the
+cover in this page. Related details sections use 16dp separation and 12dp heading/content gaps. Collapsed history/file
+rows retain 48dp touch bounds without extra spacing around their dividers. Expanded metadata uses
+4–8dp internal gaps. Description expands inline; statistics uses three
+compact outlined metrics, while history/file groups use static inline expanders. Long titles wrap
+fully; the hero stacks when readable text width cannot be maintained. No extra detail destinations
+or enclosing hero card are added.

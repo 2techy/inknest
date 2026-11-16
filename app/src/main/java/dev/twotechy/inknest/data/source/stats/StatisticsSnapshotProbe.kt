@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.model.ReadingEvent
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -38,7 +39,13 @@ internal class StatisticsSnapshotProbe(
         tree: String,
         consume: suspend (StatisticsEventReader) -> T,
     ): T = readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, _ ->
-        consume(StatisticsEventReader { batch -> readStatisticsEvents(db, batch) })
+        consume(object : StatisticsEventReader {
+            override suspend fun forEachBatch(consume: suspend (List<ReadingEvent>) -> Unit) =
+                readStatisticsEvents(db, consume)
+            override suspend fun forEachBookBatch(
+                consume: suspend (List<StatisticsBookIdentity>) -> Unit,
+            ) = readStatisticsBooks(db, consume)
+        })
     }
 
     private suspend fun <T> readSnapshotData(

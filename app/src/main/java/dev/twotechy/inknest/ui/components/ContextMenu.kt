@@ -3,20 +3,28 @@ package dev.twotechy.inknest.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -59,26 +67,56 @@ internal fun ContextMenu(
     }
 }
 
+internal data class ContextMenuEntry(
+    val label: String,
+    val enabled: Boolean = true,
+    val leadingIcon: Int? = null,
+    val trailingIcon: Int? = null,
+    val selected: Boolean? = null,
+)
+
 @Composable
 internal fun ContextMenuItem(
     label: String,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+) = ContextMenuEntryRow(ContextMenuEntry(label, enabled), modifier, onClick)
+
+@Composable
+internal fun ContextMenuEntryRow(
+    entry: ContextMenuEntry,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    Text(
-        label,
-        modifier.fillMaxWidth().heightIn(min = InkHeaderTokens.touchTarget).clickable(
-            enabled = enabled,
+    Row(
+        modifier.fillMaxWidth().heightIn(min = InkHeaderTokens.touchTarget).semantics {
+            entry.selected?.let { this.selected = it }
+        }.clickable(
+            enabled = entry.enabled,
             role = Role.Button,
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
             onClick = onClick,
         ).padding(horizontal = InkSpacing.lg, vertical = InkSpacing.md),
-        style = MaterialTheme.typography.bodyLarge,
-        color = if (enabled) colors.onSurface else colors.outline,
-    )
+        horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val tint = if (entry.enabled) colors.onSurface else colors.outline
+        entry.leadingIcon?.let {
+            Icon(painterResource(it), null, Modifier.size(InkHeaderTokens.iconSize), tint = tint)
+        }
+        Text(
+            entry.label,
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+            color = tint,
+        )
+        entry.trailingIcon?.let {
+            Icon(painterResource(it), null, Modifier.size(InkHeaderTokens.iconSize), tint = tint)
+        }
+    }
 }
 
 private class ContextMenuPosition(private val alignToEnd: Boolean) : PopupPositionProvider {

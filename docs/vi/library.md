@@ -17,19 +17,18 @@ Tệp được nhận diện có thể xuất hiện trong Thư viện, nhưng c
 
 `FolderLibraryRepository` quản lý tác vụ quét dùng chung trong toàn ứng dụng và danh mục Room được phân vùng theo định danh nguồn/cây thư mục sách. Sau khi liệt kê đầy đủ, danh sách sách được thay thế trong một giao dịch; nếu liệt kê thất bại, danh mục cũ được giữ nguyên. Thông tin sách và bìa được bổ sung theo từng lô nhỏ, tận dụng thông tin nhận diện tệp (fingerprint) đã biết để tránh đọc lại. Danh mục hoàn chỉnh được giữ qua lần khởi động tiếp theo; quá trình bị gián đoạn sẽ được tiếp tục. Thiết lập lần đầu, đổi thư mục và xóa bộ nhớ đệm đều kích hoạt lập danh mục. Làm mới thư viện cập nhật tệp mới thêm hoặc đã xóa; chuyển tab và đồng hồ chạy không gây quét thư mục.
 
-Các bảng thư viện dùng chung cơ sở dữ liệu đọc Room schema 7. Trong giai đoạn phát triển, khi đổi phiên bản mà không có migration, Room được phép xóa và tạo lại bộ nhớ đệm. Tùy chọn, ứng dụng đã ghim và quyền truy cập thư mục được quản lý riêng. Xóa bộ nhớ đệm đọc cũng xóa danh mục/bìa để tạo lại từ thư mục đang dùng. Đổi nguồn hủy tác vụ quét cũ; cả việc theo dõi dữ liệu lẫn ghi dữ liệu đều kiểm tra thư mục đang có hiệu lực.
+Các bảng thư viện dùng chung cơ sở dữ liệu đọc Room schema 8. Trong giai đoạn phát triển, khi đổi phiên bản mà không có migration, Room được phép xóa và tạo lại bộ nhớ đệm. Tùy chọn, ứng dụng đã ghim và quyền truy cập thư mục được quản lý riêng. Xóa bộ nhớ đệm đọc cũng xóa danh mục/bìa để tạo lại từ thư mục đang dùng. Đổi nguồn hủy tác vụ quét cũ; cả việc theo dõi dữ liệu lẫn ghi dữ liệu đều kiểm tra thư mục đang có hiệu lực.
 
 Chỉ EPUB được trích xuất thông tin và bìa raster, thông qua bộ đọc có giới hạn tài nguyên. URI tài liệu đã xác thực có thể được đọc trực tiếp sau khi kiểm tra quyền và bảo đảm tài liệu vẫn nằm trong cây thư mục được cấp quyền, tránh phải tìm lại từng tệp. Định dạng khác hoặc sách thiếu bìa dùng hình bìa mặc định, tên tệp và định dạng. Nếu thiếu tác giả hoặc tiến độ, kệ sách bỏ qua những thông tin đó thay vì lặp lại nhãn kỹ thuật. Sách mới có trạng thái đọc chưa xác định; không có lịch sử chưa đủ để kết luận là chưa đọc.
 
 ## Màn hình và thao tác
 
-Kệ sách dùng phần đầu trang và các giá trị thiết kế chung, có dải lọc trạng thái cuộn ngang, chế độ lưới/danh sách, tìm kiếm và menu sắp xếp/làm mới không có hiệu ứng chuyển động. Bìa và tên sách là nội dung chính. Dạng lưới có chú thích ngắn; dạng danh sách hiển thị thêm thông tin sách.
+Kệ sách dùng phần đầu trang và các giá trị thiết kế chung, có dải lọc trạng thái cuộn ngang, chế độ lưới/danh sách, tìm kiếm và menu sắp xếp/làm mới không có hiệu ứng chuyển động. Bìa và tên sách là nội dung chính. Cả lưới và danh sách chỉ hiện tên sách và tác giả đã biết.
 
 Tìm kiếm theo tên sách hoặc tác giả đã biết, không phân biệt hoa thường. Trạng thái nhập và chọn văn bản được giữ cục bộ để việc lọc ở nền không làm đảo thứ tự ký tự đang gõ. Nội dung do bộ gõ gửi đến sau khi đã đóng tìm kiếm sẽ bị bỏ qua. Từ khóa, bộ lọc, cách sắp xếp và kiểu hiển thị được lưu trong SavedStateHandle; trạng thái của thành phần lazy giúp khôi phục vị trí cuộn.
 
 Mặc định, sách được xếp theo lần đọc gần nhất, mới trước. Các lựa chọn khác là tên A–Z và tiến độ từ cao xuống thấp. Giá trị chưa biết đứng sau giá trị đã biết; khi bằng nhau, thứ tự thư mục/định danh ổn định được dùng để phân định. Bộ lọc dựa trên trạng thái KOReader ghi rõ; tiến độ 100% không tự động có nghĩa là Đã đọc.
 
-Chạm sách để mở tài liệu gốc trong KOReader đã chọn, thông qua `ReadingOpenRepository` và `ReadingItemDispatcher`. Nhấn giữ để xem thông tin chi tiết và đường dẫn; hộp thoại này cũng có nút mở sách. Dạng lưới và danh sách dùng cùng các thao tác. Khi ứng dụng chuyển xuống nền hoặc người dùng nhấn HOME, hộp thoại chi tiết được đóng và yêu cầu mở đang chờ bị bỏ; từ khóa, bộ lọc và vị trí cuộn vẫn được giữ. Yêu cầu mở không được hỗ trợ sẽ hiển thị lỗi. Lịch sử và tiến độ đọc luôn lấy từ KOReader.
 
 ## Duyệt theo tác giả
 
@@ -42,3 +41,25 @@ Chế độ duyệt và tác giả đang chọn được khôi phục qua SavedS
 Thanh công cụ có nút tìm kiếm và menu thêm. Menu thêm chia các lựa chọn duyệt thư viện, thư mục, bố cục và sắp xếp thành menu con một cấp; làm mới là thao tác trực tiếp. Danh sách tác giả không hiển thị lựa chọn bố cục/sắp xếp dành cho sách. Menu con có mũi tên quay lại ở đầu và đánh dấu lựa chọn hiện tại. Thao tác đóng hoặc Quay lại sẽ đóng menu; chuyển ứng dụng xuống nền cũng xóa menu đang mở. Không hiển thị dòng tóm tắt dưới tiêu đề trang.
 
 Thư viện và Ứng dụng dùng chung ô tìm kiếm ngay trên thanh công cụ, với gợi ý một dòng và vùng chạm 48dp. Các thao tác hiện ra theo ngữ cảnh, không bị giới hạn bởi ngưỡng chiều rộng màn hình.
+
+## Chi tiết sách
+
+Chạm hoặc nhấn giữ sách mở một trang chi tiết duy nhất; nút đọc nền đen mở KOReader qua luồng
+mở sách hiện có. Trang ẩn thanh điều hướng và vuốt đổi tab. Back giữ query/bộ lọc/vị trí kệ;
+quay lại từ KOReader giữ trang chi tiết; HOME đóng trang. Phần đầu không có khung bao ngoài:
+bìa cạnh title đầy đủ, author, tiến độ/trang và lần đọc gần nhất; nút đọc trải ngang bên dưới.
+Dùng typography, kích thước bìa và spacing tokens như Home; màn hẹp/font lớn xếp nội dung dọc.
+Kệ chỉ hiện title/author. Badge Finished ưu tiên hơn phần trăm khi KOReader báo Finished;
+100% riêng lẻ không được coi là Finished.
+
+Description EPUB nếu có được làm sạch HTML thành văn bản, giữ ngắt đoạn, giới hạn 32 KiB;
+thu gọn bốn dòng và mở rộng ngay tại chỗ. Không có description thì ẩn cả section. Thống kê
+hiện tổng thời gian, số trang ghi nhận và số ngày đọc (chỉ số, không lặp đơn vị). Lịch sử và
+thông tin tệp mặc định thu gọn, mở trong cùng trang. Lịch sử có ngày đầu/cuối, tổng theo ngày
+mới nhất trước và tải thêm 30 ngày mỗi lần. Thông tin tệp gồm định dạng, đường dẫn và quyền truy cập.
+
+Ghép thống kê theo partialMD5 tương thích KOReader trong đúng nguồn, không đoán theo title/author.
+Chỉ lấy mẫu sách đang xem (tối đa 12 KiB), không copy toàn bộ tệp để tính checksum. Provider
+không seek được thì báo chưa liên kết. Cache checksum vẫn kiểm tra lại grant/containment và
+fingerprint; xóa cache không cho tác vụ đang chạy tạo lại hàng đã xóa. Nhiều ID cùng checksum
+được cộng theo quy tắc book/ngày/layout hiện có. Lưu lựa chọn mở rộng và số ngày đã tải theo ID sách.

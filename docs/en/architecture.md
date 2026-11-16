@@ -47,7 +47,7 @@ All build types share download/verification; an unknown version name permits dow
 release without claiming it is newer. The platform APK verifier still rejects non-increasing version
 codes and incompatible signatures before installation.
 
-The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 7
+The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 8
 with destructive cache fallback during development; preferences, pins and source selections
 remain in DataStore. Stable upgrade compatibility is not promised.
 ViewModels call repositories directly for preference and source operations.
@@ -107,3 +107,10 @@ native per-app locale storage on Android 13+ and automatic AppCompat storage bel
 SettingsRoute combines that platform selection into screen state and owns the transient
 language dialog. No locale is persisted in Room or app-preferences DataStore. Activity
 recreation retains navigation and ViewModels; language changes never replay selection actions.
+
+Book details keeps its repository contract and cached implementation together. Book models live
+with `ReadingItem`; feature-only section composables stay in `BookDetailsScreen`. The existing
+`BookProbeDataSource` is the shared document I/O service for resolution, EPUB/sidecar reads and
+checksum sampling, using the injected I/O dispatcher. EPUB text cleanup/validation lives beside
+its parser; statistics tables share one bounded, cancellable batch reader. Source helpers do not
+access repositories or UI state.

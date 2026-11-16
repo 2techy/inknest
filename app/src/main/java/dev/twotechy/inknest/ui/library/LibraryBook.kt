@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingStatus
 import dev.twotechy.inknest.ui.components.BookCover
@@ -80,10 +79,28 @@ internal fun LibraryListBook(book: ReadingItem, onClick: () -> Unit, onDetails: 
 private fun LibraryBookCover(book: ReadingItem, modifier: Modifier = Modifier) {
     Box(modifier) {
         BookCover(book.coverUri, Modifier.fillMaxSize())
-        book.progress?.let { progress ->
-            val description = stringResource(R.string.reading_progress_percent, progress)
+        if (book.status == ReadingStatus.Finished || book.progress != null) {
+            val description = if (book.status ==
+                ReadingStatus.Finished
+            ) {
+                stringResource(R.string.library_filter_finished)
+            } else {
+                stringResource(
+                    R.string.reading_progress_percent,
+                    book.progress ?: 0,
+                )
+            }
             Text(
-                stringResource(R.string.library_cover_progress_percent, progress),
+                if (book.status ==
+                    ReadingStatus.Finished
+                ) {
+                    stringResource(R.string.library_filter_finished)
+                } else {
+                    stringResource(
+                        R.string.library_cover_progress_percent,
+                        book.progress ?: 0,
+                    )
+                },
                 modifier = Modifier.align(Alignment.BottomEnd)
                     .background(MaterialTheme.colorScheme.surface)
                     .border(InkBorder.thin, MaterialTheme.colorScheme.outline)
@@ -124,29 +141,7 @@ private fun LibraryBookDetails(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (book.status == ReadingStatus.Finished || book.status == ReadingStatus.Abandoned) {
-            Text(
-                stringResource(
-                    if (book.status == ReadingStatus.Finished) {
-                        R.string.library_filter_finished
-                    } else {
-                        R.string.library_status_abandoned
-                    },
-                ),
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-        book.availability.label()?.let {
-            Text(stringResource(it), style = MaterialTheme.typography.labelLarge)
-        }
     }
-}
-
-private fun BookAvailability.label(): Int? = when (this) {
-    BookAvailability.Available -> null
-    BookAvailability.Missing -> R.string.library_file_missing
-    BookAvailability.PermissionLost -> R.string.library_permission_lost
-    BookAvailability.Unresolved -> R.string.library_unresolved
 }
 
 @Composable

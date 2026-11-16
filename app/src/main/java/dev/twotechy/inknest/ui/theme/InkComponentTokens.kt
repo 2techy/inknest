@@ -92,6 +92,7 @@ internal object InkHomeTokens {
 }
 
 internal object InkLibraryTokens {
+    val menuWidth = 240.dp
     val minCellWidth = 112.dp
     val maxCoverWidth = 144.dp
     val listCoverWidth = 48.dp

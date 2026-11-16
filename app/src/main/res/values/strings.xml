@@ -156,7 +156,6 @@
     <string name="library_sort_recent">Last read, newest first</string>
     <string name="library_sort_title">Title, A–Z</string>
     <string name="library_sort_progress">Progress, highest first</string>
-    <string name="library_selected_option">Selected: %1$s</string>
     <string name="library_count">Tracked books · %1$d / %2$d</string>
     <string name="library_filter_all">All</string>
     <string name="library_filter_reading">Reading</string>
@@ -243,7 +242,6 @@
     <string name="library_menu_sort">Sort by</string>
     <string name="library_layout_grid">Grid</string>
     <string name="library_layout_list">List</string>
-    <string name="library_submenu">%1$s ›</string>
     <string name="language_title">Language</string>
     <string name="language_system">System default</string>
     <string name="language_english" translatable="false">English</string>
@@ -301,4 +299,26 @@
     <string name="home_continue">Continue</string>
     <string name="home_reading_pages">%1$d / %2$d pages</string>
     <string name="home_view_all">See all</string>
+    <string name="book_details_removed">This book is no longer in your library.</string>
+    <string name="book_details_retry">Retry</string>
+    <string name="book_details_read_again">Read again</string>
+    <string name="book_details_available">Available</string>
+    <string name="book_details_description">Description</string>
+    <string name="book_details_history">Reading history</string>
+    <string name="book_details_file">File information</string>
+    <string name="book_details_statistics">Reading statistics</string>
+    <string name="book_details_time">Reading time</string>
+    <string name="book_details_pages">Recorded pages</string>
+    <string name="book_details_days">Reading days</string>
+    <string name="book_details_last_read_value">Last read: %1$s</string>
+    <string name="book_details_first_read_value">First read: %1$s</string>
+    <string name="book_details_show_more">Show more</string>
+    <string name="book_details_show_less">Show less</string>
+    <string name="book_details_expanded">Expanded</string>
+    <string name="book_details_collapsed">Collapsed</string>
+    <string name="book_details_more_days">Show more days</string>
+    <string name="book_details_stats_loading">Loading reading statistics…</string>
+    <string name="book_details_stats_unavailable">Reading statistics are unavailable. Connect a KOReader source and refresh to load recorded reading.</string>
+    <string name="book_details_stats_unlinked">No matching reading statistics found for this book.</string>
+    <string name="book_details_no_history">No recorded reading days.</string>
 </resources>
