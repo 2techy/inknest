@@ -268,12 +268,8 @@ jobs:
             gh release edit "$TAG" --repo "$GH_REPO" --draft --prerelease="$prerelease"
           else
             notes="$RUNNER_TEMP/release-notes.md"
-            printf '%s\n\n' 'InkNest is an offline Android launcher built around reading on E-Ink devices.' > "$notes"
             gh api --method POST "repos/$GH_REPO/releases/generate-notes" \
-              -f tag_name="$TAG" -f target_commitish="$COMMIT" --jq .body >> "$notes"
-            printf '\n## Install\n\nRequires **Android 8.0 or later**. Download `InkNest-%s.apk` from Assets below and install it. KOReader is installed separately; launcher features work without a reading source.\n\n' "$VERSION" >> "$notes"
-            printf '[Setup guide](https://github.com/%s/blob/%s/docs/en/setup.md) · [Hướng dẫn tiếng Việt](https://github.com/%s/blob/%s/docs/vi/setup.md)\n' \
-              "$GH_REPO" "$TAG" "$GH_REPO" "$TAG" >> "$notes"
+              -f tag_name="$TAG" -f target_commitish="$COMMIT" --jq .body > "$notes"
             gh release create "$TAG" --repo "$GH_REPO" --verify-tag --target "$COMMIT" \
               --draft --prerelease="$prerelease" --title "InkNest $VERSION" --notes-file "$notes"
           fi

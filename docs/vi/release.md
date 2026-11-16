@@ -28,7 +28,7 @@ Sao lưu keystore ở nơi an toàn ngoài kho mã. Các bản cập nhật ph�
 5. Tải `InkNest-<version>.apk` và `SHA256SUMS.txt`. Kiểm tra checksum, chữ ký rồi thực hiện [nghiệm thu thiết bị](reliability.md) trên APK đã ký.
 6. Chọn **Publish release**.
 
-Mỗi bản nháp có APK cài đặt được, tệp checksum và ghi chú phát hành kèm hướng dẫn cài đặt cùng liên kết thiết lập. Các bản dùng phiên bản theo lịch (CalVer) không được đánh dấu là bản tiền phát hành (pre-release).
+Mỗi bản nháp có APK cài đặt được, tệp checksum và danh sách thay đổi tự sinh. Ghi chú phát hành không kèm đoạn giới thiệu ứng dụng hoặc hướng dẫn cài đặt/thiết lập chung. Các bản dùng phiên bản theo lịch (CalVer) không được đánh dấu là bản tiền phát hành (pre-release).
 
 Bộ cập nhật trong ứng dụng đọc bản stable mới nhất đã xuất bản trên GitHub. Giữ đúng tên asset
 `InkNest-<version>.apk` và `SHA256SUMS.txt`; checksum chỉ có một dòng cho APK tương ứng. Xuất bản cả hai
