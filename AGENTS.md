@@ -117,7 +117,7 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
 
 ## Data, generated files and release boundaries
 
-- Room is currently schema 6 with destructive cache fallback during development.
+- Room is currently schema 7 with destructive cache fallback during development.
   DataStore owns pins/preferences/source selections separately. Do not silently change
   schemas or add migrations; stable upgrade behavior must be decided before stable release.
 - Generate schemas through Room/KSP and profiles through the benchmark workflow.

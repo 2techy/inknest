@@ -13,6 +13,8 @@ data class BookUiModel(
     val progress: Int?,
     val coverUri: String? = null,
     val availability: BookAvailability = BookAvailability.Available,
+    val currentPage: Int? = null,
+    val totalPages: Int? = null,
 )
 
 data class HomePinUiModel(val componentId: String, val label: String, val iconVersion: Long = 0)

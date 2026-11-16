@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
         StatisticsEventEntity::class, StatisticsSourceEntity::class,
         StatisticsDayEntity::class, StatisticsImportEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 internal abstract class ReadingDatabase : RoomDatabase() {

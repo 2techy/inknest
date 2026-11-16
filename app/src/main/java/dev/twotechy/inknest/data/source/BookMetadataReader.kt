@@ -35,6 +35,8 @@ internal class BookMetadataReader(
                 coverUri = metadata.coverUri,
                 progress = sidecar?.percent?.let { (it * 100).roundToInt() },
                 status = readingStatus(sidecar?.status),
+                currentPage = sidecar?.currentPage,
+                totalPages = sidecar?.totalPages,
             ),
             metadata,
         )

@@ -69,7 +69,7 @@ Unflushed reading is absent. At most one million rows and 256 MiB of source file
 Malformed numeric/time values are rejected; missing page metadata does not discard valid time.
 
 The reader streams at most 500 events per batch into a private Room staging generation.
-Room schema 6 keeps raw page/layout events on disk and precomputes daily seconds/page counts
+Room schema 7 keeps raw page/layout events on disk and precomputes daily seconds/page counts
 in SQL. UI state exposes only daily summaries, the generation, timezone and snapshot timestamp;
 it never retains the full event list or per-event page sets.
 
