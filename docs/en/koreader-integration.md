@@ -2,13 +2,13 @@
 
 [Tiếng Việt](../vi/koreader-integration.md) · [Documentation](README.md)
 
+SAF access, parser limits and error contracts for real KOReader sources in debug/release. For folder-selection steps, see [setup](setup.md).
+
 ## Configuration and access
 
-Debug and release use the same real sources. Settings → Reading & data selects the installed `org.koreader.launcher` package, a KOReader data folder and one or more independent Books folders through the system document-tree picker with persisted read grants. Invalid selections and cancellation preserve the active configuration. Obsolete grants are released; disconnect removes source keys and grants while preserving pins, appearance and onboarding.
+Preferences DataStore stores source identity, selected `org.koreader.launcher` package, KOReader tree and independent Books trees. The system picker supplies persisted read grants. Invalid/cancelled selections retain active config; obsolete grants are released. Disconnect removes source keys/grants while preserving pins, appearance and onboarding. Room caches reading data; see [reading cache](reading-cache.md).
 
-Source identity, selected package, KOReader tree and Books trees share the existing Preferences DataStore. Room holds cached reading data. Developer tools, probe routes and runtime sample data are absent in both build types; only debug enables StrictMode logging. See [reading cache](reading-cache.md) for refresh and opening.
-
-Only primary internal storage through Android ExternalStorageProvider is supported. Other providers/volumes are rejected. Document IDs are validated by volume/path segments; children must remain within the granted root. Source paths resolve only into configured Books or KOReader trees. Primary aliases are accepted only after canonical filesystem identity is checked on the device. Unicode, case and spaces are retained. Dot segments, sibling-prefix matches and title/basename guessing are rejected. A missing grant never triggers guessed paths or broader storage access.
+Only primary internal storage through Android ExternalStorageProvider is supported. Other providers/volumes are rejected. Document IDs are validated by volume/path segments; children must remain within the granted root. Source paths resolve only into configured Books or KOReader trees. Primary aliases are accepted only after canonical filesystem identity is checked on the device. Unicode, case and spaces are retained. Dot segments (`.`/`..`), sibling-prefix matches and title/basename guessing are rejected. A missing grant never triggers guessed paths or broader storage access.
 
 ## Parsers and limits
 

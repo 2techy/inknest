@@ -2,93 +2,48 @@
 
 [Tiếng Việt](../vi/setup.md) · [Documentation](README.md)
 
-Download and install the APK from the [latest release](https://github.com/2techy/inknest/releases/latest), or build one using [development](development.md) or [release signing](release.md). Open InkNest and choose E-Ink or Standard display mode. Setup is optional;
-Skip setup opens Home. You can revisit it from Settings → About → Review setup.
+Install and configure InkNest, manage updates and recover access to your reading folders.
+
+Download the APK from the [latest release](https://github.com/2techy/inknest/releases/latest), or [build from source](development.md). Open InkNest and choose E-Ink or Standard. Setup is optional; return through Settings → About → Review setup.
 
 ## Connect KOReader
 
-1. Install KOReader separately and open a book once so its settings directory exists.
-2. In InkNest, open Settings → Reading & data. Select the KOReader app.
-3. Select the KOReader data folder containing `settings.reader.lua` or `history.lua`.
-4. Use Add book folder to select one or more Books folders; subfolders are included.
-   Tap an existing folder to replace it, or remove it from InkNest without deleting files.
-   Overlapping Books folders are rejected because a parent already includes its children.
-   Android grants read access only to each selected tree. These controls are also in setup.
-5. Refresh. Library includes supported files that have never been opened. Home's current
-   book and reading status come from KOReader; Statistics requires its reading-statistics DB.
+1. Install KOReader separately and open a book once to create its settings directory.
+2. In Settings → Reading & data, select KOReader.
+3. Select its data folder containing `settings.reader.lua` or `history.lua`.
+4. Add one or more Books folders; subfolders are included. Tap a folder to replace it, or remove it without deleting files. Overlapping roots are rejected.
+5. Refresh. Library includes recognized books even if never opened; current reading/status comes from KOReader. Statistics requires `settings/statistics.sqlite3`.
 
-Paths differ by installation. Choose them through the system picker; InkNest does not assume
-a fixed `/koreader`, `/webdav` or Downloads path. Arbitrary SD/cloud document providers are
-not currently supported. Do not choose a broad storage root to work around missing data.
+Choose folders through Android's picker. Only primary internal storage is supported; do not choose a broad storage root to bypass missing access. Paths vary by installation.
 
-Library combines all Books folders by default. Its folder menu filters one root and combines
-with search, reading status and sorting. Refresh scans every configured root; an unavailable
-root keeps cached books while other roots continue. If permission is lost, choose that folder again.
+| Problem or action | Result / recovery |
+| --- | --- |
+| Lost permission | Select the affected folder again. |
+| A root cannot refresh | Its cached books remain; other roots continue updating. |
+| Failed refresh | Cached content remains available with an error. |
+| Clear reading cache | Rebuilds reading data and covers; preserves pins and appearance. |
+| Disconnect | Removes source config/cache/grants, without deleting books or KOReader data. |
 
-A failed refresh preserves cached content.
-Clear reading cache rebuilds local reading data and covers without changing pins or appearance.
-Disconnect removes source configuration and local reading cache, not book files or KOReader data.
+Library combines Books folders; its folder menu filters one root. Refresh scans all roots. See [Library](library.md) and [Statistics](statistics.md).
 
 ## Reading and launcher behavior
 
-Tap a book in Library to open it directly in the selected KOReader app; long-press for details.
-Home uses the same original-document opening flow.
-If a file, permission or handler is unavailable, InkNest reports the error instead of opening
-KOReader without the selected book. Dispatching an Android intent is not proof that the reader
-opened the correct book; reading state is refreshed from KOReader when returning.
-
-Default launcher is optional in Settings → Launcher. To switch back, use Android Settings →
-Apps → Default apps → Home app and choose the previous launcher. Names vary by firmware.
-HOME returns to InkNest Home when InkNest owns the Home role. Apps and pins remain available
-without a reading source.
-
-E-Ink mode grayscales app icons; Standard preserves their colors. Both keep static transitions.
-Appearance groups Language and Display mode under General; both open a selection dialog.
-The Home sections group can hide mini stats and pins without deleting pins. Device-wide font size controls
-text. Firmware refresh settings remain managed by the device, not InkNest.
+- Tap or long-press a Library book to view details, then use the reading button to open KOReader. Home opens the current book directly. Missing files, grants or handlers produce an error; reading state refreshes from KOReader on return.
+- Set the default Home app in Settings → Launcher. To switch back, use Android Settings → Apps → Default apps → Home app; names vary by firmware. HOME returns to InkNest Home when it owns that role. Apps/pins work without reading sources.
+- E-Ink uses grayscale app icons; Standard keeps their colors. Both use static transitions. Settings → Appearance controls display mode and Home sections, including mini stats, reading rhythm and pins; hiding pins does not delete them. Font size follows Android; panel refresh remains controlled by firmware.
 
 ## App updates
 
-Settings → About → App updates can check GitHub Releases and download an update APK.
-About shows a compact status row. The update page groups version information in a responsive grid.
-It uses the same sections, text and controls as the other Settings pages. Opening it checks for
-updates when no successful result is saved yet; otherwise it keeps the saved result.
-One main button changes from **Check for updates** to **Download update**, then **Install update**;
-during a download it becomes **Cancel**. This control stays above
-expandable **What’s new** content, so the next action stays easy to reach. Headings, lists, emphasis,
-code and links are formatted for reading; tap a link to open it in your browser.
-Official release builds check automatically at most once every 24 hours while InkNest is open;
-you can turn this off or check manually. No update dialog interrupts Home. Reading and launcher
-features continue to work offline; checking and downloading updates require internet access.
+Open Settings → About → App updates. Without a saved successful result, opening the page checks for updates; otherwise it retains that result. Official release builds can check automatically at most every 24 hours while InkNest is open; this is optional. Checking/downloading needs internet; reading and launcher features work offline.
 
-Choose **Download update**, keep InkNest open until preparation finishes, then choose **Install update**.
-Leaving the app cancels an unfinished download; a completed APK is retained and checked again before
-installation. If Android asks, allow installs from InkNest, return and tap **Install update** again.
-Android asks you to confirm installation. Cancelling the installer leaves the APK available to retry.
-Checksum, package, version, Android compatibility and signing checks must pass before installation.
-Network failures keep the previous check result, labelled with its check time.
+1. Choose **Check for updates**, then **Download update** when available. Expand **What’s new** to read release notes; links open in your browser.
+2. Keep InkNest open until preparation finishes. Leaving cancels an unfinished download; **Cancel** also stops it.
+3. Choose **Install update**. If Android requests permission to install from InkNest, grant it, return and choose Install again. Confirm installation in Android.
 
-Downloads and installation start from InkNest. The GitHub link is for viewing the release page.
-See [development](development.md) for testing updates in local builds.
+A completed APK remains available if installation is cancelled and is verified again before retry. Checksum, package, version, Android compatibility and signature must pass. Network errors retain the previous check result/time. The GitHub link opens the release page. For local-build testing, see [development](development.md).
 
 ## App language
 
-Settings → Appearance → Language offers System default, English and Tiếng Việt.
-System default follows Android's locale list; unsupported languages fall back to English.
-The names English and Tiếng Việt remain in their own languages. Onboarding follows the
-selected app language without a separate language step. Changing language recreates the
-Activity while retaining the current Settings page; open popups close.
+Settings → Appearance → Language offers System default, English and Tiếng Việt. Unsupported system languages fall back to English. Both languages are available offline; Android 13+ also exposes the choice in system app-language settings.
 
-InkNest uses AndroidX AppCompat per-app locales, not a second DataStore preference.
-Android 13 and later share the selection with Android's app-language settings. Older
-Android versions use AppCompat's automatic locale storage. This storage can produce
-StrictMode disk-access diagnostics in debug on Android 12 and earlier, as documented by
-[Android](https://developer.android.com/guide/topics/resources/app-languages).
-
-English resources are the default; Vietnamese resources live in `values-vi`.
-Only en/vi locale resources are packaged, including dependencies, and App Bundle language
-splitting is disabled so both choices stay available offline. Date labels,
-chart captions and number formatting use the UI locale. Language changes do not change
-timezone, stored reading dates or streak calculations. Book metadata, external app names
-and third-party license text remain supplied by their sources. Installed app metadata is
-reloaded after effective UI-locale changes; browsing books does not need a new source scan.
+Changing language retains the current Settings page and closes popups. Dates/numbers follow the UI locale; timezone, reading dates and streak rules do not change. Book metadata, external app names and license text remain as supplied. See [architecture](architecture.md) for locale storage and debug diagnostics.

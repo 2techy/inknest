@@ -2,6 +2,8 @@
 
 [Tiếng Việt](../vi/reliability.md) · [Documentation](README.md)
 
+Repeatable recovery, lifecycle and physical-device acceptance checks. These procedures do not assert that a device/version has passed.
+
 ## Prepare a test environment
 
 Use an authorized test device or emulator and synthetic or non-private books. Build and install using [development](development.md). Record the app variant/version, Android/firmware, KOReader version, display settings and dataset characteristics when reporting a result. Keep logs, traces and measurements under ignored build directories.
@@ -28,7 +30,7 @@ Read Android tests before running them. `SourceAccessIntegrationTest` runs only 
 - Test saving preferences under failure: the UI must not report success or replace the saved value.
 - Exercise system Back, default Home selection, app launch, pins, tab swipes and pull refresh. Tab/range/clock changes must not start a source scan.
 - Change app language, font scale (including 150%), window width, date and timezone. Check wrapping, reachable controls, calendar boundaries and DST without changing source data.
-- Inspect debug StrictMode output for unexpected app I/O on main. Account separately for AppCompat locale-storage diagnostics on Android 12 and earlier, described in [setup](setup.md).
+- Inspect debug StrictMode output for unexpected app I/O on main. Account separately for AppCompat locale-storage diagnostics on Android 12 and earlier, described in [architecture](architecture.md).
 
 Native Room/SAF/lifecycle behavior belongs in Android integration tests; aggregation, source error mapping and ViewModel behavior also have focused JVM coverage. See [architecture](architecture.md) for ownership and recovery contracts.
 
@@ -36,6 +38,6 @@ Native Room/SAF/lifecycle behavior belongs in Android integration tests; aggrega
 
 On iReader Tango 2, verify contrast, ghosting, refresh behavior, touch targets, cold/warm opening and return after a long KOReader session on the actual panel. Check launcher/source/opening flows on Samsung Galaxy S25 Ultra as the secondary development target. Recheck after firmware or KOReader updates and after release signing changes.
 
-Measure refresh latency and memory using a fixed dataset and comparable conditions. Distinguish PSS from RSS, sampled values from continuous peaks and emulator results from hardware measurements. Use [benchmarking](benchmarking.md) for controlled synthetic comparisons. Screenshots and synthetic benchmarks cannot certify physical E-Ink behavior or real-reader correctness.
+Use [benchmarking](benchmarking.md) for controlled latency/memory comparisons. Screenshots and synthetic measurements cannot certify physical E-Ink or real-reader correctness.
 
-Before distribution, complete [signed-artifact verification](release.md). These procedures define acceptance work; they do not assert that a particular device/version has passed.
+Before distribution, complete [signed-artifact verification](release.md).

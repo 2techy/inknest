@@ -21,7 +21,7 @@ A contribution should preserve cancellation, report failed writes and retain suc
 
 ## Pull request checks
 
-Every PR into `master`, including drafts and documentation changes, runs the `build` check: formatting, debug/release JVM tests, debug/release lint and APK/test compilation. Keep the check green and resolve review conversations before squash merge. An additional approving reviewer is not required. Android emulator tests are dispatched manually; benchmark and physical-device acceptance stay separate. See [GitHub Actions](docs/en/development.md#github-actions) for artifacts and [security reporting](SECURITY.md) for sensitive issues.
+Follow the [CI rules and artifacts](docs/en/development.md#github-actions). Automatic CI skips changes limited to `docs/**` and root Markdown. Keep applicable checks green and resolve conversations before squash merge; no additional approving reviewer is required. Emulator tests are manual; benchmarks/device acceptance are separate. Use [security reporting](SECURITY.md) for sensitive issues.
 
 ## Documentation and translations
 

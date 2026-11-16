@@ -1,6 +1,8 @@
 # InkNest documentation
 
-[Tiếng Việt](../vi/README.md) · [Documentation](README.md)
+[Tiếng Việt](../vi/README.md) · [Project overview](../../README.md)
+
+Find setup steps, feature contracts and development procedures.
 
 ## Use InkNest
 
@@ -23,6 +25,4 @@
 - [Benchmarking](benchmarking.md): synthetic fixtures, measurement and profiles.
 - [Release](release.md): signing and artifact validation.
 
-InkNest requires Android 8.0+ (API 26). Download an APK from [GitHub Releases](https://github.com/2techy/inknest/releases/latest). The app works offline and remains in active development; building from source initially requires dependency downloads. See the [project overview](../../README.md), [MIT license](../../LICENSE) and [third-party notices](../../app/src/main/assets/licenses).
-
-Commands and source paths in these guides are relative to the repository root unless stated otherwise.
+Commands and source paths are relative to the repository root unless stated otherwise.

@@ -2,46 +2,44 @@
 
 [Tiếng Việt](../vi/development.md) · [Documentation](README.md)
 
+Set up the toolchain, build/install the app and choose the checks needed for a change.
+
 ## Prerequisites
 
-- Android Studio, Android SDK Platform 37 and SDK Platform-Tools.
-- Java 21, as specified by [the Gradle daemon configuration](../../gradle/gradle-daemon-jvm.properties). Use a compatible JDK; Studio's bundled JBR is suitable only if its version matches. Both app and benchmark use Java 21 source/bytecode targets. AGP's built-in Kotlin inherits JVM target 21 from the Android compile options.
-- An authorized Android 8.0+ device or emulator for the app; benchmark instrumentation requires Android 11+.
+- Android Studio, Android SDK Platform 37 and Platform-Tools; keep SDK location in untracked `local.properties`.
+- Java 21 for app/benchmark source and bytecode targets. Set Studio's Gradle JDK to 21; its bundled JBR is suitable only if that version matches. The [daemon criteria](../../gradle/gradle-daemon-jvm.properties) select Java 21; verify with `--version`. Studio itself may use its bundled runtime.
+- Authorized Android 8.0+ device/emulator; benchmark instrumentation requires Android 11+.
 
-Open the repository in Android Studio and sync Gradle. Keep the SDK location in untracked `local.properties`. Dependencies resolve through Gradle; no backend, API keys or separate package installation is required. The first build needs access to the configured Gradle/Maven repositories. Versions live in the [wrapper configuration](../../gradle/wrapper/gradle-wrapper.properties) and [version catalog](../../gradle/libs.versions.toml).
+Open the project and sync Gradle. Dependencies download automatically on the first build; no backend/API keys or separate install step. Versions live in the [wrapper](../../gradle/wrapper/gradle-wrapper.properties) and [catalog](../../gradle/libs.versions.toml). Java library API availability still depends on the Android version.
 
-Run commands from the repository root in PowerShell. If needed, set `JAVA_HOME` to your Java 21 installation. On macOS/Linux replace `.\gradlew.bat` with `bash ./gradlew`; the wrapper has no Git executable bit. The benchmark runner is a PowerShell script that invokes the Windows wrapper.
-
-Configure Android Studio's Gradle JDK to use JDK 21 as well. The checked-in daemon JVM criteria select Java 21 for the build, even if the wrapper is launched by another compatible JDK. Verify the daemon JVM with `--version`. Android Studio itself can continue using its bundled runtime.
-
-D8/R8 converts JVM bytecode to DEX for Android 8.0+ (API 26). Java library API availability depends on the device's Android version; check platform compatibility when introducing APIs.
+Commands run from the repo root in PowerShell. Set `JAVA_HOME` to JDK 21 if needed. On macOS/Linux replace `.\gradlew.bat` with `bash ./gradlew` (no executable bit in Git). The benchmark script uses PowerShell and the Windows wrapper.
 
 ## Build and install
-
-Local builds use version `0.1.0-dev` and code `1`. The [release workflow](release.md) generates
-CalVer and an increasing version code. To reproduce its metadata
-locally, pass quoted Gradle properties, for example
-`.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'`.
-Use the values recorded by the relevant release run when reproducing a release.
-
-Manual updates work with the default `0.1.0-dev` version through the same in-app download flow.
-An unrecognized version name is not labelled as older, but the latest release can be downloaded and
-verified. APK version-code and signing checks still apply before installation; there is no special
-website fallback. To test the available-update UI in debug, use an older
-CalVer, for example `:app:assembleDebug '-PinknestVersionName=2026.10.0'`. Automatic checks remain
-disabled in debug; GitHub APKs cannot replace a debug installation signed with a different key.
 
 ```powershell
 .\gradlew.bat --version
 .\gradlew.bat :app:assembleDebug
 adb devices -l
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n dev.twotechy.inknest/.MainActivity
+adb shell am start -n dev.twotechy.inknest.debug/dev.twotechy.inknest.MainActivity
 ```
 
-Alternatively run `app` from Android Studio or use `.\gradlew.bat :app:installDebug`. With multiple ADB devices, add `-s SERIAL` after `adb`; for Gradle device tasks select the target with `ANDROID_SERIAL`. An APK signed with another certificate cannot update an existing installation. Uninstalling deletes local settings and pins, so use a separate test device/profile when appropriate.
+Alternatively run `app` in Studio or use `.\gradlew.bat :app:installDebug`. For multiple devices, use `adb -s SERIAL` or set `ANDROID_SERIAL` for Gradle device tasks.
 
-See [setup](setup.md) for real reading sources. Normal debug/release builds have no sample-data mode. [Release signing](release.md) is separate from building a debug APK.
+| Variant | Application ID | APK |
+| --- | --- | --- |
+| Debug | `dev.twotechy.inknest.debug` | `app/build/outputs/apk/debug/app-debug.apk` |
+| Unsigned optimized release | `dev.twotechy.inknest` | `app/build/outputs/apk/release/app-release-unsigned.apk` |
+
+Normal debug/release builds use [real sources](setup.md). Debug and release use separate application IDs, so both can coexist with independent settings and SAF grants. Updating an installed copy requires compatible signing; use a separate test device/profile when changing signing identity. Uninstalling deletes local settings/pins. See [release signing](release.md).
+
+Local version defaults to `0.1.0-dev` / code `1`. To reproduce release metadata, use its recorded values as quoted properties, for example:
+
+```powershell
+.\gradlew.bat :app:assembleRelease '-PinknestVersionName=2026.11.0' '-PinknestVersionCode=1000001'
+```
+
+Manual updates work with unknown version names without claiming the release is newer; APK code/signature checks still apply. Test available-update UI with an older CalVer, e.g. `.\gradlew.bat :app:assembleDebug '-PinknestVersionName=2026.10.0'`. Debug disables automatic checks. The debug updater rejects production APKs because their package differs. Test installation end to end with a release build using the matching signing identity.
 
 ## Verification
 
@@ -52,23 +50,20 @@ See [setup](setup.md) for real reading sources. Normal debug/release builds have
 | JVM tests | `.\gradlew.bat :app:testDebugUnitTest` |
 | Focused JVM test | `.\gradlew.bat :app:testDebugUnitTest --tests '*StatsViewModelTest'` |
 | Android lint | `.\gradlew.bat :app:lintDebug :app:lintRelease` |
-| Debug and unsigned optimized release | `.\gradlew.bat :app:assembleDebug :app:assembleRelease` |
-| Compile Android tests without a device | `.\gradlew.bat :app:assembleDebugAndroidTest` |
+| Debug/release APKs | `.\gradlew.bat :app:assembleDebug :app:assembleRelease` |
+| Android test compilation | `.\gradlew.bat :app:assembleDebugAndroidTest` |
 | Connected Android tests | `.\gradlew.bat :app:connectedDebugAndroidTest` |
 | Performance APKs | `.\gradlew.bat :app:assembleBenchmark :benchmark:assembleBenchmark` |
 
-For code changes run formatting, relevant tests, affected debug/release builds and lint. Do not edit Kotlin while lint runs. Read native tests before using a personal device: opt-in SAF tests can revoke configured grants. Use [reliability checks](reliability.md) for recovery and lifecycle scenarios. There is no `:benchmark:lintBenchmark` task.
+For code changes, run formatting, relevant tests, affected debug/release builds and lint. Do not edit Kotlin while lint runs. Read native tests before running on personal devices; [opt-in SAF tests](reliability.md) can revoke configured grants. There is no `:benchmark:lintBenchmark` task.
 
-Documentation-only changes need link, command and diff validation rather than a device matrix. Report which checks actually ran and any limitations; emulator layout checks do not certify E-Ink hardware. See [benchmarking](benchmarking.md) for isolated fixtures and performance measurements.
+Docs-only changes need link, command and diff validation. Report checks actually run and limitations; emulator layouts do not certify physical E-Ink. [Benchmarking](benchmarking.md) owns fixture/measurement procedures.
 
-JVM repository tests create Preferences DataStore with `OkioStorage` and the real Preferences serializer on disk, so repeated writes work across host operating systems. Android integration tests exercise the production Android storage implementation.
+JVM repository tests use disk-backed Preferences `OkioStorage` with the real serializer; Android integration tests cover production Android storage. Coroutine tests share a scheduler across injected dispatchers and fake clocks.
 
 ## GitHub Actions
 
-The [CI workflow](../../.github/workflows/ci.yml) runs on pull requests into `master` (including drafts), pushes to `master`, and manual dispatch. Automatic runs use `paths-ignore` to skip changes limited to `docs/**` and root-level Markdown files. Other changes and manual runs execute the full `build` check: formatting, debug/release JVM tests and Android lint, and compilation of debug/release APKs plus the Android test APK. No signing secrets are needed for CI.
-
-CI uses standard Ubuntu runners, Temurin 21 and SDK package `platforms;android-37.0`. Gradle cache writes are limited to pushes to `master`; PRs and manual workflows only read it. Failure reports expire after one day. A manual CI run can enable `upload_debug_apk` to retain a debug APK for one day; ordinary PR runs do not upload APKs.
-
-Run the [Android tests workflow](../../.github/workflows/android-tests.yml) manually from Actions → Android tests → Run workflow. It uses one Android 14/API 34 x86_64 emulator and the default integration suite. Real-source/grant-revocation tests remain opt-in and are skipped. Failure reports/logcat expire after one day. Emulator results do not establish Android 8 or physical E-Ink acceptance; benchmarks and profile generation stay in the [device workflow](benchmarking.md).
-
-Release automation is described in [release signing](release.md). Workflows use pinned actions with read-only tokens by default. Repository log/artifact retention defaults to seven days; uploaded artifacts use one-day retention.
+- [CI](../../.github/workflows/ci.yml): PRs into `master` (including drafts), pushes to `master` and manual dispatch. Automatic runs skip changes limited to `docs/**` and root Markdown. The full `build` checks formatting, debug/release JVM tests/lint and APK/Android-test compilation, without signing secrets.
+- CI uses Ubuntu, Temurin 21 and `platforms;android-37.0`. Only pushes to `master` write Gradle cache. Failure reports last one day; manual `upload_debug_apk` retains a debug APK for one day, ordinary PRs upload none.
+- [Android tests](../../.github/workflows/android-tests.yml): manual Actions → Android tests → Run workflow, using Android 14/API 34 x86_64. Real-source/grant-revocation tests stay opt-in and skipped; failure reports/logcat last one day. This does not certify Android 8 or physical E-Ink.
+- [Release](release.md) and [benchmark/profile](benchmarking.md) workflows are separate. Actions are pinned, tokens read-only by default. Repository retention defaults to seven days; uploaded workflow artifacts last one day.

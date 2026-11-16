@@ -2,125 +2,52 @@
 
 [English](../en/design-system.md) · [Mục lục](README.md)
 
-## Giá trị thiết kế và kiểu chữ
+Quy tắc dùng chung để giao diện E-Ink dễ đọc và tĩnh. Tra giá trị token trực tiếp tại [ui/theme](../../app/src/main/java/dev/twotechy/inknest/ui/theme).
 
-Các giá trị thiết kế dùng chung (design token) được định nghĩa trong [ui/theme](../../app/src/main/java/dev/twotechy/inknest/ui/theme). Các token nền tảng (`InkSpacing`, `InkRadius`, `InkBorder`, `InkPalette`, `InkTextStyles`) là cơ sở cho token bố cục/thành phần, rồi đến khung trang và điều khiển dùng chung. Kiểu chữ, màu và hình dạng của Material được suy ra từ các định nghĩa này; màn hình dùng lại để tránh khai báo trùng kích thước.
+## Token và kiểu chữ
 
-Tên thương hiệu và đồng hồ Home dùng serif hệ thống; văn bản còn lại dùng sans-serif hệ thống, không tăng khoảng cách ký tự. Cỡ chữ và chiều cao dòng tính bằng sp, thay đổi theo mức phóng to chữ của hệ thống.
+Token nền (`InkSpacing`, `InkRadius`, `InkBorder`, `InkPalette`, `InkTextStyles`) cung cấp giá trị cho token thành phần/bố cục và typography/colors/shapes Material. Screen dùng lại, không chép kích thước riêng.
 
-| Token kiểu chữ | Cỡ chữ / chiều cao dòng (sp) | Độ đậm |
-| --- | --- | --- |
-| displayClock | 44 / 52 | 400 |
-| pageTitle | 22 / 28 | 600 |
-| subPageTitle | 20 / 26 | 600 |
-| cardTitle | 18 / 24 | 600 |
-| sectionTitle | 16 / 22 | 600 |
-| bodyLarge | 16 / 24 | 400 |
-| bodyMedium | 14 / 20 | 400 |
-| bodySmall | 12 / 16 | 400 |
-| labelLarge | 14 / 20 | 500 |
-| labelMedium | 12 / 16 | 500 |
-| labelSmall | 11 / 16 | 400 |
-
-Tên sách dùng cardTitle; nhãn điều hướng đang chọn dùng độ đậm 600. Hướng dẫn quan trọng dùng kiểu chữ nội dung thay vì chú thích phụ.
+Thương hiệu/đồng hồ Trang chủ dùng serif hệ thống; phần khác dùng sans-serif. Chữ dùng sp và theo cỡ hệ thống. Hướng dẫn thiết yếu dùng kiểu body; tên sách dài được xuống dòng đầy đủ, nhãn ứng dụng tối đa hai dòng. Logo Trang chủ dùng hình gốc, không có đệm adaptive-icon.
 
 ## Khoảng cách và kích thước
 
-| Token khoảng cách | dp |
-| --- | --- |
-| xs | 4 |
-| sm | 8 |
-| md | 12 |
-| lg | 16 |
-| xl | 20 |
-| xxl | 24 |
-| xxxl | 32 |
-| huge | 40 |
-
-Phần đầu trang cách nội dung 8dp; các phần cách nhau 24dp; tiêu đề phần cách nội dung 12dp. Khoảng đệm trong thẻ là 16dp, hoặc 12dp với thẻ gọn. Các ô trong lưới ứng dụng cách nhau 12dp theo chiều ngang và 16dp theo chiều dọc. Các đoạn chữ liên quan cách nhau 4dp; khoảng cách giữa biểu tượng và chữ, cũng như giữa các nút cùng nhóm, là 12dp. Viền mảnh dày 1dp, viền mặc định dày 1.25dp.
-
-| `InkRadius` | dp | Áp dụng |
-| --- | --- | --- |
-| `small` | 2 | Chi tiết nhỏ, ô heatmap |
-| `medium` | 4 | Bìa sách, tab, nút, menu, khung icon |
-| `large` | 8 | Thẻ, hộp thoại |
-
-Viền và vùng cắt nội dung dùng chung hình dạng.
-
-| Thành phần | Kích thước cơ sở |
-| --- | --- |
-| Phần đầu trang / vùng chạm thao tác | tối thiểu 48dp / 48×48dp |
-| Vùng bố trí / biểu tượng Quay lại ở đầu trang | 24 / 24dp |
-| Nút thao tác | tối thiểu 112×48dp; khoảng đệm ngang 16dp, dọc 12dp |
-| Hàng cài đặt / lựa chọn đơn / công tắc | tối thiểu 64 / 56 / 64dp |
-| Vùng đầu hàng cài đặt / biểu tượng / mũi tên điều hướng / dấu chọn | 32 / 24 / 20 / 24dp |
-| Khung / biểu tượng trong lưới ứng dụng | 48 / 36dp |
-| Khung / biểu tượng trong danh sách ứng dụng | 40 / 28dp |
-| Ô ứng dụng | rộng tối thiểu 84dp; khoảng đệm 4dp; biểu tượng cách nhãn 8dp |
-| Bìa sách đang đọc | 23% chiều rộng khả dụng, giới hạn 64–112dp |
-| Thanh tiến độ đọc | 4dp |
-| Menu ngữ cảnh | rộng 160–280dp; cuộn được |
-| ChoiceTab | phần hiển thị cao tối thiểu 32dp, vùng chạm tối thiểu 48×48dp; chữ có độ đậm medium, cỡ 12sp / chiều cao dòng 16sp |
-
-Các thành phần tăng chiều cao khi chữ xuống dòng hoặc được phóng to. Nhãn ứng dụng có tối đa hai dòng; Trang chủ luôn chừa đủ chỗ cho hai dòng. Thẻ sách chuyển sang xếp bìa và thông tin theo chiều dọc khi không đủ chỗ cho chữ. Không lưu bitmap trong ViewModel hoặc trạng thái được khôi phục.
+- Dùng token section, card, bìa và điều khiển chung; không duy trì bản sao từng màn hình.
+- Vùng chạm tối thiểu 48×48dp. Phần hiển thị nhỏ hơn như ChoiceTab vẫn giữ vùng chạm lớn. Chiều cao tăng theo xuống dòng/cỡ chữ; không thu nhỏ chữ để vừa.
+- Màn hẹp xếp bìa/chi tiết hoặc nhóm chỉ số theo chiều dọc. Nội dung tùy chọn bị ẩn không chừa cột/khối rỗng.
 
 ## Bố cục và điều hướng
 
-`AppScaffold` quản lý khoảng chừa cho giao diện hệ thống, lề trang, chiều rộng nội dung và điều hướng thích ứng. `ScreenScaffold` quản lý phần đầu trang, vùng cuộn và phần chân trang nếu có. Route không thêm khoảng đệm trang lần nữa.
+`AppScaffold` quản lý inset, lề, chiều rộng và điều hướng thích ứng; `ScreenScaffold` quản lý header, cuộn và footer tùy chọn. Route không thêm lề trang lần nữa. Thích ứng theo chiều rộng/cỡ chữ, không theo model thiết bị.
 
-Lề trang là 12dp khi chiều rộng nội dung dưới 360dp, 16dp từ 360dp đến dưới 600dp và 32dp từ 600dp trở lên. Nội dung rộng tối đa 800dp. Khoảng đệm trên/dưới lần lượt là 4/16dp.
+- Thứ tự chính: Trang chủ → Thư viện → Thống kê → Ứng dụng. Điều hướng đáy đổi sang rail cuộn được tại chiều rộng cửa sổ 600dp. Header căn theo lề nội dung; trang chính không có nút Back.
+- Cài đặt mở từ Trang chủ/thao tác cấu hình, ẩn điều hướng chính và về tab xuất phát. Chi tiết Cài đặt, thiết lập ban đầu và Chi tiết sách ẩn điều hướng chính/vuốt tab.
+- HOME về Trang chủ, đóng UI tạm và vô hiệu cử chỉ. Giữ đích/từ khóa/vị trí cuộn khi được hỗ trợ.
+- Lựa chọn dùng icon đặc và vạch phía trên. Khi nhãn không vừa, icon có nhãn trợ năng dùng chung chú thích đích đang chọn. Tab/biểu đồ tràn cuộn ngang, nội dung cuộn dọc.
 
-Tiêu đề và các nút ở đầu trang được căn giữa theo chiều dọc. Tiêu đề trang chính và mũi tên Quay lại của trang chi tiết thẳng hàng với mép đầu nội dung. Tiêu đề trang chi tiết nằm ngay sau vùng bố trí nút Quay lại, không thêm khoảng cách. Các trang chính không có nút Quay lại.
+## Màu sắc và ảnh
 
-Các trang chính dùng thanh điều hướng dưới; từ chiều rộng cửa sổ 600dp, thanh này chuyển thành thanh điều hướng dọc có thể cuộn. Toàn bộ Cài đặt và thiết lập ban đầu ẩn thanh điều hướng. Nhấn HOME về Trang chủ và đóng các thành phần giao diện tạm thời. Mỗi mục điều hướng dùng biểu tượng 24dp, nhãn cỡ 12sp / chiều cao dòng 16sp, khoảng cách 4dp và chiều cao tối thiểu 64dp. Mục đang chọn dùng biểu tượng đặc và vạch đánh dấu 32×3dp phía trên, không đổi nền. Khi không đủ chỗ cho nhãn, các biểu tượng có mô tả trợ năng, kèm chú thích cho trang đang chọn. Bố cục thích ứng theo chiều rộng cửa sổ và cỡ chữ, không theo mẫu thiết bị.
+Cả hai chế độ dùng UI thang xám. E-Ink tăng viền cấu trúc và chuyển icon ứng dụng sang xám; Tiêu chuẩn dùng viền nhẹ, icon màu gốc. Chữ nhỏ có thông tin dùng màu chính/phụ. Lỗi và lựa chọn phải hiểu được mà không chỉ dựa vào màu.
 
-## Màu và hình ảnh
+Chuyển trạng thái, menu và dialog giữ tĩnh: không animation trang trí, ripple, bóng, elevation, shimmer hoặc crossfade.
 
-| Vai trò | Hex |
+| Cache ảnh | Contract |
 | --- | --- |
-| Màu chữ chính | #181818 |
-| Chữ phụ | #333333 |
-| Màu ít nhấn mạnh / viền đậm | #777777 |
-| Viền tiêu chuẩn | #A0A0A0 |
-| Nền nhạt | #F2F2F2 |
-| Nền giấy | #FFFFFF |
+| Icon ứng dụng | RAM cache chung, 100 icon ở 128px; khóa gồm component/version và locale/density. Cache miss tải trên IO, dự phòng bằng chữ cái đầu. |
+| Bìa đã giải mã | LRU chung 4 MiB bộ nhớ giữ lại; URI bất biến và nhóm kích thước 64px, tối đa 480px. Tham chiếu UI/buffer tạm ngoài ngân sách. Giải mã tuần tự, yêu cầu trùng dùng lại kết quả. |
 
-Cả hai chế độ đều dùng giao diện thang xám. E-Ink dùng đường viền phân chia bố cục đậm hơn và biểu tượng ứng dụng thang xám; Tiêu chuẩn dùng viền nhạt hơn và giữ màu gốc của biểu tượng. Chữ nhỏ có nội dung cần đọc dùng màu chính/phụ. Các vai trò màu của Material, kể cả màu lỗi, được ánh xạ vào bảng màu này; lớp phủ màu (tint) được đặt trong suốt. Lỗi có dấu hiệu nhận biết ngoài màu sắc. Dấu chọn, menu và hộp thoại không có hiệu ứng chuyển động trang trí, gợn sóng khi chạm, bóng đổ hoặc hiệu ứng nổi.
+Trang chủ/Thư viện dùng chung bìa mặc định tĩnh và giải mã IO. Xóa cache/ngắt kết nối vô hiệu bìa đã giải mã, chặn tác vụ cũ nạp lại. Không lưu bitmap trong ViewModel hoặc saved state. Ảnh thu nhỏ trên đĩa theo [contract cache đọc](reading-cache.md).
 
-Biểu tượng dùng bộ nhớ đệm RAM chung, tối đa 100 ảnh ở kích thước 128px. Khóa gồm component/phiên bản, ngôn ngữ và mật độ điểm ảnh; khi chưa có ảnh trong bộ nhớ đệm, ứng dụng tải trên IO dispatcher và tạm hiện chữ cái đầu. Trang chủ và Thư viện dùng chung hình sách mặc định không chuyển động; ảnh được giải mã trên IO dispatcher. Bộ nhớ đệm LRU cho bìa đã giải mã giữ tối đa 4 MiB dữ liệu ảnh; khóa gồm URI bất biến và kích thước hiển thị chia theo các mức 64px, tối đa 480px. Giới hạn này không tính ảnh mà giao diện đang giữ tham chiếu hoặc bộ đệm tạm. Giải mã tuần tự, yêu cầu trùng dùng lại kết quả. Xóa bộ nhớ đệm/ngắt kết nối sẽ vô hiệu dữ liệu đệm và ngăn tác vụ cũ nạp lại dữ liệu. Không dùng hiệu ứng mờ chuyển ảnh (crossfade) hoặc ánh sáng lướt khi tải (shimmer).
+## Thứ bậc nội dung
 
-## Bố cục từng tính năng
+Dùng header, điều khiển và token chung. Giữ thao tác chính dễ tới, nội dung tùy chọn có thể thu gọn, lỗi/retry hiển thị mà không thay dữ liệu thành công. Hàng điều hướng/toggle Cài đặt dùng divider; metadata chỉ đọc không có chevron. Thiết lập cuộn trên footer cố định, có ngữ nghĩa bước/tiến độ và thông báo lỗi lưu; đang lưu khóa điều hướng/hoàn tất.
 
-Trang chủ lần lượt hiển thị phần đồng hồ tổng quan, sách đang đọc, nhịp đọc nếu bật và ứng dụng đã ghim. Thống kê nhanh chuyển xuống dưới đồng hồ khi thiếu chỗ; khi ẩn thì không chừa cột trống. Một đường kẻ phân cách phần tổng quan. Thông báo nằm trong hàng gọn có viền. Thẻ sách có một đường viền và thanh tiến độ trải hết chiều rộng. Trang chủ hiển thị hàng ứng dụng đã ghim đầu tiên theo thứ tự lưu; Xem tất cả mở trang Ứng dụng để xem toàn bộ mục ghim.
-
-Cài đặt gồm Đọc và dữ liệu, Giao diện, Trình khởi chạy, Giới thiệu. Mỗi hàng dùng tiêu đề cỡ 16sp, độ đậm regular; mô tả cỡ 12sp, cách tiêu đề 4dp. Tiêu đề phần dùng chữ 14sp, độ đậm medium, không có đường kẻ trang trí; các phần cách nhau 24dp, tiêu đề cách nội dung 12dp. Hàng điều hướng/công tắc có viền phân cách mảnh và căn lề trang. Tên/đường dẫn thư mục là một vùng chạm; mỗi thư mục sách có nút xóa riêng 48dp kèm xác nhận. Thông tin chỉ đọc không có mũi tên điều hướng. Các lệnh được thực hiện bằng nút có viền.
-
-Trong Giao diện, phần Chung gồm Ngôn ngữ và Chế độ hiển thị, mỗi mục mở hộp thoại lựa chọn không có hiệu ứng chuyển động. Phần Các mục trên Trang chủ cho phép bật/tắt thống kê nhanh, nhịp đọc và ứng dụng đã ghim độc lập. Giới thiệu hiển thị thương hiệu, phiên bản/tác giả, một hàng trạng thái mở trang cập nhật riêng, liên kết trang web/thiết lập và cuối cùng là giấy phép bên thứ ba. Trang cập nhật mở đầu bằng một tiêu đề trạng thái, tiếp đến là lưới metadata hai cột với nhãn nhỏ hơn giá trị. Lưới tự xếp thành một cột khi hẹp hoặc chữ lớn, căn theo lề trang; ghi chú phát hành và liên kết GitHub nằm trong các hàng Settings liền nhau. Một nút chính đổi giữa kiểm tra/tải/hủy/cài, phía trên mục Có gì mới có định dạng tiêu đề, danh sách, chữ nhấn mạnh và liên kết, có thể mở rộng, chỉ hiển thị một trạng thái chính. Mỗi giấy phép có trang chi tiết cuộn được. Việc tải, thử lại và lưu đệm được quản lý riêng cho từng thành phần, hoạt động ngoại tuyến.
-
-Thiết lập ban đầu có ba bước, thanh tiến độ tĩnh dày 3dp, số bước hiển thị và thông tin tiến độ cho công cụ trợ năng. Nội dung cuộn phía trên phần chân trang cố định; nút chính và Bỏ qua có vùng chạm đủ lớn. Bước kết nối dữ liệu đọc dùng lại các điều khiển nguồn thật; yêu cầu đặt trình khởi chạy chỉ xảy ra khi người dùng chủ động chọn. Lỗi lưu được thông báo qua trợ năng mà không ngắt lời nội dung đang đọc; trong lúc lưu, thao tác điều hướng và hoàn tất bị vô hiệu hóa.
-
-Thống kê lần lượt hiển thị ba thẻ có icon và viền (Hôm nay, trung bình ngày, chuỗi hiện tại), xu hướng, lịch hoạt động và tổng theo kỳ. Menu header cho chọn Thời gian/Số trang và làm mới. Bộ lọc Tuần/Tháng/Năm/Tất cả trong khối xu hướng chỉ đổi biểu đồ. Trang chủ và Thống kê dùng chung lịch tự điều chỉnh theo chiều rộng. Xem [thống kê](statistics.md) về kỳ lịch, sắc độ và cách đếm.
+Hành vi tính năng nằm ở [thiết lập](setup.md), [Thư viện](library.md) và [Thống kê](statistics.md), không mô tả màn hình lần hai ở đây.
 
 ## Cử chỉ và làm mới
 
-`InkGestureTokens` định nghĩa ngưỡng vuốt tab 40dp, kéo làm mới 56dp. Sau khi vượt ngưỡng di chuyển tối thiểu của hệ thống (touch slop), cử chỉ được khóa hướng nếu khoảng di chuyển theo một trục lớn hơn 1.5× trục kia. Thao tác chỉ thực hiện khi thả tay; hủy cử chỉ hoặc đa chạm không kích hoạt thao tác. Vùng vuốt Quay lại ở cạnh màn hình và thao tác cuộn ngang đã được thành phần con tiếp nhận được ưu tiên.
+- `InkGestureTokens` giữ ngưỡng: vuốt tab 40dp, kéo làm mới 56dp. Sau touch slop hệ thống, khóa hướng khi một trục vượt trục kia 1.5×. Kích hoạt một lần khi thả; hủy/đa chạm không kích hoạt. Tôn trọng mép Back và cuộn ngang đã được thành phần con xử lý.
+- Vuốt vòng Trang chủ → Thư viện → Thống kê → Ứng dụng, mỗi cử chỉ một tab. Loại trừ điều hướng, Cài đặt, thiết lập, Chi tiết sách, tìm kiếm/IME và modal.
+- Trang chủ/Thư viện/Thống kê/Ứng dụng cung cấp `RefreshAction` qua `ScreenScaffold`. Kéo từ đầu trang, kể cả nội dung rỗng/ngắn. Chỉ báo đơn sắc tĩnh phủ dưới header, không đẩy nội dung; giữ nút/retry thay thế. Tắt làm mới đọc khi chưa có nguồn; đổi tab không làm mới.
 
-Vuốt tab theo Trang chủ → Thư viện → Thống kê → Ứng dụng, nối vòng hai chiều giữa Ứng dụng và Trang chủ. Cử chỉ chỉ áp dụng cho nội dung trang chính, không áp dụng cho thanh điều hướng, toàn bộ Cài đặt, thiết lập ban đầu, tìm kiếm/bộ gõ hoặc hộp thoại và các lớp giao diện modal. Trạng thái có thể lưu giúp khôi phục trang đang mở; HOME hủy hiệu lực của cử chỉ đang thực hiện.
-
-Trang chủ, Thư viện, Thống kê và Ứng dụng cung cấp `RefreshAction` qua `ScreenScaffold`. Có thể bắt đầu kéo khi đang ở đầu trang, kể cả nội dung ngắn hoặc rỗng. Chỉ báo đang làm mới có màu đơn sắc, hiển thị đè bên dưới phần đầu trang, không đẩy nội dung hoặc chạy hiệu ứng chuyển động. Home làm mới bằng thao tác kéo xuống, không có nút làm mới ở cuối trang; thông báo lỗi vẫn có thao tác thử lại. Chưa có nguồn thì vô hiệu làm mới dữ liệu đọc; chuyển tab không làm mới. Các thông báo về dữ liệu đệm/lỗi vẫn được giữ trong nội dung, không hiển thị thêm nhãn đang làm mới trùng lặp. Đánh giá độ nét và bóng mờ E-Ink trên phần cứng thật theo [kiểm tra độ tin cậy](reliability.md).
-
-
-## Home và điều hướng
-
-Header Home dùng logo InkNest chuẩn với viewport ôm sát nét logo, tên serif đậm
-28/34sp và nút Search/Settings. Đồng hồ serif đậm 60/68sp; các chữ khác giữ sans-serif.
-Search mở tìm kiếm Library trống trên toàn thư viện, giữ sort/kiểu hiển thị.
-Mini stats xếp dọc bên phải với đường phân cách, thiếu chỗ chuyển xuống dưới.
-Ngày giữ tên thứ/tháng đầy đủ theo ngôn ngữ. Divider ngang ngăn phần đồng hồ với nội dung đọc.
-Heading Đang đọc nằm ngoài card; toàn bộ card (kể cả bìa) mở sách. Thanh tiến độ chạy hết chiều rộng ở đáy card; nhãn tiến độ có số trang tính từ tiến độ gốc trong cùng sidecar khi đủ dữ liệu. Continue cao hiển thị tối thiểu 36dp, tăng theo cỡ chữ; card cung cấp vùng chạm trợ năng.
-Heatmap giữ giữa card và Truy cập nhanh; ứng dụng ghim giữ thứ tự đã lưu. Khoảng cách từ hàng tiêu đề Truy cập nhanh đến hàng app là 4dp; ô app không thêm padding phía trên.
-
-Bottom bar/rail chỉ có Home → Library → Stats → Apps, vuốt nối vòng hai chiều
-giữa Apps và Home, mỗi gesture một tab. Settings là màn riêng, ẩn navigation và
-không tham gia vòng vuốt; Back từ trang con về cha, từ overview về tab xuất phát.
-HOME luôn về Home. Giữ ngưỡng gesture và ưu tiên Back hệ thống, search/IME, modal.
+Kiểm tra xuống dòng, vùng chạm và điều khiển với chữ lớn/màn hẹp. Tương phản/ghosting cần [nghiệm thu thiết bị](reliability.md).

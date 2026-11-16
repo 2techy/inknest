@@ -2,59 +2,47 @@
 
 [English](../en/reading-cache.md) · [Mục lục](README.md)
 
-Cả bản debug và release đều dùng `CachedReadingRepository`. Trang chủ theo dõi sách đang đọc được lưu trong Room và trạng thái `ReadingSyncStatus` riêng; ứng dụng đã ghim, đồng hồ và thống kê được theo dõi độc lập. Ứng dụng không có chế độ chạy bằng dữ liệu mẫu. Sách đang đọc và lịch sử dùng chung bộ nhớ đệm, cùng được làm mới từ nguồn. Tệp sidecar bổ sung tiến độ/trạng thái; EPUB bổ sung tên sách, tác giả và bìa. Trường thiếu hoặc không được hỗ trợ giữ trạng thái chưa xác định. Mở sách qua `ReadingOpenRepository` / `ReadingItemDispatcher` không tự tạo tiến độ hoặc thời điểm đọc giả.
+Contract sách hiện tại, lịch sử, làm mới và mở sách của `CachedReadingRepository`, dùng chung debug/release. Trang chủ theo dõi Room và `ReadingSyncStatus` độc lập; ghim, đồng hồ và thống kê tách riêng. Metadata thiếu giữ chưa xác định; mở sách không tạo tiến độ/thời điểm đọc giả.
 
 ## Ranh giới dữ liệu và nguồn
 
-`KoreaderCurrentSource` dùng lại các bộ đọc Lua/SAF có giới hạn tài nguyên. Giá trị `lastfile` hợp lệ được ưu tiên. Nếu cấu hình sách hiện tại thiếu hoặc sai, ứng dụng chọn đường dẫn hợp lệ đầu tiên theo thứ tự mảng lịch sử. Thiếu cả hai nguồn hoặc dữ liệu bị hỏng phải được phân biệt với trường hợp đọc thành công nhưng không có sách. Nếu sách hiện tại bị mất tệp hoặc nằm ngoài phạm vi được cấp quyền, ứng dụng vẫn giữ định danh và tên tệp, kèm cảnh báo không thể truy cập. Không suy đoán sách hiện tại từ thống kê hoặc từ tên sách/tên tệp trùng nhau.
+- `KoreaderCurrentSource` ưu tiên `lastfile` hợp lệ, dự phòng bằng đường dẫn hợp lệ đầu tiên theo thứ tự lịch sử. Nguồn thiếu/hỏng khác dữ liệu rỗng thành công. Sách hiện tại mất/ngoài quyền giữ định danh/tên tệp, kèm cảnh báo truy cập. Không suy sách hiện tại từ thống kê hoặc tên sách/tên tệp.
+- Room schema 8 xuất tại `app/schemas`; giai đoạn phát triển cho xóa/tạo lại cache, chưa bảo đảm nâng cấp ổn định. DataStore giữ riêng tùy chọn, ghim và cấu hình SAF. Làm mới foreground dựng lại cache.
+- `reading_items` lưu định danh nguồn/đường dẫn, truy cập, metadata, tiến độ/trạng thái, thời điểm đọc từ nguồn và thứ tự lịch sử nullable. `reading_sources` lưu con trỏ hiện tại, mốc thử/thành công, lỗi và số mục lịch sử bỏ qua.
+- Định danh miền giữ qua bí danh bộ nhớ chính. Hàng cache phân vùng thêm bằng fingerprint cây KOReader/các cây sách đã sắp xếp. Đọc/kiểm tra/ghi cache cấu hình ứng viên trước khi kích hoạt DataStore; lỗi giữ cấu hình/cache hiện hành. Phân vùng ứng viên ẩn bị xóa khi xóa cache/ngắt kết nối.
+- DataStore/Room không có giao dịch chung; thứ tự staging xử lý khoảng dừng giữa hai bước. Dọn quyền dựa trên cấu hình thực đã lưu, kể cả sau hủy bên gọi.
 
-Room schema 8 được xuất trong `app/schemas`. Trong giai đoạn phát triển, thay đổi schema phải tăng phiên bản Room; nếu không có migration, Room được phép xóa và tạo lại cơ sở dữ liệu đọc. Tùy chọn, ứng dụng đã ghim và cấu hình SAF nằm riêng trong DataStore nên không bị ảnh hưởng. Khi ứng dụng trở lại hoạt động, việc làm mới sẽ tạo lại dữ liệu đọc từ nguồn đã cấu hình.
+## Metadata, bìa và lịch sử
 
-`reading_items` lưu định danh nguồn/đường dẫn, khả năng truy cập, thông tin sách, tiến độ/trạng thái, thời điểm đọc từ nguồn và thứ tự lịch sử có thể để trống. `reading_sources` lưu con trỏ tới sách hiện tại, thời điểm thử cập nhật/cập nhật thành công, lỗi và số mục lịch sử bị bỏ qua. Định danh nguồn/đường dẫn ở tầng mô hình không đổi khi dùng các bí danh đường dẫn của cùng bộ nhớ chính. Mỗi hàng trong bộ nhớ đệm còn có fingerprint của cây KOReader và danh sách cây sách đã sắp xếp, để lựa chọn thư mục mới chưa được kích hoạt không ghi đè phân vùng đang dùng.
+Lịch sử giữ thứ tự mảng; đường dẫn chuẩn trùng giữ mục đầu, cùng tên khác đường dẫn vẫn riêng. Kiểm tra giây nguồn trước khi đổi an toàn sang mili giây epoch. Bỏ từng mục sai kèm cảnh báo/số lượng; tài liệu hỏng giữ danh sách cũ, chọn dự phòng thất bại không phát rỗng giả.
 
-Cấu hình mới được đọc, kiểm tra và ghi vào bộ nhớ đệm trước khi được kích hoạt trong DataStore. Nếu thất bại, cấu hình và dữ liệu cũ vẫn được giữ. Phân vùng chưa kích hoạt không hiển thị và sẽ bị xóa khi xóa bộ nhớ đệm hoặc ngắt kết nối. Việc thu hồi quyền không còn dùng luôn dựa trên cấu hình thực sự đã lưu, kể cả khi bên gọi hủy tác vụ. DataStore và Room không có giao dịch chung; thứ tự ghi tạm và phân vùng dữ liệu giúp xử lý trường hợp tiến trình dừng giữa hai bước.
+Ghi danh sách mới, con trỏ hiện tại và thứ tự trong một giao dịch Room. Sách không phân giải được vẫn theo dõi với trạng thái truy cập. `ReadingRepository.trackedItems` bổ sung trạng thái; danh sách [Thư viện](library.md) lấy từ danh mục thư mục. Trang chủ không có mục Gần đây.
 
-## Thông tin sách, bìa và lịch sử đọc
+Sidecar đọc lại khi làm mới: `percent_finished` hữu hạn trong [0, 1] có thể giảm. Trạng thái rõ `reading`, `complete`, `abandoned` được ánh xạ; 100% riêng lẻ không là Đã đọc.
 
-Lịch sử giữ thứ tự mảng từ nguồn. Các đường dẫn chuẩn trùng nhau chỉ giữ lần xuất hiện đầu tiên; sách cùng tên ở đường dẫn khác nhau vẫn là hai sách riêng. Thời điểm từ nguồn phải là giá trị giây hợp lệ và được đổi sang mili giây tính từ epoch mà không tràn số. Từng mục sai được bỏ qua kèm cảnh báo và số lượng. Nếu toàn bộ cấu trúc lịch sử bị hỏng, danh sách cũ được giữ nguyên; việc chọn sách dự phòng thất bại không được phát trạng thái rỗng giả.
-
-Danh sách mới, con trỏ sách hiện tại và thứ tự lịch sử được ghi trong cùng một giao dịch Room. Sách bị mất hoặc không phân giải được đường dẫn vẫn được theo dõi, kèm trạng thái truy cập. `ReadingRepository.trackedItems` cung cấp dữ liệu trong phân vùng đang dùng để bổ sung trạng thái đọc. Danh sách sách trong Thư viện do danh mục thư mục riêng quyết định; Trang chủ không thêm mục đọc gần đây.
-
-Tệp sidecar được đọc lại khi làm mới, nên `percent_finished` thấp hơn có thể thay thế giá trị cao hơn đã lưu. Chỉ chấp nhận số hữu hạn trong [0, 1]. Các trạng thái được ghi rõ là `reading`, `complete`, `abandoned` được ánh xạ sang trạng thái tương ứng; tiến độ 100% không tự động có nghĩa là Đã đọc.
-
-EPUB2/3 được trích xuất qua bộ đọc ZIP/XML có giới hạn tài nguyên. Tên sách và tác giả hợp lệ vẫn được giữ nếu bìa thiếu hoặc không được hỗ trợ. Ảnh thu nhỏ PNG được lưu riêng trong vùng dữ liệu ứng dụng, với cạnh dài nhất tối đa 480px; ảnh được ghi vào tệp tạm rồi đổi tên bằng thao tác nguyên tử.
-
-Khóa ảnh gồm nguồn/phân vùng, đường dẫn chuẩn và kích thước/thời điểm sửa tệp nguồn (size/mtime). Nếu fingerprint đã biết không đổi, ứng dụng dùng lại thông tin sách và bìa; nếu chưa biết fingerprint thì đọc lại. Tệp thay đổi sẽ dùng khóa mới. Ảnh cũ không còn được tham chiếu sẽ được dọn sau 24 giờ, để các tác vụ đọc cấu hình mới chạy đồng thời có thể ghi tạm an toàn. Xóa bộ nhớ đệm hoặc ngắt kết nối cũng xóa bìa. Không lưu bitmap trong ViewModel hoặc trạng thái được khôi phục.
-
-## Mở trình đọc
-
-ViewModel của Trang chủ và Thư viện quản lý trạng thái mở sách. `ReadingOpenRepository` phân giải lại tài liệu gốc và kiểm tra nguồn đã chọn. Route chỉ tiếp nhận yêu cầu khi ở trạng thái RESUMED, mỗi yêu cầu đúng một lần, rồi dùng `ReadingItemDispatcher` gửi ACTION_VIEW với URI/MIME, ClipData và quyền đọc. Việc tìm ứng dụng/trình xử lý intent chạy ngoài luồng chính; gửi intent chạy trên main dispatcher được truyền vào. Mở sách không phân tích hoặc sao chép EPUB. Khi Route tạm dừng hoặc bị loại khỏi composition, công việc đang chờ bị bỏ; yêu cầu không được lưu để thực hiện lại về sau.
-
-Luồng mở phân biệt rõ: thiếu ứng dụng, thiếu tệp, mất quyền, không có trình xử lý tương thích hoặc nguồn đã thay đổi. Lỗi tệp gợi ý làm mới; lỗi quyền/cấu hình gợi ý mở Cài đặt. `Dispatched` chỉ có nghĩa là Android đã nhận intent, chưa phải xác nhận KOReader đã mở sách. Tiến độ, lịch sử và sách hiện tại vẫn được cập nhật từ nguồn.
-
-Trên một số thiết bị, đã xác nhận ở Tango 2, mô tả tệp từ ExternalStorageProvider có thể được KOReader phân giải thành `/mnt/user/...`, khiến mã Lua của trình đọc không mở lại được. Sau khi kiểm tra nguồn SAF, tài liệu trên bộ nhớ chính sẽ dùng URI `content://org.koreader.launcher.provider/external/` của KOReader nếu authority đó thuộc trình đọc đã chọn. Provider này ánh xạ tới cùng tệp qua `/storage/emulated/0/...`; không sao chép hay nhập lại sách. Data và ClipData dùng URI nhất quán; các cờ cấp quyền URI cho ứng dụng khác được bỏ vì bên nhận sở hữu provider. Nếu không dùng được cách này, ứng dụng giữ intent SAF gốc. Không dùng `file://` để vượt cơ chế bảo vệ URI.
-
-Việc ánh xạ từ chối ID sai, đường dẫn thoát thư mục và volume khác. Kiểm thử hồi quy bao gồm tên được mã hóa, giữ đúng đường dẫn/MIME, kiểm tra chủ sở hữu provider và xử lý quyền. Debug và release dùng cùng luồng mở.
-
-## Làm mới và xử lý lỗi
-
-Effect theo vòng đời ở trạng thái STARTED chuyển việc cập nhật qua AppViewModel và bộ điều phối làm mới chung. Yêu cầu làm mới từ Trang chủ/Cài đặt dùng cùng tác vụ repository cấp ứng dụng. Các bên gọi đồng thời chờ chung tác vụ đang chạy; một bên hủy chờ không làm hủy yêu cầu của bên khác. Đổi nguồn hủy tác vụ cũ. Trước khi ghi, repository kiểm tra khóa nguồn đang có hiệu lực và trạng thái hủy coroutine. Việc dọn dẹp của tác vụ cũ kết thúc muộn không được xóa trạng thái đang chạy của tác vụ khác.
-
-Lỗi nguồn cập nhật thông tin đồng bộ nhưng không xóa con trỏ sách từ lần đọc thành công gần nhất. Trang chủ giữ thẻ sách đã lưu, kèm thông báo ngắn về dữ liệu cũ hoặc lỗi. Định danh nguồn và dữ liệu đệm được kiểm tra cùng nhau để dữ liệu/trạng thái của nguồn trước không xuất hiện dưới cấu hình mới. Lỗi ghi bộ nhớ đệm dự kiến vẫn phải hiển thị, kể cả khi không thể lưu bản ghi mô tả lỗi đó.
-
-Ngắt kết nối xóa dữ liệu đọc, khóa nguồn và quyền truy cập, giữ ứng dụng đã ghim cùng tùy chọn. Xóa bộ nhớ đệm xóa dữ liệu đọc, danh mục sách và bìa rồi tải lại các nguồn đã cấu hình. Cấu hình chỉ có thư mục sách cũng có thể xóa và tạo lại danh mục. Dung lượng bộ nhớ đệm bao gồm ảnh thu nhỏ. Chuyển tab hoặc đồng hồ chạy không kích hoạt phân tích nguồn.
-
-Thống kê dùng chung schema 8 nhưng có định danh nguồn và repository riêng. Xóa bộ nhớ đệm/ngắt kết nối bao gồm sự kiện gốc, tổng theo ngày, token nhập dữ liệu và thời điểm chụp dữ liệu. Xem [thống kê](statistics.md) và [kiểm tra độ tin cậy](reliability.md).
-
+Tên/tác giả EPUB giữ khi thiếu/không hỗ trợ bìa. [Trích xuất có giới hạn](koreader-integration.md) tạo PNG riêng, cạnh dài tối đa 480px, ghi tạm/đổi tên nguyên tử. Khóa gồm nguồn/phân vùng, đường dẫn chuẩn và size/mtime. Fingerprint đã biết không đổi dùng lại metadata/bìa; chưa biết thì đọc lại, tệp đổi dùng khóa mới. Dọn ảnh không còn tham chiếu sau 24 giờ để ứng viên đồng thời ghi tạm an toàn. Xóa cache/ngắt kết nối xóa bìa. Không giữ bitmap trong ViewModel/saved state; cache giải mã theo [hệ thống thiết kế](design-system.md).
 
 ## Vị trí trang đã lưu
 
-Home tính trang hiện tại từ `percent_finished` gốc nhân `doc_pages` trong cùng sidecar,
-làm tròn gần nhất. Tiến độ hợp lệ trong 0..1 bảo đảm kết quả trong 0..tổng trang. Không dùng phần trăm đã làm tròn để
-hiển thị. EPUB có `last_xpointer` vẫn hiển thị số trang, không cần `last_page`.
-Tổng trang phải là số nguyên dương; tổng trang thiếu/sai không làm mất tiến độ/trạng thái
-hợp lệ. Thiếu phần trăm thì không có cặp trang. Không ghép số trang từ Statistics/tên sách.
-Đây là vị trí tính theo bố cục KOReader đã lưu, có thể đổi khi đổi font/bố cục,
-không phải số trang hiện tại được lưu trực tiếp hoặc số trang in của nhà xuất bản.
-Schema 7 thêm hai cột nullable; nâng cấp tạo lại cache đọc/thư viện/thống kê và refresh
-dựng lại dữ liệu, không đổi DataStore chứa tùy chọn, pins và nguồn.
+Trang chủ tính từ cùng sidecar: `round(percent_finished × doc_pages)`, dùng phần trăm gốc, không dùng số nguyên hiển thị. Tiến độ 0..1 và tổng nguyên dương cho kết quả 0..tổng. Có `last_xpointer` không cần `last_page`; tổng thiếu/sai giữ tiến độ/trạng thái hợp lệ, thiếu tiến độ thì vị trí chưa biết.
+
+Đây là vị trí suy từ layout KOReader đã lưu, có thể đổi theo cài đặt đọc, không phải nhãn trang nhà xuất bản. Không ghép từ thống kê/tên sách.
+
+## Mở trình đọc
+
+ViewModel Trang chủ/Thư viện giữ trạng thái mở. `ReadingOpenRepository` phân giải lại tài liệu gốc và kiểm tra nguồn. Route RESUMED nhận mỗi yêu cầu một lần, gửi ACTION_VIEW với URI/MIME, ClipData và quyền đọc qua `ReadingItemDispatcher`. Tìm package/handler ngoài main; gửi dùng main được inject. Chuẩn bị không phân tích/sao chép cả sách. Pause/HOME/disposal hủy chờ; không lưu yêu cầu để phát lại.
+
+Lỗi phân biệt thiếu ứng dụng/tệp/quyền, handler chưa hỗ trợ và nguồn đổi. Lỗi tệp cho làm mới; lỗi quyền/cấu hình mở Cài đặt. `Dispatched` chỉ là Android nhận intent, chưa xác nhận trình đọc thành công. Tiến độ/lịch sử/sách hiện tại vẫn theo nguồn.
+
+Trên Tango 2, descriptor ExternalStorageProvider có thể được KOReader phân giải thành `/mnt/user/...` không mở được. Sau xác thực SAF, tài liệu bộ nhớ chính chỉ dùng `content://org.koreader.launcher.provider/external/` khi authority thuộc trình đọc đã chọn. Nó mở cùng tệp qua `/storage/emulated/0/...`, không sao chép/nhập lại. Data/ClipData nhất quán; bỏ cờ quyền ngoài vì bên nhận sở hữu provider. Trường hợp khác giữ intent SAF gốc; không dùng `file://`.
+
+Từ chối ID sai/thoát thư mục và volume khác. Kiểm thử gồm tên mã hóa, đúng đường dẫn/MIME, chủ provider và quyền. Xem [nghiệm thu thiết bị](reliability.md) để kiểm tra mở/quay lại thực tế.
+
+## Làm mới và lỗi
+
+Trách nhiệm foreground theo [kiến trúc](architecture.md). Trang chủ/Cài đặt dùng chung tác vụ repository cấp ứng dụng; bên gọi đồng thời chờ cùng job, hủy một bên không hủy bên khác. Đổi nguồn hủy job cũ; kiểm tra khóa hiện hành/tín hiệu hủy trước ghi. Dọn muộn không xóa trạng thái chạy của job khác.
+
+- Lỗi nguồn cập nhật metadata đồng bộ, không xóa con trỏ thành công gần nhất. Trang chủ giữ cache, kèm báo cũ/lỗi. Kiểm tra định danh cùng observation để dữ liệu/trạng thái nguồn cũ không hiện dưới cấu hình mới.
+- Báo lỗi ghi cache dự kiến kể cả khi ghi bản lỗi cũng thất bại.
+- Ngắt kết nối xóa hàng/khóa/quyền nguồn, giữ ghim/tùy chọn. Xóa cache xóa dữ liệu đọc, danh mục và bìa rồi nạp lại nguồn đã chọn; cấu hình chỉ có sách cũng dựng lại. Dung lượng cache gồm ảnh thu nhỏ.
+- Thống kê có định danh/repository riêng trong DB chung. Xóa cache/ngắt kết nối gồm sự kiện, tổng, token nhập và timestamp. Xem [thống kê](statistics.md). Đổi tab/đồng hồ không phân tích nguồn.

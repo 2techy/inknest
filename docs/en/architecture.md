@@ -2,115 +2,45 @@
 
 [Tiếng Việt](../vi/architecture.md) · [Documentation](README.md)
 
-InkNest uses unidirectional data flow:
-repositories expose data; ViewModels produce observable UI state; routes collect state
-with lifecycle awareness and connect actions; screens render state and callbacks.
+Ownership and lifecycle contracts for the single production `:app` module, using Kotlin/Compose and manual constructor injection.
 
 ## Boundaries
 
-- `data/repository`: data contracts and implementations. DataStore owns saved preferences;
-  source settings have a separate contract. Asset acknowledgements are loaded by a
-  main-safe repository with an injectable IO dispatcher, never read inside a screen/route.
-- `di`: application-scoped dependencies and ViewModel factories. Runtime wiring uses
-  real platform dependencies in both build types. ReadingDataContainer shares the existing
-  DataStore and Room instance. Graph initialization and interrupted temp-file cleanup run off main.
-- `ui/settings`: `SettingsViewModel` owns one public `SettingsUiState`, including initial
-  preference read failures, source actions and acknowledgements loading/retry. Internal
-  cached preference state retains the last snapshot across temporary collection stops.
-  `WhileSubscribed(5_000)` scopes upstream collection to active UI subscribers.
-- `SettingsRoute`: lifecycle-aware collection, navigation, platform intents and ephemeral
-  folder/confirmation dialogs. `SettingsScreen` and its content helpers receive only
-  state/callbacks; they do not access repositories or perform IO.
-- `ui/onboarding`: the route owns wizard collection and Back handling. The app supplies
-  display preference state/actions; the route does not depend on another feature's ViewModel.
-- Debug builds enable StrictMode policies; release builds provide no-op runtime diagnostics.
-  Synthetic fixtures are confined to benchmark/profile source sets.
-- `ui/InkNestApp`: composition root for theme, top-level navigation and feature routes.
-  `ui/components` and `ui/theme` own shared UI behavior and design tokens.
+| Layer | Responsibility |
+| --- | --- |
+| `data/source` | SAF access, bounded parsers, capability results and expected-error mapping; never imports repositories. |
+| `data/repository` | Observable application data, source configuration, refresh and writes. |
+| ViewModel | UI state and actions; calls repositories directly, without pass-through use cases. |
+| Route | Lifecycle-aware collection, navigation, platform dispatch and transient dialogs. |
+| Screen | Renders state/callbacks; no repositories, file I/O or parsing. |
+| `di` | Shared DataStore, Room, loaders, clocks, dispatchers and ViewModel factories. |
+| `ui/components`, `ui/theme` | Shared controls, gestures and design tokens. |
 
-## Deliberate scope
+Graph initialization and interrupted-temp-file cleanup run off main. Asynchronous components receive dispatchers; repository and StatsViewModel share an injectable `StatisticsClock`.
+`BookProbeDataSource` shares document resolution, EPUB/sidecar reads and checksum sampling. Feature-only helpers stay beside their feature; book models live with `ReadingItem`.
 
-App updates have a separate `AppUpdateRepository`, GitHub source and keys in the existing DataStore.
-Settings collects update state; root theme and Home preferences do not include it. An independent
-STARTED effect delegates foreground checks through AppViewModel. Release builds check at most every
-24 hours, with persisted attempt/rate-limit times. Backgrounding cancels downloads; verified APKs
-remain in private storage for a later explicit install. Platform helpers verify the APK and share
-only the update directory through FileProvider. No background service, network sync or telemetry is used.
+## Storage and observation
 
-SettingsViewModel parses release-note Markdown with an injected CommonMark parser on a background
-dispatcher. Screens render immutable styled text, lists and code using Compose/theme tokens, without
-a WebView or remote image requests. Link destinations are limited to web URLs and dispatched by the route.
-CommonMark's BSD notice is bundled in the existing third-party acknowledgements flow.
+- Room schema 8 caches current/history, folder inventory and statistics. Development uses destructive cache fallback; stable upgrade compatibility is not promised.
+- DataStore separately owns pins, preferences and source selections. Locale uses AppCompat storage, not Room/DataStore.
+- Recover expected I/O/SQLite observation failures before sharing flows, with 1/2/4/8/16/30-second backoff and manual retry. Retain successful snapshots; recovery never invents empty data or starts a SAF scan.
+- Preserve coroutine cancellation. Failed writes expose errors and never report success or replace saved values.
 
-The update UI has one state-driven primary action for check, download, cancellation and installation.
-All build types share download/verification; an unknown version name permits downloading a discovered
-release without claiming it is newer. The platform APK verifier still rejects non-increasing version
-codes and incompatible signatures before installation.
-
-The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 8
-with destructive cache fallback during development; preferences, pins and source selections
-remain in DataStore. Stable upgrade compatibility is not promised.
-ViewModels call repositories directly for preference and source operations.
-Repository failures must not replace saved values with pretend success, and UI labels
-remain Android string resources. Preserve cancellation when handling coroutine failures.
-
-Settings has four categories: Reading & data, Appearance, Launcher and About. This is
-product organization, separate from repository boundaries. Combining menus does not
-combine preference storage with reading-source/cache storage.
-
-## Reading data
-
-Room owns current/history, full-folder inventory and statistics snapshots. DataStore owns
-pins, preferences and source selection. Statistics is independent
-of current-book parsing and inventory membership. Routes do not scan files or aggregate
-statistics. See [Library](library.md), [Statistics](statistics.md) and
-[Reading cache](reading-cache.md) for refresh/cancellation and source boundaries.
-
+See [reading cache](reading-cache.md), [Library](library.md), [Statistics](statistics.md) and [source integration](koreader-integration.md) for feature contracts.
 
 ## State and work ownership
 
-Settings and onboarding each own a SourceSetupStateHolder. They share saved source data through
-repositories, while picker requests, in-flight actions and errors belong to each owner. Onboarding
-exposes a single UiState; navigation records FirstRun versus Review and completion only closes
-an open wizard. HOME bypasses setup for the current session without persisting completion.
+- A Compose STARTED effect calls AppViewModel → `ForegroundRefreshCoordinator` for foreground reading/statistics refresh. Activity owns HOME intents. Concurrent repository callers share jobs without a freshness TTL; tab changes never scan sources.
+- Root theme/setup observes app preferences, not Settings source/action state. Onboarding completion has its own composition scope so source updates do not invalidate Home.
+- Settings exposes one `SettingsUiState`; cached preference state retains its last snapshot across collection stops, with `WhileSubscribed(5_000)`. Acknowledgements load through a main-safe repository with independent retry/cache per component.
+- Settings and onboarding own separate `SourceSetupStateHolder` instances. Repositories share saved config; each holder owns picker requests, errors and in-flight actions. Onboarding distinguishes FirstRun/Review; completion closes only an open wizard. HOME skips it for the session without saving completion.
+- Home/Library ViewModels own `ReadingOpenStateHolder`. `ReadingOpenRepository` prepares Android-independent requests; resumed Routes claim each Ready request once and dispatch through `ReadingItemDispatcher`. Pause, HOME or disposal cancels pending work; requests are not persisted. Context/Intent stay in `platform`.
 
-A Compose STARTED effect calls AppViewModel, which delegates foreground reading/statistics updates
-to an application-scoped ForegroundRefreshCoordinator. Activity handles platform intents, not
-refresh sequencing. Startup has one owner; actual source changes and explicit refresh actions
-remain repository operations. Concurrent callers share jobs without a freshness TTL.
-AppViewModel also exposes app preferences for the theme/setup gate. The root does not
-collect Settings' source/actions state; SettingsRoute owns that collection. Onboarding
-completion is observed in its own composition scope so source updates do not invalidate
-the entire Home scaffold.
+## Platform services
 
-Local Room/DataStore observations recover expected I/O/SQLite failures before sharing state.
-Backoff is 1/2/4/8/16/30 seconds, cancellation is preserved and manual retry wakes pending reads.
-Recovery never publishes an invented empty snapshot or initiates a SAF scan. Home combines the
-independent repository states and keeps unaffected pins/stats/reading content.
+- `AppLanguageController` delegates to AppCompat: native per-app storage on Android 13+, automatic AppCompat storage below it. SettingsRoute owns the language dialog. Activity recreation retains navigation/ViewModels without replaying actions. AppCompat storage may produce debug StrictMode disk-access diagnostics on Android 12 and earlier. Only en/vi resources are packaged, with language splitting disabled; app metadata reloads after locale changes without rescanning books.
+- `AppUpdateRepository` uses a GitHub source and separate keys in the existing DataStore. Settings owns update state; an independent STARTED effect delegates foreground checks through AppViewModel. Attempt/rate-limit times persist. Backgrounding cancels downloads; verified APKs remain private for explicit installation. Platform verification and FileProvider sharing are limited to the update directory.
+- SettingsViewModel parses release-note Markdown using injected CommonMark off main. Screens render immutable Compose content without WebView or remote images; Routes dispatch only web links. The bundled BSD notice appears in acknowledgements. All build types share download/verification; unknown version names do not imply a newer release, and APK version/signature checks still apply. See [setup](setup.md) and [release](release.md).
+- Debug enables StrictMode; release diagnostics are no-ops. The separate `:benchmark` module drives real UI/SAF against benchmark/profile variants. Fixtures/setup stay in those source sets; release contains generated profiles only. See [benchmarking](benchmarking.md).
 
-ReadingOpenRepository prepares a source-validated, Android-independent opening request. Home and
-Library ViewModels own ReadingOpenStateHolder; routes claim each Ready request once and dispatch
-through ReadingItemDispatcher only while resumed. Pause/disposal cancels preparation and drops
-pending requests. Intents and Context remain in the platform layer; requests are not persisted.
-
-Source capability results and exception mapping live in data/source; source implementations do
-not import repositories. Dispatchers are constructor dependencies. Repository and StatsViewModel
-share a StatisticsClock from DI; tests replace it and dispatchers without changing system time.
-
-The production graph remains in `:app`. The separate `:benchmark` instrumentation module
-drives release-like benchmark and unminified profile variants through the real UI and SAF
-boundaries. Synthetic setup exists only in those target source sets; release contains app
-profiles but no fixture or setup entry point. See [benchmarking.md](benchmarking.md).
-
-App language is platform configuration: AppLanguageController delegates to AppCompat, with
-native per-app locale storage on Android 13+ and automatic AppCompat storage below it.
-SettingsRoute combines that platform selection into screen state and owns the transient
-language dialog. No locale is persisted in Room or app-preferences DataStore. Activity
-recreation retains navigation and ViewModels; language changes never replay selection actions.
-
-Book details keeps its repository contract and cached implementation together. Book models live
-with `ReadingItem`; feature-only section composables stay in `BookDetailsScreen`. The existing
-`BookProbeDataSource` is the shared document I/O service for resolution, EPUB/sidecar reads and
-checksum sampling, using the injected I/O dispatcher. EPUB text cleanup/validation lives beside
-its parser; statistics tables share one bounded, cancellable batch reader. Source helpers do not
-access repositories or UI state.
+No background update service, network sync or telemetry is configured.

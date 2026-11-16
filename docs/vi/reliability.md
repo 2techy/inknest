@@ -2,6 +2,8 @@
 
 [English](../en/reliability.md) · [Mục lục](README.md)
 
+Kiểm tra có thể lặp lại cho phục hồi, vòng đời và nghiệm thu thiết bị thật. Quy trình không khẳng định thiết bị/phiên bản nào đã đạt.
+
 ## Chuẩn bị môi trường kiểm thử
 
 Dùng thiết bị thử nghiệm hoặc giả lập đã cấp quyền gỡ lỗi, cùng sách mẫu tự tạo hoặc sách không chứa dữ liệu riêng tư. Biên dịch và cài đặt theo [hướng dẫn phát triển](development.md). Khi báo kết quả, ghi rõ biến thể/phiên bản ứng dụng, Android/firmware, phiên bản KOReader, cấu hình hiển thị và đặc điểm bộ dữ liệu. Lưu log, trace và kết quả đo trong thư mục build được Git bỏ qua.
@@ -28,7 +30,7 @@ Dùng thiết bị thử nghiệm hoặc giả lập đã cấp quyền gỡ l�
 - Gây lỗi khi lưu tùy chọn: giao diện không được báo thành công hoặc thay giá trị đã lưu.
 - Kiểm tra nút Quay lại của hệ thống, chọn ứng dụng Trang chủ mặc định, mở ứng dụng, ghim, vuốt tab và kéo làm mới. Đổi tab, khoảng thời gian hoặc đồng hồ không được quét nguồn.
 - Đổi ngôn ngữ ứng dụng, cỡ chữ (gồm mức 150%), chiều rộng cửa sổ, ngày và múi giờ. Kiểm tra xuống dòng, khả năng tiếp cận các nút điều khiển, ranh giới ngày/tháng và giờ mùa hè (DST), không thay đổi dữ liệu nguồn.
-- Xem log StrictMode của bản debug để tìm I/O ngoài dự kiến trên luồng chính. Phân biệt với thông báo do AppCompat lưu ngôn ngữ trên Android 12 trở xuống, được mô tả trong [thiết lập](setup.md).
+- Xem log StrictMode của bản debug để tìm I/O ngoài dự kiến trên luồng chính. Phân biệt với thông báo do AppCompat lưu ngôn ngữ trên Android 12 trở xuống, được mô tả trong [kiến trúc](architecture.md).
 
 Hành vi Room, SAF và vòng đời trên Android được kiểm tra bằng kiểm thử tích hợp Android. Phần tổng hợp dữ liệu, ánh xạ lỗi nguồn và ViewModel cũng có các bài kiểm thử JVM riêng. Xem [kiến trúc](architecture.md) về phân chia trách nhiệm và quy tắc phục hồi.
 
@@ -36,6 +38,6 @@ Hành vi Room, SAF và vòng đời trên Android được kiểm tra bằng ki�
 
 Trên iReader Tango 2, kiểm tra trực tiếp độ tương phản, bóng mờ, cách làm mới màn hình, vùng chạm, mở sách khi KOReader chưa chạy/đã chạy và quay về sau phiên đọc dài. Kiểm tra luồng trình khởi chạy, kết nối nguồn và mở sách trên Samsung Galaxy S25 Ultra, thiết bị phát triển phụ. Kiểm tra lại sau khi cập nhật firmware, KOReader hoặc thay đổi chứng chỉ ký bản release.
 
-Đo độ trễ làm mới và bộ nhớ với bộ dữ liệu cố định, trong điều kiện có thể so sánh. Phân biệt PSS/RSS, giá trị lấy mẫu/đỉnh bộ nhớ đo liên tục, kết quả giả lập/thiết bị thật. Dùng [hướng dẫn đo hiệu năng](benchmarking.md) để so sánh có kiểm soát bằng dữ liệu giả lập. Ảnh chụp màn hình và benchmark với dữ liệu giả lập không xác nhận được hành vi trên màn hình E-Ink thật hoặc việc mở đúng sách trong trình đọc.
+Dùng [đo hiệu năng](benchmarking.md) để so độ trễ/bộ nhớ có kiểm soát. Ảnh chụp và phép đo dữ liệu giả không chứng nhận E-Ink thật hoặc việc mở đúng sách.
 
-Trước khi phân phối, hoàn tất [kiểm tra APK đã ký](release.md). Các bước trên mô tả quy trình nghiệm thu, không có nghĩa là một thiết bị hoặc phiên bản cụ thể đã vượt qua kiểm tra.
+Trước khi phân phối, hoàn tất [kiểm tra APK đã ký](release.md).

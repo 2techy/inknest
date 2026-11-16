@@ -2,114 +2,47 @@
 
 [Tiếng Việt](../vi/reading-cache.md) · [Documentation](README.md)
 
-Both debug and release use `CachedReadingRepository`. Home observes Room-backed current reading
-and an independent `ReadingSyncStatus`; pins, clock and statistics remain separate. No runtime
-sample-data path exists. Current reading and tracked history share the same cache and source
-refresh. Sidecar progress/status and EPUB title/author/cover enrich resolved books; unsupported or
-missing fields remain unknown. The current card opens the configured reader through
-`ReadingOpenRepository` / `ReadingItemDispatcher`, without writing synthetic progress or last-read timestamps.
+Current reading, tracked history, refresh and opening contracts for `CachedReadingRepository`, shared by debug/release. Home observes Room data and independent `ReadingSyncStatus`; pins, clock and statistics remain separate. Missing metadata stays unknown; opening never fabricates progress/last-read times.
 
 ## Data and source boundaries
 
-`KoreaderCurrentSource` reuses the bounded Lua/SAF sources. A valid lastfile takes priority. Missing
-or invalid current settings fall back to the first valid history path in source array order.
-Missing both sources or corrupt data cannot masquerade as a successfully empty source. A current
-file missing/outside grants retains its identity and filename with an availability warning.
-No current-book choice is inferred from statistics or basename/title matches.
-
-Room schema 8 is exported in `app/schemas`. During development, schema changes do not carry
-migration code: increment the Room version when changing the schema, and allow Room to recreate
-the disposable reading database when no migration exists. Preferences, pins and SAF configuration
-live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
-rebuilds reading data from the configured source. `reading_items` stores source/path identity, availability,
-metadata, progress/status, source last-read time and nullable history order. `reading_sources`
-stores the current pointer, attempt/success timestamps, error and skipped-history count. The source/path domain identity remains stable across primary-storage aliases. Physical
-cache rows additionally use a fingerprint of the KOReader tree and sorted Books trees, so a candidate Books
-selection cannot overwrite the active partition before DataStore switches to it.
-
-Candidate read/validation and cache write precede DataStore activation. A failed candidate keeps
-active config/cache. Unactivated partitions remain invisible and are removed by clear/disconnect.
-Grant cleanup checks the actual saved config, including after caller cancellation. There is no
-transaction spanning DataStore and Room; the partition/staging order handles the crash gap.
+- `KoreaderCurrentSource` prioritizes valid `lastfile`, falling back to the first valid history path in array order. Missing/corrupt sources differ from successful empty data. A missing/out-of-grant current file retains identity/filename with an availability warning. Never infer current reading from statistics or title/basename matches.
+- Room schema 8 is exported in `app/schemas`; development uses destructive cache fallback, without stable upgrade guarantees. DataStore separately owns preferences, pins and SAF config. Foreground refresh rebuilds disposable data.
+- `reading_items` stores source/path identity, availability, metadata, progress/status, source last-read time and nullable history order. `reading_sources` stores the current pointer, attempt/success times, errors and skipped-history count.
+- Domain identity survives primary-storage aliases. Cache rows additionally partition by KOReader-tree/sorted-Books-tree fingerprint. Candidate read/validation/cache write precedes DataStore activation; failure preserves active config/cache. Invisible candidate partitions are removed by clear/disconnect.
+- DataStore/Room have no shared transaction; staging order handles the crash gap. Grant cleanup uses the actual saved config even after caller cancellation.
 
 ## Metadata, covers and tracked history
 
-History follows the source array order. Canonical-path duplicates keep their first occurrence;
-same-title books at different paths remain separate. Source timestamps are validated seconds and
-converted to epoch milliseconds without overflow. Individual malformed entries are skipped with a
-warning/count. A structurally broken history document retains the previous tracked list; failed
-fallback selection cannot publish a false empty state. A successful replacement, its current
-pointer and history order are committed in one Room transaction. Missing/unresolved books remain
-tracked with their availability. `ReadingRepository.trackedItems` exposes the active partition for
-reading-status enrichment. Library membership comes from the separate Books-folder inventory;
-Home does not add a Recent section.
+History preserves array order; canonical-path duplicates keep the first entry, while equal titles at different paths remain distinct. Validate source seconds before overflow-safe conversion to epoch milliseconds. Skip individual malformed entries with warning/count; a broken document retains the previous list, and failed fallback selection never publishes false empty data.
 
-Sidecars are reread on refresh, so a lower `percent_finished` replaces a higher previous value.
-Only finite values in [0, 1] are accepted. Explicit `reading`, `complete` and `abandoned` statuses
-map to known states; 100% alone does not imply Finished.
+Commit replacement history, current pointer and order in one Room transaction. Unresolved books remain tracked with availability. `ReadingRepository.trackedItems` enriches reading status; [Library](library.md) membership comes from folder inventory. Home has no Recent section.
 
-EPUB2/3 extraction reuses the bounded ZIP/XML adapter. Valid title/author survive unsupported or
-missing artwork. Private PNG thumbnails have a longest edge of at most 480 pixels and are written
-through a temporary file plus atomic rename. Their keys include source/partition, canonical path
-and source size/mtime. Unchanged known fingerprints reuse metadata and existing covers; unknown
-fingerprints are reread. Changed files use a new key. Old unreferenced thumbnails are pruned after
-24 hours, allowing concurrent candidate reads to stage files safely. Clear/disconnect removes the
-cover cache along with reading rows. No bitmap is stored in ViewModels or saved state.
+Sidecars reread on refresh: finite `percent_finished` in [0, 1] may decrease. Explicit `reading`, `complete`, `abandoned` map to known states; 100% alone is not Finished.
+
+EPUB title/author survive missing/unsupported artwork. [Bounded extraction](koreader-integration.md) produces private PNG thumbnails, longest edge at most 480px, through temporary write/atomic rename. Keys include source/partition, canonical path and size/mtime. Known unchanged fingerprints reuse metadata/covers; unknown ones reread and changed files use new keys. Prune unreferenced thumbnails after 24 hours to allow concurrent candidate staging. Clear/disconnect removes covers. No bitmap belongs in ViewModels/saved state; decoded-cache rules are in [design system](design-system.md).
 
 ## Saved page position
 
-Home derives a page position from the same sidecar's full-precision `percent_finished`
-and positive integer `doc_pages`: round(percent × total). Validated progress in 0..1 keeps the result in 0..total.
-It uses the original fraction before converting progress to a displayed integer percentage.
-This supports EPUB sidecars containing `last_xpointer` without requiring `last_page`.
-Missing or malformed totals leave valid percentage/status metadata usable; absent progress
-leaves the page label unknown. No Statistics/title matching supplies page counts.
-The result is a derived position in KOReader's saved layout, which can change with reader
-settings; it is not a directly recorded current page or a publisher page label.
-Schema 7 adds nullable current/total page columns; upgrading recreates the disposable
-reading, library and statistics cache, then refresh rebuilds it. DataStore is unchanged.
+Home derives position from the same sidecar: `round(percent_finished × doc_pages)`, using the original fraction, not the displayed integer percentage. Valid progress in 0..1 and positive integer totals produce 0..total. `last_xpointer` works without `last_page`; invalid/missing totals retain valid progress/status, while missing progress leaves position unknown.
+
+This is a derived position in KOReader's saved layout, which can change with reader settings, not a publisher page label. Never supply it through statistics/title matching.
 
 ## Opening the reader
 
-Home and Library ViewModels own opening state. ReadingOpenRepository re-resolves the original
-document and validates the selected source. The resumed Route claims each request once and uses
-ReadingItemDispatcher to dispatch ACTION_VIEW with its URI/MIME, ClipData and read permission.
-Package/intent resolution runs off main; dispatch runs on the injected main dispatcher. Opening
-does not parse or copy the EPUB. Pause/disposal drops pending work; requests are not persisted.
+Home/Library ViewModels own opening state. `ReadingOpenRepository` re-resolves the original document and validates its source. The RESUMED Route claims each request once, dispatching ACTION_VIEW with URI/MIME, ClipData and read permission through `ReadingItemDispatcher`. Package/handler resolution runs off main; dispatch uses injected main. Preparation never parses/copies the whole book. Pause/HOME/disposal cancels pending work; requests are not persisted.
 
-Opening reports distinct outcomes for a missing app, file or grant, an unsupported handler,
-and a changed source. File errors offer refresh; access
-or configuration errors offer Settings. `Dispatched` means Android accepted the intent, not that
-KOReader confirmed opening the file. Progress/history/current-book cache remain source-driven.
+Distinct failures cover missing app/file/grant, unsupported handler and changed source. File errors offer refresh; access/configuration errors offer Settings. `Dispatched` means Android accepted the intent, not confirmed reader success. Progress/history/current reading remain source-driven.
 
-On some devices (confirmed on Tango 2), ExternalStorageProvider descriptors resolve inside
-KOReader to `/mnt/user/...`, which its Lua file checks cannot reopen. After validating the SAF
-source, primary-storage documents use KOReader's own `content://org.koreader.launcher.provider/external/`
-URI when that authority belongs to the selected reader. Its provider resolves the same file to
-`/storage/emulated/0/...`; no file is copied or imported. Data and ClipData stay consistent, and
-foreign URI-grant flags are removed because the receiving app owns that provider. If unavailable,
-other readers/providers retain the original SAF intent. No `file://` exposure bypass is used.
+On Tango 2, ExternalStorageProvider descriptors can resolve in KOReader to inaccessible `/mnt/user/...` paths. After SAF validation, primary-storage documents use `content://org.koreader.launcher.provider/external/` only when that authority belongs to the selected reader. It resolves the same file via `/storage/emulated/0/...`, without copying/importing. Data/ClipData remain consistent; foreign grant flags are removed because the receiver owns the provider. Otherwise retain the original SAF intent; never use `file://`.
 
-The mapping rejects invalid/traversal IDs and other volumes. Regression tests cover encoded
-names, exact path/MIME preservation, provider ownership and grant handling. Debug and release
-use the same opening flow.
-
+Reject malformed/traversal IDs and other volumes. Regression coverage includes encoded names, exact path/MIME, provider ownership and grants. See [device acceptance](reliability.md) for actual opening/return checks.
 
 ## Refresh and failures
 
-A lifecycle-aware STARTED effect delegates foreground updates through AppViewModel and the shared refresh coordinator. Home/Settings refresh use the same application-owned repository jobs.
-Concurrent callers await the same active job. Cancelling an await does not cancel other callers.
-Source changes cancel obsolete jobs, and active key plus coroutine cancellation are checked before
-writing. Late cancellation cleanup cannot clear another job's running state.
+Foreground ownership follows [architecture](architecture.md). Home/Settings share application-owned repository jobs; concurrent callers await the same job, and cancelling one waiter does not cancel others. Source changes cancel obsolete jobs; active key/cancellation are checked before writes. Late cleanup cannot clear another job's running state.
 
-Source errors update sync metadata without erasing the last successful current pointer. Home
-keeps the cached card and shows a compact stale/error notice. Source identity and cache observations
-are checked together, preventing previous-source rows/status from appearing under a new config.
-Expected cache write failures are surfaced even if persisting their error record fails.
-Disconnect clears reading rows/source keys/grants but preserves pins/preferences. Clear cache
-removes reading rows, the Books inventory and covers, then reloads the configured sources.
-Books-only configurations can also clear/rebuild their inventory; cache size includes thumbnails. Switching tabs/clock ticks never starts
-source parsing.
-
-
-Statistics shares schema 8 but owns its source identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps. See [statistics](statistics.md) and [reliability checks](reliability.md).
+- Source errors update sync metadata without erasing the last successful current pointer. Home retains cached content with a stale/error notice. Check source identity and observations together to prevent previous-source data/status appearing under new config.
+- Surface expected cache-write failures even if recording the error also fails.
+- Disconnect clears source rows/keys/grants, preserving pins/preferences. Clear cache removes reading data, Books inventory and covers, then reloads selected sources; Books-only configs also rebuild. Cache size includes thumbnails.
+- Statistics owns its source identity/repository within the shared DB. Clear/disconnect includes events, summaries, import tokens and timestamps. See [statistics](statistics.md). Tab/clock changes never parse sources.

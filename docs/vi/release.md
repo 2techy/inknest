@@ -72,16 +72,7 @@ Các APK chưa ký và đã ký dùng để chuyển giữa các job được gi
 
 ## Biên dịch và ký cục bộ
 
-Dùng Java 21 và Gradle wrapper theo [phát triển](development.md):
-
-```powershell
-.\gradlew.bat spotlessCheck :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease
-```
-
-| Bản dựng | APK |
-| --- | --- |
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` |
-| Release tối ưu chưa ký | `app/build/outputs/apk/release/app-release-unsigned.apk` |
+Theo [phát triển](development.md) để chuẩn bị công cụ, chạy lệnh build/kiểm tra và tìm APK chưa ký.
 
 Trong Android Studio, chọn **Build → Generate Signed App Bundle or APK → APK**, chọn `app`, keystore phát hành và biến thể release. Kiểm tra APK bằng `apksigner verify --verbose --print-certs`, tính checksum bằng `Get-FileHash <apk> -Algorithm SHA256`. Giữ riêng tệp mapping tương ứng với từng bản dựng.
 
@@ -95,10 +86,8 @@ Job ký và job tạo bản nháp không lấy mã nguồn ứng dụng về. Ch
 
 ## Nghiệm thu và tương thích
 
-Kiểm tra quyền truy cập, thiết lập nguồn đọc, vai trò ứng dụng Trang chủ mặc định, mở ứng dụng, mở sách, Thư viện, Thống kê và phục hồi trên APK đã ký. Kiểm tra độ tương phản và bóng mờ E-Ink trên màn hình thật; xem [độ tin cậy](reliability.md) để thực hiện các bước theo thiết bị. Ghi rõ thiết bị, firmware và phiên bản KOReader khi mô tả tương thích hoặc lỗi đã biết.
-
-Kết nối dữ liệu đọc hỗ trợ KOReader và bộ nhớ trong chính. Xem [bộ nhớ đệm đọc và mở sách](reading-cache.md) về xử lý URI và phục hồi. Hiện chưa hỗ trợ nhà cung cấp tài liệu trên thẻ SD/đám mây, bộ máy đọc sách tích hợp, ghi dữ liệu ngược về nguồn, điều khiển làm mới màn hình của OEM hoặc đồng bộ nền định kỳ.
+Hoàn tất [nghiệm thu thiết bị](reliability.md) trên APK đã ký, ghi thiết bị/firmware/KOReader. [Thiết lập](setup.md) mô tả nguồn hỗ trợ và khôi phục; [cache đọc](reading-cache.md) quy định URI/mở sách.
 
 Cơ sở dữ liệu đọc là bộ nhớ đệm có thể tạo lại. Thay đổi schema có thể khiến bộ nhớ đệm được tạo lại; ghim, tùy chọn và lựa chọn nguồn được lưu riêng trong DataStore. Sao lưu và chuyển thiết bị không bao gồm dữ liệu InkNest; quyền SAF thuộc từng thiết bị.
 
-Chẩn đoán khi chạy chỉ hoạt động trong bản debug. Thông báo giấy phép bên thứ ba nằm trong Giới thiệu. InkNest dùng [giấy phép MIT](../../LICENSE); thành phần đi kèm giữ giấy phép riêng.
+Giấy phép bên thứ ba nằm trong Giới thiệu. InkNest dùng [MIT](../../LICENSE); thành phần đi kèm giữ giấy phép riêng.

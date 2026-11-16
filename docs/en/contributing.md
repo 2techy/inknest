@@ -2,33 +2,34 @@
 
 [Tiếng Việt](../vi/contributing.md) · [Documentation](README.md)
 
+Report issues, prepare focused pull requests and keep both documentation languages aligned.
+
 ## Report a bug or propose a feature
 
-Use the repository's issue tracker. For bugs include the app version/build variant, device model, Android and firmware versions, KOReader version when relevant, reproduction steps, expected behavior and actual behavior. Identify emulator versus physical-device results. Include small sanitized logs or screenshots only when needed.
+Use [Issues](https://github.com/2techy/inknest/issues). Bugs need app version/variant, device, Android/firmware, relevant KOReader version, reproduction steps and expected/actual results. Identify emulator versus physical results; include only necessary sanitized logs/screenshots. Features should describe the user problem and offline/E-Ink workflow.
 
-Do not upload private books, document URIs, source databases, signing keys or passwords. Use synthetic examples and redact paths or screenshots containing personal information. For features describe the user problem, expected workflow and relevant offline/E-Ink constraints before proposing implementation details.
+Never upload private books, document URIs, source databases, signing keys or passwords. Use synthetic examples and redact personal paths. Report sensitive issues through [security reporting](../../SECURITY.md).
 
 ## Prepare a pull request
 
-1. Follow [development setup](development.md), inspect existing code/tests and keep the change focused.
-2. Follow the [architecture](architecture.md) and [design system](design-system.md). Keep the single production `:app` module, manual DI and Repository → ViewModel → UI state → Route/Screen flow.
-3. Use `.editorconfig`, string resources and shared theme/gesture tokens. Add dependencies through the grouped version catalog only when necessary. Do not hand-edit generated Room schemas or profiles.
-4. Add meaningful tests for changed behavior, particularly failures, cancellation, restoration, source isolation and retained snapshots. Coroutine tests share a scheduler across injected dispatchers and fake clocks; native Room/SAF behavior belongs in Android tests.
-5. Run the applicable [checks](development.md). Describe the problem, resulting behavior, checks actually run and remaining limitations in the PR. Include layout evidence for UI changes and identify physical E-Ink acceptance separately.
-6. Review the final diff for unrelated changes, private data and generated output. Use Conventional Commits when creating commits.
+1. Follow [development](development.md), inspect existing code/tests and keep changes focused.
+2. Preserve [architecture](architecture.md), [design rules](design-system.md), string resources and shared tokens. Use the version catalog for dependencies; never hand-edit generated schemas/profiles.
+3. Test meaningful failures, cancellation, restoration, source isolation and retained snapshots. Follow existing tests; native Room/SAF behavior belongs in Android tests.
+4. Run applicable [checks](development.md). Describe the problem, resulting behavior, checks actually run and limitations. UI changes need layout evidence; physical E-Ink acceptance is separate.
+5. Review the diff for unrelated/generated/private data. Use Conventional Commits when committing.
 
-A contribution should preserve cancellation, report failed writes and retain successful data when expected reads fail. Do not add network sync, telemetry, broad production storage access or schema migrations incidentally. Changes to cache schemas require an explicit review of upgrade behavior. Keep signing material and build/measurement artifacts outside version control.
+Do not add network sync, telemetry, broad storage access or migrations incidentally. Schema changes require explicit upgrade review. Keep signing/build/measurement artifacts outside Git.
 
 ## Pull request checks
 
-CI skips PRs whose changes are limited to `docs/**` and root-level Markdown files. Other PRs into `master`, including drafts, run the `build` check: formatting, debug/release JVM tests, debug/release lint and APK/test compilation. Keep applicable checks green and resolve review conversations before squash merge. An additional approving reviewer is not required. Android emulator tests are dispatched manually; benchmark and physical-device acceptance stay separate. See [GitHub Actions](development.md#github-actions) for artifacts and [security reporting](../../SECURITY.md) for sensitive issues.
+Follow the [CI rules and artifacts](development.md#github-actions). Keep applicable checks green and resolve conversations before squash merge; no additional approving reviewer is required. Emulator tests are manual; benchmarks/device acceptance are separate.
 
 ## Documentation and translations
 
-Each document in `docs/en` has a same-named counterpart in `docs/vi`. English is the technical reference; update both versions together and retain the cross-language link. Keep identifiers, commands, paths and units unchanged. Match UI labels to the corresponding Android string resources and use natural Vietnamese with consistent terminology.
+Keep same-named `docs/en` and `docs/vi` pages aligned, using English as the technical reference. Preserve cross-language links, identifiers, commands, paths and units. Match UI labels to string resources; use natural, consistent Vietnamese.
 
-Document supported behavior, setup tasks, technical contracts and reproducible checks. Use examples that readers can follow in their own environment. Verify relative links, anchors and command examples after moves or heading changes.
+Write the minimum needed to perform a task or understand a contract. Give each detail one primary home and link to it elsewhere. Verify relative links, anchors and commands after edits.
 
 ## License
 
-InkNest code and documentation use the [MIT license](../../LICENSE). Keep third-party copyright and license notices intact; these components retain their own terms. APK signing certificates are separate from source licensing.
+Code/docs use [MIT](../../LICENSE). Preserve third-party notices and terms; signing certificates are separate from licensing.

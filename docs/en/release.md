@@ -72,16 +72,7 @@ Unsigned and signed transfer artifacts expire after one day and are deleted afte
 
 ## Build and sign locally
 
-Use Java 21 and the Gradle wrapper as described in [development](development.md):
-
-```powershell
-.\gradlew.bat spotlessCheck :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease
-```
-
-| Build | APK |
-| --- | --- |
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` |
-| Unsigned optimized release | `app/build/outputs/apk/release/app-release-unsigned.apk` |
+Follow [development](development.md) for prerequisites, build/check commands and unsigned APK paths.
 
 In Android Studio, choose **Build → Generate Signed App Bundle or APK → APK**, select `app`, choose the release keystore and build the release variant. Verify the APK with `apksigner verify --verbose --print-certs` and calculate its checksum with `Get-FileHash <apk> -Algorithm SHA256`. Keep matching mapping files privately.
 
@@ -95,10 +86,8 @@ The signing and draft jobs do not check out application code. Only the draft job
 
 ## Acceptance and compatibility
 
-Check permissions, reading-source setup, the Home role, app launching, book opening, Library, Statistics and recovery on the signed APK. Verify E-Ink contrast and ghosting on a physical panel; use the [reliability guide](reliability.md) for device-specific checks. Record device, firmware and KOReader versions when describing compatibility or known issues.
-
-Reading integration supports KOReader and primary internal storage. See [reading cache and opening](reading-cache.md) for URI handling and recovery. SD/cloud providers, a reader engine, write-back, OEM display-refresh controls and periodic background synchronization are outside the supported scope.
+Complete [device acceptance](reliability.md) on the signed APK and record device/firmware/KOReader versions. [Setup](setup.md) describes supported sources and recovery; [reading cache](reading-cache.md) covers URI/opening behavior.
 
 The reading database is a rebuildable cache. Schema changes can recreate it; pins, preferences and source selections are stored separately in DataStore. App backup and device transfer exclude InkNest data, and SAF grants are device-local.
 
-Runtime diagnostics are enabled only in debug builds. Third-party notices are available in About. InkNest uses the [MIT license](../../LICENSE); bundled components retain their own licenses.
+Third-party notices are in About. InkNest uses [MIT](../../LICENSE); bundled components retain their own licenses.

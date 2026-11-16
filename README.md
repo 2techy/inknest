@@ -46,7 +46,7 @@ InkNest requires **Android 8.0 or later (API 26)**. Install KOReader separately 
 3. In **Settings → Reading & data**, select KOReader, its data folder and your book folders.
 4. Refresh your library. Optionally set InkNest as your default launcher in **Settings → Launcher**.
 
-The [setup guide](docs/en/setup.md) covers folder selection, permissions, recovery and switching back to your previous launcher.
+The [setup guide](docs/en/setup.md) covers folder selection, permissions, app updates and switching back to your previous launcher.
 
 ## 🛠️ Build from source
 
@@ -56,7 +56,7 @@ Use **Java 21**, **Android SDK Platform 37** and the checked-in Gradle wrapper. 
 .\gradlew.bat :app:assembleDebug
 ```
 
-On macOS/Linux, use `bash ./gradlew :app:assembleDebug`. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+On macOS/Linux, use `bash ./gradlew :app:assembleDebug`. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Debug uses a separate application ID (`dev.twotechy.inknest.debug`) so it can be installed alongside release.
 
 InkNest uses Kotlin, Jetpack Compose, Room, DataStore and manual dependency injection. See [development](docs/en/development.md) for SDK setup, installation and checks, or [architecture](docs/en/architecture.md) for the application structure.
 

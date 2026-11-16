@@ -84,6 +84,10 @@ Commands use Windows PowerShell. On POSIX use `bash ./gradlew` instead of
 | Connected Android tests | `.\gradlew.bat :app:connectedDebugAndroidTest` |
 | Performance APKs | `.\gradlew.bat :app:assembleBenchmark :benchmark:assembleBenchmark` |
 
+Debug uses `dev.twotechy.inknest.debug`; release uses `dev.twotechy.inknest`. Preserve
+this separation so both can coexist on physical devices. Keep their settings and SAF
+grants separate; debug cannot install production updates through the in-app updater.
+
 Install on an authorized device using `:app:installDebug` or the [development guide's ADB command](docs/en/development.md).
 With multiple devices, specify an ADB serial for installs and `-Device` for the benchmark
 runner. Read native tests before running them on personal devices: they may exercise
@@ -114,6 +118,27 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
   tooling explicitly; there is no Gradle task replacing the MCP safeguard.
 - Never claim a check passed unless executed successfully. Distinguish dry runs from
   executed tests and emulator screenshots from physical E-Ink acceptance.
+
+## Documentation updates
+
+- Keep docs minimal and task-focused: state the purpose, then the steps or contract.
+  Remove repetition, obvious explanations and obsolete history; preserve prerequisites,
+  limits, failure/recovery behavior and reproducible commands.
+- Give each detail one primary home and link elsewhere. Keep user steps in setup/feature
+  guides, technical contracts in their owning guides and agent-only rules in this file.
+  Keep README as the project entry point, linking to detailed guides.
+  Read token values from code rather than duplicating pixel tables or screen specifications.
+- Update same-named `docs/en` and `docs/vi` pages together; English is the technical
+  reference. Keep language links, identifiers, commands, paths and units aligned, and
+  match UI labels to the corresponding string resources.
+- Verify claims against the code, configuration, scripts and workflows included in the
+  same change. Do not document unrelated local-only edits as shipped behavior or promote
+  unverified workarounds and performance claims into guidance.
+- Edit existing sections instead of appending change notes. Keep filenames and externally
+  referenced anchors stable unless restructuring is requested; update affected links.
+- For docs-only changes, check relative links, assets, anchors, command examples,
+  translation parity and `git diff --check`. Report static checks separately from commands
+  actually executed; builds and device tests are unnecessary unless behavior also changes.
 
 ## Data, generated files and release boundaries
 

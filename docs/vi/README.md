@@ -1,6 +1,8 @@
 # Tài liệu InkNest
 
-[English](../en/README.md)
+[English](../en/README.md) · [Giới thiệu dự án](../../README.md)
+
+Tra cách thiết lập, contract tính năng và quy trình phát triển.
 
 ## Sử dụng InkNest
 
@@ -23,6 +25,4 @@
 - [Đo hiệu năng](benchmarking.md): dữ liệu kiểm thử, phép đo và profile tối ưu ứng dụng.
 - [Phát hành](release.md): ký APK và kiểm tra bản phân phối.
 
-InkNest yêu cầu Android 8.0 trở lên (API 26). Tải APK từ [GitHub Releases](https://github.com/2techy/inknest/releases/latest). Ứng dụng hoạt động ngoại tuyến và vẫn đang được phát triển. Lần biên dịch đầu tiên từ mã nguồn cần tải các thư viện phụ thuộc. Xem [giới thiệu dự án](../../README.md), [giấy phép MIT](../../LICENSE) và [thông báo bên thứ ba](../../app/src/main/assets/licenses).
-
-Trừ khi có ghi chú khác, các lệnh cần được chạy tại thư mục gốc của kho mã và các đường dẫn mã nguồn cũng tính từ đó.
+Trừ khi ghi khác, lệnh và đường dẫn mã nguồn tính từ gốc kho mã.
