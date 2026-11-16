@@ -6,17 +6,26 @@ Tính năng Thống kê đọc dữ liệu từ `settings/statistics.sqlite3` tr
 
 ## Màn hình và đơn vị
 
-Lựa chọn Thời gian/Trang áp dụng đồng thời cho Hôm nay, trung bình ngày, tiêu chí tính chuỗi ngày đọc, tổng theo kỳ, sắc độ lịch hoạt động và biểu đồ. Hôm nay chỉ hiện đơn vị đang chọn. Các phần trên màn hình lần lượt là Hôm nay, trung bình ngày/chuỗi ngày đọc, xu hướng, lịch hoạt động và tổng theo kỳ.
+Menu ba chấm trên header cho chọn Thời gian/Số trang, đánh dấu lựa chọn hiện tại và có lệnh làm mới. Vẫn hỗ trợ kéo để làm mới. Đơn vị áp dụng cho Hôm nay, trung bình ngày, tiêu chí tính chuỗi ngày đọc, tổng theo kỳ, sắc độ lịch và biểu đồ. Màn hình lần lượt hiển thị ba thẻ có icon và viền cho Hôm nay, trung bình ngày, chuỗi hiện tại; sau đó là xu hướng, lịch hoạt động và tổng theo kỳ. Các khối dùng cùng nhịp với Trang chủ: 24dp trước divider của khối tiếp theo, 12dp từ divider đến tiêu đề, 12dp từ tiêu đề lịch/bảng tổng đến nội dung. Bộ lọc xu hướng vẫn giữ khoảng cách nội bộ gọn và vùng chạm 48dp.
 
-Trung bình ngày được tính trên 30 ngày lịch gần nhất, gồm hôm nay và cả những ngày không đọc. Nếu hôm nay có đọc, chuỗi ngày đọc được tính đến hôm nay. Nếu chưa đọc hôm nay, chuỗi kết thúc ở hôm qua vẫn được giữ cho tới hết ngày. Thiếu dữ liệu trang có nghĩa là chưa xác định, không phải 0.
+Trung bình ngày giữ cách tính trên 30 ngày lịch gần nhất, gồm hôm nay và những ngày không đọc. Chuỗi ngày tính đến hôm nay nếu có đọc, hoặc giữ chuỗi kết thúc hôm qua cho tới hết hôm nay. Thiếu dữ liệu trang là chưa xác định, không phải 0.
 
-Tổng theo kỳ gồm tuần này tính từ thứ Hai, tháng này, năm nay và toàn bộ thời gian. Biểu đồ có các mức: Ngày (30 ngày gần nhất), Tuần (12 tuần bắt đầu từ thứ Hai, gồm tuần hiện tại chưa kết thúc), Tháng (12 tháng gồm tháng hiện tại), Năm (mỗi năm từ năm đầu có dữ liệu). Khoảng không có dữ liệu được điền 0. Mọi mức đều cộng từ cùng các tổng theo ngày đã lưu, không đọc lại nguồn. Đổi mức thời gian của biểu đồ không thay đổi tổng theo kỳ, trung bình, chuỗi ngày đọc hay lịch hoạt động; đơn vị đã chọn áp dụng cho mọi mức.
+Tổng theo kỳ gồm tuần này từ thứ Hai, tháng này, năm nay và toàn bộ thời gian. Bộ lọc trong khối Xu hướng đọc chỉ đổi khoảng ngày và tổng của biểu đồ:
+
+| Bộ lọc | Khoảng lịch | Cột |
+| --- | --- | --- |
+| Tuần | Thứ Hai–Chủ nhật hiện tại | Ngày |
+| Tháng | Tháng hiện tại | Tuần thứ Hai–Chủ nhật, cắt tại ranh giới tháng và ghi nhãn khoảng ngày |
+| Năm | Năm hiện tại | Tháng 1–12 |
+| Tất cả | Năm đầu có dữ liệu đến năm hiện tại | Năm; một cột năm hiện tại khi dữ liệu rỗng |
+
+Cột hiện tại chỉ cộng đến hôm nay; cột tương lai để trống, khoảng đã qua không đọc là 0. Nhãn và cột cuộn ngang cùng nhau khi thiếu chỗ, trục giá trị giữ cố định. Các thẻ chỉ số, lịch và bảng tổng giữ kỳ riêng. Mọi phép tính dùng tổng ngày trong cache, không đọc lại nguồn.
 
 Lịch hoạt động dạng bản đồ nhiệt trải hết chiều rộng nội dung, tự điều chỉnh từ 16 đến 52 cột tuần; mỗi tuần gồm thứ Hai đến Chủ nhật. Với chiều rộng tương đương Tango, lịch hiển thị khoảng 26 tuần. Lề dành cho nhãn thứ rộng 48dp và tăng theo cỡ chữ. Ô vuông có cạnh tối đa 10dp, cách nhau khoảng 3dp theo chiều ngang và 2dp theo chiều dọc. Lịch giữ nhãn tháng/thứ, không có chú thích số tuần hoặc thang chú giải ít/nhiều. Ngày tương lai không hiển thị; ngày chưa xác định có dấu gạch chéo. Ô không có hoạt động có viền nhạt 0.75dp; ô có hoạt động dùng màu xám đặc, bo góc 2dp.
 
 Sắc độ được tính tương đối từ các giá trị dương đã biết trong khoảng đang hiển thị, riêng cho thời gian và số trang. Các ngưỡng phân vị dưới 25/50/75 chia hoạt động thành bốn mức xám. Ngày có giá trị 0 hoặc chưa xác định không ảnh hưởng ngưỡng. Khi tất cả giá trị dương bằng nhau, kể cả chỉ có một ngày đọc, ứng dụng dùng mức xám 3 để dễ nhìn. Màu ô biểu thị mức hoạt động tương đối, không tương ứng với ngưỡng phút/trang cố định và không thay đổi cách tính tổng.
 
-Bộ lọc Thư viện và tab chọn đơn vị Thống kê dùng chung ChoiceTab: chữ có độ đậm medium, cỡ 12sp và chiều cao dòng 16sp, phần hiển thị cao tối thiểu 32dp, vùng chạm tối thiểu 48dp. Tab chọn mức thời gian dùng cùng kiểu chữ gọn. Chữ theo cỡ hệ thống; trang cuộn dọc, dải tab cuộn ngang khi không đủ chỗ. Chiều rộng cột biểu đồ được giới hạn để khi ít dữ liệu, cột không thành khối đen quá lớn.
+Bộ lọc Thư viện và tab chọn kỳ Thống kê dùng chung ChoiceTab: chữ medium 12sp/16sp, phần hiển thị cao tối thiểu 32dp, vùng chạm tối thiểu 48dp. Các tab chọn kỳ Thống kê nằm trong một khung viền chung cao hiển thị 32dp; mục đang chọn lấp đầy khung, vùng chạm vẫn tối thiểu 48dp. Menu tùy chọn có chiều rộng gọn, căn theo cạnh cuối header. Chữ theo cỡ hệ thống; trang cuộn dọc, tab và biểu đồ cuộn ngang khi không đủ chỗ. Cột có giới hạn chiều rộng; trục dùng bước chia phút/giờ/trang dễ đọc.
 
 ## Quy tắc đếm trang
 
@@ -38,17 +47,15 @@ Việc dọn dẹp dựa trên con trỏ đã được Room xác nhận ghi, k�
 
 Bộ nhớ đệm được phân vùng theo cây thư mục KOReader; đổi thư mục sách không làm mất thống kê. Xóa bộ nhớ đệm đọc hoặc ngắt kết nối cũng xóa thống kê, nhưng giữ tùy chọn giao diện và ứng dụng đã ghim. Khi đổi schema trong giai đoạn phát triển, dữ liệu đệm đọc được tạo lại, không có migration.
 
-Thống kê được cập nhật lúc khởi động, khi ứng dụng trở lại hoạt động và khi người dùng yêu cầu làm mới từ Trang chủ/Cài đặt/Thống kê. Các bên gọi đồng thời dùng chung tác vụ cấp ứng dụng. Đổi tab, đơn vị, mức thời gian, từ khóa tìm kiếm hoặc đồng hồ không đọc SAF. Mutex điều phối việc chuyển nguồn đọc ngăn bản chụp cũ nạp lại dữ liệu của nguồn đã ngắt kết nối.
+Thống kê được cập nhật lúc khởi động, khi ứng dụng trở lại hoạt động và khi người dùng yêu cầu làm mới từ Trang chủ/Cài đặt/Thống kê. Các bên gọi đồng thời dùng chung tác vụ cấp ứng dụng. Đổi tab, đơn vị, kỳ biểu đồ, từ khóa tìm kiếm hoặc đồng hồ không đọc SAF. Mutex điều phối việc chuyển nguồn đọc ngăn bản chụp cũ nạp lại dữ liệu của nguồn đã ngắt kết nối.
 
 ## Ngày, múi giờ và trạng thái
 
 Thời điểm nội bộ được lưu bằng mili giây tính từ epoch và diễn giải theo múi giờ hệ thống hiện tại. Dòng dữ liệu kéo dài qua nửa đêm được tính vào ngày bắt đầu, dùng Java ZoneId và tính cả giờ mùa hè (DST). Khi đổi múi giờ, các dòng gốc trong Room được nhóm lại theo ngày, mỗi lô tối đa 500 dòng, vào phiên bản dữ liệu tạm khác; không đọc lại SAF hoặc đổi thời điểm cập nhật nguồn. Tổng của ngày tương lai vẫn nằm trên đĩa nhưng bị ẩn khỏi Trang chủ/Thống kê cho tới đúng ngày đó. Thời lượng và số trang không phụ thuộc sách hiện tại. Phép tính thời gian giữ đơn vị giây cho tới khi hiển thị.
 
-Room thực hiện tổng hợp SQL và nhập dữ liệu theo giới hạn. I/O nguồn/bản chụp chạy trên IO dispatcher; việc chuyển dữ liệu thành nội dung bảng thống kê chạy trên Default dispatcher. Screen không phân tích dữ liệu. Thống kê nhanh trên Trang chủ và màn hình Thống kê dùng chung tổng theo ngày. Đổi đơn vị/mức thời gian không đọc lại các dòng gốc; đổi nguồn chọn phiên bản dữ liệu đệm tương ứng.
+Room thực hiện tổng hợp SQL và nhập dữ liệu theo giới hạn. I/O nguồn/bản chụp chạy trên IO dispatcher; việc chuyển dữ liệu thành nội dung bảng thống kê chạy trên Default dispatcher. Screen không phân tích dữ liệu. Thống kê nhanh trên Trang chủ và màn hình Thống kê dùng chung tổng theo ngày. Đổi đơn vị/kỳ biểu đồ không đọc lại các dòng gốc; đổi nguồn chọn phiên bản dữ liệu đệm tương ứng.
 
-StatsViewModel lưu đơn vị và mức thời gian trong SavedStateHandle. Route theo dõi trạng thái theo vòng đời; Screen chỉ nhận trạng thái và callback. Việc duy trì múi giờ ở repository có phạm vi toàn ứng dụng. Repository và StatsViewModel dùng chung `StatisticsClock` được truyền vào; đồng hồ kiểm tra ngày/múi giờ mỗi phút. Kiểm thử dùng đồng hồ giả và dispatcher được truyền vào. Làm mới lúc khởi động thuộc bộ điều phối làm mới khi ứng dụng hoạt động; những lần đổi nguồn KOReader sau đó vẫn tự làm mới.
-
-Màn hình không lặp lại chú thích kỳ tính trung bình hoặc đoạn giải thích cách đếm trang. Tổng trên biểu đồ chỉ hiện giá trị và đơn vị. Lịch tự điều chỉnh mật độ để dùng hết chiều rộng nội dung.
+StatsViewModel lưu đơn vị và kỳ biểu đồ trong SavedStateHandle, khôi phục lựa chọn mức thời gian cũ khi chưa có kỳ mới. Route theo dõi trạng thái theo vòng đời; Screen chỉ nhận trạng thái và callback. Việc duy trì múi giờ ở repository có phạm vi toàn ứng dụng. Repository và StatsViewModel dùng chung `StatisticsClock` được truyền vào; đồng hồ kiểm tra ngày/múi giờ mỗi phút. Kiểm thử dùng đồng hồ giả và dispatcher được truyền vào. Làm mới lúc khởi động thuộc bộ điều phối làm mới khi ứng dụng hoạt động; những lần đổi nguồn KOReader sau đó vẫn tự làm mới.
 
 ## Nhịp đọc trên Trang chủ
 

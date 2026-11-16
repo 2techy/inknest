@@ -99,7 +99,7 @@ Appearance groups Language and Display mode under General with static selection 
 
 Onboarding has three steps, a static 3dp progress strip, visible step count and progress semantics. Content scrolls above a fixed footer; the primary action and Skip have accessible targets. Reading setup reuses real source controls; launcher requests are explicit. Save errors are announced politely and saving disables navigation/completion.
 
-Stats has Today, daily average and streak in three equal columns, then trend, activity calendar and totals. Time/Pages controls every reading value. The heatmap fits 16–52 weeks, square cells up to 10dp, 3/2dp gaps, a font-scaled 48dp weekday gutter, 0.75dp empty outlines and 2dp corners. Month/weekday labels remain; future dates are absent. Home uses the same time-only calendar. See [statistics](statistics.md) for intensity and counting semantics.
+Stats orders three outlined icon cards (Today, daily average, current streak), trend, activity calendar and totals. The header menu selects Time/Pages and offers Refresh. The in-block Week/Month/Year/All filter changes only the chart. Home and Stats share the responsive heatmap. See [statistics](statistics.md) for periods, intensity and counting semantics.
 
 ## Gestures and refresh
 

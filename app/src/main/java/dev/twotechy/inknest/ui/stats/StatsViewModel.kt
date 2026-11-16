@@ -9,7 +9,6 @@ import dev.twotechy.inknest.data.repository.StatisticsPeriod
 import dev.twotechy.inknest.data.repository.StatisticsRepository
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
-import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.platform.clock.StatisticsClock
 import java.time.LocalDate
@@ -34,7 +33,7 @@ internal data class StatsOverview(
 
 internal data class StatsOptions(
     val unit: StatisticsUnit = StatisticsUnit.Time,
-    val granularity: StatisticsGranularity = StatisticsGranularity.Days,
+    val period: StatisticsPeriod = StatisticsPeriod.ThisWeek,
 )
 
 internal data class StatsUiState(
@@ -52,13 +51,12 @@ internal class StatsViewModel(
     defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     private val options = combine(
-        saved.getStateFlow("stats.granularity", StatisticsGranularity.Days.name),
+        saved.getStateFlow("stats.period", restoredPeriod().name),
         saved.getStateFlow("stats.unit", StatisticsUnit.Time.name),
-    ) { granularity, unit ->
+    ) { period, unit ->
         StatsOptions(
             StatisticsUnit.entries.find { it.name == unit } ?: StatisticsUnit.Time,
-            StatisticsGranularity.entries.find { it.name == granularity }
-                ?: StatisticsGranularity.Days,
+            StatisticsPeriod.entries.find { it.name == period } ?: StatisticsPeriod.ThisWeek,
         )
     }
     val uiState = combine(repository.data, clock.moments, options) {
@@ -81,15 +79,22 @@ internal class StatsViewModel(
                     StatisticsPeriod.entries.associateWith(it::total),
                     it.days,
                     it.today,
-                    it.chart(options.granularity),
+                    it.chart(options.period),
                 )
             },
         )
     }.flowOn(defaultDispatcher)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsUiState())
 
-    fun granularity(granularity: StatisticsGranularity) {
-        saved["stats.granularity"] = granularity.name
+    private fun restoredPeriod(): StatisticsPeriod = when (saved.get<String>("stats.granularity")) {
+        "Weeks" -> StatisticsPeriod.ThisMonth
+        "Months" -> StatisticsPeriod.ThisYear
+        "Years" -> StatisticsPeriod.AllTime
+        else -> StatisticsPeriod.ThisWeek
+    }
+
+    fun period(period: StatisticsPeriod) {
+        saved["stats.period"] = period.name
     }
     fun unit(unit: StatisticsUnit) {
         saved["stats.unit"] = unit.name

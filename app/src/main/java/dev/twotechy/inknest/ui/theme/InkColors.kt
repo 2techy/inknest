@@ -13,6 +13,10 @@ internal object InkPalette {
     val background = Color.White
 }
 
+internal object InkStatsPalette {
+    val chartGrid = Color(0xFFD0D0D0)
+}
+
 internal object InkHeatmapPalette {
     val emptyOutline = Color(0xFFB0B0B0)
     val fills = listOf(

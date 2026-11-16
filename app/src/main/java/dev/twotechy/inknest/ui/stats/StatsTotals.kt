@@ -15,12 +15,20 @@ import dev.twotechy.inknest.data.repository.StatisticsPeriod
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.formatStatsAmount
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun StatsTotals(totals: Map<StatisticsPeriod, StatisticsAmount>, unit: StatisticsUnit) {
-    Text(stringResource(R.string.stats_totals), style = MaterialTheme.typography.titleMedium)
-    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.sm)) {
+    Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {
+        Text(stringResource(R.string.stats_totals), style = MaterialTheme.typography.titleMedium)
+        StatsTotalRows(totals, unit)
+    }
+}
+
+@Composable
+private fun StatsTotalRows(totals: Map<StatisticsPeriod, StatisticsAmount>, unit: StatisticsUnit) {
+    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
         StatisticsPeriod.entries.forEachIndexed { index, period ->
             if (index > 0) HorizontalDivider()
             Row(

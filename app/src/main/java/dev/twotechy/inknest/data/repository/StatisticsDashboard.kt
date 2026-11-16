@@ -1,13 +1,16 @@
 package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.model.StatisticsAmount
-import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
-data class StatisticsBucket(val date: LocalDate, val amount: StatisticsAmount)
+data class StatisticsBucket(
+    val date: LocalDate,
+    val amount: StatisticsAmount,
+    val lastDay: LocalDate = date,
+)
 enum class StatisticsPeriod { ThisWeek, ThisMonth, ThisYear, AllTime }
 
 data class StatisticsDashboard(val today: LocalDate, val days: Map<LocalDate, StatisticsAmount>) {
@@ -37,8 +40,8 @@ data class StatisticsDashboard(val today: LocalDate, val days: Map<LocalDate, St
         }
     }
 
-    fun chart(granularity: StatisticsGranularity): List<StatisticsBucket> =
-        statisticsChartBuckets(days, today, granularity)
+    fun chart(period: StatisticsPeriod): List<StatisticsBucket> =
+        statisticsChartBuckets(days, today, period)
 
     private fun totalSince(first: LocalDate): StatisticsAmount =
         days.filterKeys { it >= first }.values.fold(StatisticsAmount(), StatisticsAmount::plus)

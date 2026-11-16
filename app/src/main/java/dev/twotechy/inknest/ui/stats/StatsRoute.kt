@@ -16,7 +16,7 @@ internal fun StatsRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     StatsScreen(
         state,
-        StatsActions(viewModel::granularity, viewModel::unit, viewModel::refresh, onSettings),
+        StatsActions(viewModel::period, viewModel::unit, viewModel::refresh, onSettings),
         modifier,
         contentPadding,
     )

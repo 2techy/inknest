@@ -1,10 +1,11 @@
 package dev.twotechy.inknest.data
 
+import dev.twotechy.inknest.data.repository.StatisticsDashboard
 import dev.twotechy.inknest.data.repository.StatisticsPeriod
 import dev.twotechy.inknest.data.repository.buildStatisticsDashboard
 import dev.twotechy.inknest.data.repository.miniStatistics
 import dev.twotechy.inknest.model.ReadingEvent
-import dev.twotechy.inknest.model.StatisticsGranularity
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import java.time.Instant
 import java.time.LocalDate
@@ -40,21 +41,10 @@ class StatisticsSummaryTest {
             event("2026-01-02T12:00:00Z", 600),
         )
         val dashboard = buildStatisticsDashboard(events, today, zone)
-        val week = dashboard.chart(StatisticsGranularity.Days)
-        assertEquals(360L, week.sumOf { it.amount.seconds })
-        assertEquals(2, dashboard.days.filterKeys { it >= today.minusDays(6) }.size)
-        assertEquals(30, week.size)
-        assertEquals(300L, week[28].amount.seconds)
+        assertEquals(300L, dashboard.days[today.minusDays(1)]!!.seconds)
+        assertEquals(60L, dashboard.todayAmount.seconds)
         assertEquals(1 to 2, miniStatistics(events, today, zone))
-        val year = dashboard.chart(StatisticsGranularity.Months)
-        assertEquals(12, year.size)
-        assertEquals(LocalDate.parse("2025-02-01"), year.first().date)
-        assertEquals(360L, year.sumOf { it.amount.seconds })
         assertEquals(960L, dashboard.total(StatisticsPeriod.AllTime).seconds)
-        assertEquals(
-            30,
-            dashboard.chart(StatisticsGranularity.Days).size,
-        )
     }
 
     @Test fun timezoneAndDstRebinInstantsWithoutDroppingOrDuplicatingDurations() {
@@ -67,10 +57,10 @@ class StatisticsSummaryTest {
         assertEquals(0 to 1, miniStatistics(events, today, ZoneId.of("America/New_York")))
         assertEquals(1 to 2, miniStatistics(events, today, ZoneId.of("UTC")))
         val dashboard = buildStatisticsDashboard(events, today, ZoneId.of("America/New_York"))
-        val summary = dashboard.chart(StatisticsGranularity.Days)
+        val summary = dashboard.chart(StatisticsPeriod.ThisMonth)
         assertEquals(3660L, summary.sumOf { it.amount.seconds })
         assertEquals(1, dashboard.days.size)
-        assertEquals(0L, summary.last().amount.seconds)
+        assertEquals(0L, dashboard.todayAmount.seconds)
     }
 
     @Test fun pagesDeduplicateWithinDayAndLayoutWhileEveryDurationIsRetained() {
@@ -90,8 +80,6 @@ class StatisticsSummaryTest {
         assertEquals(1L, stats.todayAmount.pages)
         assertEquals(2, stats.streak(StatisticsUnit.Pages))
         assertEquals(4.0 / 30, stats.average(StatisticsUnit.Pages)!!, 0.0001)
-        assertEquals(4L, stats.chart(StatisticsGranularity.Days).sumOf { it.amount.pages ?: 0 })
-        assertEquals(4L, stats.chart(StatisticsGranularity.Months).sumOf { it.amount.pages ?: 0 })
     }
 
     @Test fun streakGracePeriodAndUnknownPageDataAreUnitSpecific() {
@@ -117,34 +105,77 @@ class StatisticsSummaryTest {
         )
     }
 
-    @Test fun calendarWeeksMonthsAndYearsRetainTotalsAcrossYearBoundary() {
+    @Test fun periodsClipCalendarBoundariesAndExcludeFutureReadings() {
         val today = LocalDate.parse("2026-01-05")
-        val events = listOf(
-            event("2025-12-28T12:00:00Z", 60).copy(page = 1),
-            event("2025-12-29T12:00:00Z", 120).copy(page = 1),
-            event("2026-01-04T12:00:00Z", 180).copy(page = 1),
-            event("2026-01-05T12:00:00Z", 240).copy(page = 1),
-            event("2026-01-06T12:00:00Z", 900).copy(page = 1),
+        val stats = StatisticsDashboard(
+            today,
+            mapOf(
+                LocalDate.parse("2025-12-28") to StatisticsAmount(60, 1),
+                LocalDate.parse("2025-12-29") to StatisticsAmount(120, 1),
+                LocalDate.parse("2026-01-04") to StatisticsAmount(180, 1),
+                today to StatisticsAmount(240, 1),
+                today.plusDays(1) to StatisticsAmount(900, 1),
+            ),
         )
-        val stats = buildStatisticsDashboard(events, today, ZoneId.of("UTC"))
-        StatisticsGranularity.entries.forEach { granularity ->
-            val buckets = stats.chart(granularity)
-            assertEquals(600L, buckets.sumOf { it.amount.seconds })
-            assertEquals(4L, buckets.sumOf { it.amount.pages ?: 0 })
+        StatisticsPeriod.entries.forEach { period ->
+            val buckets = stats.chart(period)
+            val expected = when (period) {
+                StatisticsPeriod.ThisWeek -> 240L
+                StatisticsPeriod.AllTime -> 600L
+                else -> 420L
+            }
+            assertEquals(expected, buckets.sumOf { it.amount.seconds })
         }
-        val weeks = stats.chart(StatisticsGranularity.Weeks)
-        assertEquals(12, weeks.size)
-        assertEquals(LocalDate.parse("2025-12-29"), weeks[10].date)
-        assertEquals(300L, weeks[10].amount.seconds)
-        assertEquals(240L, weeks.last().amount.seconds)
-        assertEquals(12, stats.chart(StatisticsGranularity.Months).size)
-        val years = stats.chart(StatisticsGranularity.Years)
-        assertEquals(listOf(2025, 2026), years.map { it.date.year })
-        assertEquals(listOf(180L, 420L), years.map { it.amount.seconds })
-        assertEquals(
-            1,
-            buildStatisticsDashboard(emptyList(), today, ZoneId.of("UTC"))
-                .chart(StatisticsGranularity.Years).size,
-        )
+        val weeks = stats.chart(StatisticsPeriod.ThisMonth)
+        assertEquals(LocalDate.parse("2026-01-01"), weeks.first().date)
+        assertEquals(LocalDate.parse("2026-01-04"), weeks.first().lastDay)
+        assertEquals(180L, weeks.first().amount.seconds)
+        assertEquals(240L, weeks[1].amount.seconds)
+        assertEquals(LocalDate.parse("2026-01-31"), weeks.last().lastDay)
+        assertEquals(listOf(2025, 2026), stats.chart(StatisticsPeriod.AllTime).map { it.date.year })
+        assertEquals(12, stats.chart(StatisticsPeriod.ThisYear).size)
+        assertEquals(7, stats.chart(StatisticsPeriod.ThisWeek).size)
+    }
+
+    @Test fun monthWeeksCoverFourToSixWeeksAndKeepLeapDayAndUnknownPages() {
+        for ((month, count) in listOf("2021-02-28" to 4, "2024-02-29" to 5, "2026-03-31" to 6)) {
+            val today = LocalDate.parse(month)
+            val stats = StatisticsDashboard(
+                today,
+                mapOf(
+                    today.withDayOfMonth(1).minusDays(1) to StatisticsAmount(999, 5),
+                    today to StatisticsAmount(60, null),
+                    today.plusDays(1) to StatisticsAmount(999, 5),
+                ),
+            )
+            val weeks = stats.chart(StatisticsPeriod.ThisMonth)
+            assertEquals(count, weeks.size)
+            assertEquals(today, weeks.last().lastDay)
+            assertEquals(60L, weeks.sumOf { it.amount.seconds })
+            assertNull(weeks.last().amount.pages)
+            assertEquals(
+                (1..today.dayOfMonth).toList(),
+                weeks.flatMap { bucket ->
+                    (bucket.date.dayOfMonth..bucket.lastDay.dayOfMonth).toList()
+                },
+            )
+        }
+    }
+
+    @Test fun emptyHistoryStillHasCurrentYearAndCalendarGapsStayZero() {
+        val today = LocalDate.parse("2026-11-05")
+        val empty = StatisticsDashboard(today, emptyMap()).chart(StatisticsPeriod.AllTime)
+        assertEquals(listOf(2026), empty.map { it.date.year })
+        assertEquals(StatisticsAmount(), empty.single().amount)
+        val history = StatisticsDashboard(
+            today,
+            mapOf(
+                today.minusYears(2) to StatisticsAmount(60, 1),
+                today to StatisticsAmount(120, 2),
+                today.plusYears(1) to StatisticsAmount(999, 5),
+            ),
+        ).chart(StatisticsPeriod.AllTime)
+        assertEquals(listOf(60L, 0L, 120L), history.map { it.amount.seconds })
+        assertEquals(listOf(1L, 0L, 2L), history.map { it.amount.pages })
     }
 }
