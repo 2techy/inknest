@@ -6,13 +6,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -32,6 +36,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
 import dev.twotechy.inknest.ui.theme.InkMenuTokens
@@ -52,7 +57,9 @@ internal fun ContextMenu(
         properties = PopupProperties(focusable = true),
     ) {
         Surface(
-            modifier = modifier,
+            modifier = modifier.widthIn(
+                max = InkMenuTokens.maxWidth,
+            ).width(InkMenuTokens.defaultWidth),
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(InkBorder.default, MaterialTheme.colorScheme.outlineVariant),
@@ -99,13 +106,16 @@ internal fun ContextMenuEntryRow(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
             onClick = onClick,
-        ).padding(horizontal = InkSpacing.lg, vertical = InkSpacing.md),
-        horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
+        ).padding(
+            horizontal = InkMenuTokens.horizontalPadding,
+            vertical = InkMenuTokens.verticalPadding,
+        ),
+        horizontalArrangement = Arrangement.spacedBy(InkMenuTokens.iconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val tint = if (entry.enabled) colors.onSurface else colors.outline
         entry.leadingIcon?.let {
-            Icon(painterResource(it), null, Modifier.size(InkHeaderTokens.iconSize), tint = tint)
+            Icon(painterResource(it), null, Modifier.size(InkMenuTokens.iconSize), tint = tint)
         }
         Text(
             entry.label,
@@ -113,10 +123,37 @@ internal fun ContextMenuEntryRow(
             style = MaterialTheme.typography.bodyLarge,
             color = tint,
         )
-        entry.trailingIcon?.let {
-            Icon(painterResource(it), null, Modifier.size(InkHeaderTokens.iconSize), tint = tint)
+        val trailingIcon =
+            entry.trailingIcon ?: R.drawable.ic_check.takeIf { entry.selected == true }
+        if (trailingIcon != null) {
+            Icon(
+                painterResource(trailingIcon),
+                null,
+                Modifier.size(InkMenuTokens.iconSize),
+                tint = tint,
+            )
+        } else if (entry.selected != null) {
+            Spacer(Modifier.size(InkMenuTokens.iconSize))
         }
     }
+}
+
+@Composable
+internal fun ContextMenuHeader(title: String, onBack: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = InkSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        HeaderIconButton(R.drawable.ic_back, stringResource(R.string.back), onBack)
+        Text(
+            title,
+            Modifier.weight(
+                1f,
+            ).padding(end = InkSpacing.md, top = InkSpacing.sm, bottom = InkSpacing.sm),
+            style = MaterialTheme.typography.titleSmall,
+        )
+    }
+    HorizontalDivider()
 }
 
 private class ContextMenuPosition(private val alignToEnd: Boolean) : PopupPositionProvider {

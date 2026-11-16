@@ -42,6 +42,8 @@ Trang chủ/Thư viện dùng chung bìa mặc định tĩnh và giải mã IO. 
 
 Dùng header, điều khiển và token chung. Giữ thao tác chính dễ tới, nội dung tùy chọn có thể thu gọn, lỗi/retry hiển thị mà không thay dữ liệu thành công. Hàng điều hướng/toggle Cài đặt dùng divider; metadata chỉ đọc không có chevron. Thiết lập cuộn trên footer cố định, có ngữ nghĩa bước/tiến độ và thông báo lỗi lưu; đang lưu khóa điều hướng/hoàn tất.
 
+Bộ lọc Thư viện và kỳ Thống kê dùng chung nhóm tab rộng bằng nhau, cuộn khi cần. Menu dùng token chung, vùng chạm theo chuẩn trợ năng và trạng thái lựa chọn rõ ràng.
+
 Hành vi tính năng nằm ở [thiết lập](setup.md), [Thư viện](library.md) và [Thống kê](statistics.md), không mô tả màn hình lần hai ở đây.
 
 ## Cử chỉ và làm mới

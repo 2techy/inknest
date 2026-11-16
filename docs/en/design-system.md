@@ -42,6 +42,8 @@ Home/Library share a static book placeholder and IO decoding. Clear/disconnect i
 
 Use shared headers, controls and tokens throughout. Keep primary actions reachable, optional content collapsible and errors/retry visible without replacing successful content. Settings navigation/toggle rows share dividers; read-only metadata has no chevron. Onboarding scrolls above a fixed footer, exposes step/progress semantics and announces save errors; saving disables navigation/completion.
 
+Library filters and Stats periods share equal-width segments that scroll when needed. Menus reuse shared tokens, accessible touch targets and explicit selection states.
+
 Feature behavior belongs in [setup](setup.md), [Library](library.md) and [Statistics](statistics.md), rather than a second screen specification here.
 
 ## Gestures and refresh

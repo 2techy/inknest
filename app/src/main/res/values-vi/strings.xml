@@ -184,7 +184,6 @@
     <string name="stats_refresh">Làm mới</string>
     <string name="stats_chart_total">Tổng: %1$s</string>
     <string name="stats_options">Tùy chọn thống kê</string>
-    <string name="stats_selected_option">✓ %1$s</string>
     <string name="stats_current_streak">Chuỗi hiện tại</string>
     <string name="stats_period_week">Tuần</string>
     <string name="stats_period_month">Tháng</string>
