@@ -46,7 +46,7 @@ internal fun ChoiceTab(
     ) {
         Surface(
             Modifier.fillMaxWidth().heightIn(min = InkChoiceTokens.minHeight),
-            shape = RoundedCornerShape(InkRadius.small),
+            shape = RoundedCornerShape(InkRadius.medium),
             color = if (selected) colors.onSurface else colors.surface,
             contentColor = if (selected) colors.surface else colors.onSurface,
         ) {

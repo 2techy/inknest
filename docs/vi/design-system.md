@@ -37,7 +37,15 @@ Tên sách dùng cardTitle; nhãn điều hướng đang chọn dùng độ đ�
 | xxxl | 32 |
 | huge | 40 |
 
-Phần đầu trang cách nội dung 8dp; các phần cách nhau 24dp; tiêu đề phần cách nội dung 12dp. Khoảng đệm trong thẻ là 16dp, hoặc 12dp với thẻ gọn. Các ô trong lưới ứng dụng cách nhau 12dp theo chiều ngang và 16dp theo chiều dọc. Các đoạn chữ liên quan cách nhau 4dp; khoảng cách giữa biểu tượng và chữ, cũng như giữa các nút cùng nhóm, là 12dp. Bán kính bo góc có các mức 4/8/12dp; viền mảnh dày 1dp, viền mặc định dày 1.25dp.
+Phần đầu trang cách nội dung 8dp; các phần cách nhau 24dp; tiêu đề phần cách nội dung 12dp. Khoảng đệm trong thẻ là 16dp, hoặc 12dp với thẻ gọn. Các ô trong lưới ứng dụng cách nhau 12dp theo chiều ngang và 16dp theo chiều dọc. Các đoạn chữ liên quan cách nhau 4dp; khoảng cách giữa biểu tượng và chữ, cũng như giữa các nút cùng nhóm, là 12dp. Viền mảnh dày 1dp, viền mặc định dày 1.25dp.
+
+| `InkRadius` | dp | Áp dụng |
+| --- | --- | --- |
+| `small` | 2 | Chi tiết nhỏ, ô heatmap |
+| `medium` | 4 | Bìa sách, tab, nút, menu, khung icon |
+| `large` | 8 | Thẻ, hộp thoại |
+
+Viền và vùng cắt nội dung dùng chung hình dạng.
 
 | Thành phần | Kích thước cơ sở |
 | --- | --- |

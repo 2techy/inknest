@@ -37,7 +37,15 @@ Book titles use cardTitle; selected navigation labels use weight 600. Important 
 | xxxl | 32 |
 | huge | 40 |
 
-Header/content gap is 8dp; section gap 24dp; heading/content gap 12dp. Cards use 16dp padding, compact cards 12dp. App grid gaps are 12dp horizontal and 16dp vertical. Related text uses 4dp; icon/text and grouped buttons use 12dp. Radii are 4/8/12dp; borders are 1dp thin and 1.25dp default.
+Header/content gap is 8dp; section gap 24dp; heading/content gap 12dp. Cards use 16dp padding, compact cards 12dp. App grid gaps are 12dp horizontal and 16dp vertical. Related text uses 4dp; icon/text and grouped buttons use 12dp. Borders are 1dp thin and 1.25dp default.
+
+| `InkRadius` | dp | Use |
+| --- | --- | --- |
+| `small` | 2 | Fine details, heatmap cells |
+| `medium` | 4 | Covers, tabs, buttons, menus, icon frames |
+| `large` | 8 | Cards, dialogs |
+
+Use the same shape for clipping and borders.
 
 | Component | Baseline |
 | --- | --- |

@@ -104,7 +104,7 @@ internal object InkStatsTokens {
     val heatmapLabelWidth = 48.dp
     val heatmapHorizontalGap = 3.dp
     val heatmapVerticalGap = 2.dp
-    val heatmapCornerRadius = 2.dp
+    val heatmapCornerRadius = InkRadius.small
     val heatmapEmptyStroke = 0.75.dp
     val heatmapCellSize = 10.dp
     val rangeMarker = 2.dp

@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
@@ -25,18 +26,18 @@ import dev.twotechy.inknest.ui.theme.LocalDisplayMode
 
 @Composable
 internal fun BookCover(uri: String?, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(InkRadius.medium)
     val loader = LocalBookCoverLoader.current
     val grayscale =
         remember { ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) }
     BoxWithConstraints(
-        modifier.background(
+        modifier.clip(shape).background(
             MaterialTheme.colorScheme.surfaceVariant,
-            RoundedCornerShape(InkRadius.small),
         )
             .border(
                 InkBorder.default,
                 MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(InkRadius.small),
+                shape,
             ),
         contentAlignment = Alignment.Center,
     ) {

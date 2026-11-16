@@ -5,9 +5,9 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 internal object InkRadius {
-    val small = 4.dp
-    val medium = 8.dp
-    val large = 12.dp
+    val small = 2.dp
+    val medium = 4.dp
+    val large = 8.dp
 }
 
 internal object InkBorder {
