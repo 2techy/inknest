@@ -99,7 +99,7 @@ Trong Giao diện, phần Chung gồm Ngôn ngữ và Chế độ hiển thị, 
 
 Thiết lập ban đầu có ba bước, thanh tiến độ tĩnh dày 3dp, số bước hiển thị và thông tin tiến độ cho công cụ trợ năng. Nội dung cuộn phía trên phần chân trang cố định; nút chính và Bỏ qua có vùng chạm đủ lớn. Bước kết nối dữ liệu đọc dùng lại các điều khiển nguồn thật; yêu cầu đặt trình khởi chạy chỉ xảy ra khi người dùng chủ động chọn. Lỗi lưu được thông báo qua trợ năng mà không ngắt lời nội dung đang đọc; trong lúc lưu, thao tác điều hướng và hoàn tất bị vô hiệu hóa.
 
-Thống kê hiển thị Hôm nay, trung bình ngày và chuỗi ngày đọc trong ba cột bằng nhau, tiếp theo là xu hướng, lịch hoạt động và tổng theo kỳ. Thời gian/Trang áp dụng cho mọi giá trị đọc. Lịch hoạt động dạng bản đồ nhiệt tự điều chỉnh từ 16 đến 52 tuần, với ô vuông tối đa 10dp, khoảng cách ngang/dọc 3/2dp, lề nhãn thứ 48dp tăng theo cỡ chữ, viền ô không có hoạt động 0.75dp và bán kính bo góc 2dp. Giữ nhãn tháng/thứ, không hiện ngày tương lai. Trang chủ dùng cùng lịch theo thời gian. Xem [thống kê](statistics.md) về sắc độ và cách đếm.
+Thống kê lần lượt hiển thị ba thẻ có icon và viền (Hôm nay, trung bình ngày, chuỗi hiện tại), xu hướng, lịch hoạt động và tổng theo kỳ. Menu header cho chọn Thời gian/Số trang và làm mới. Bộ lọc Tuần/Tháng/Năm/Tất cả trong khối xu hướng chỉ đổi biểu đồ. Trang chủ và Thống kê dùng chung lịch tự điều chỉnh theo chiều rộng. Xem [thống kê](statistics.md) về kỳ lịch, sắc độ và cách đếm.
 
 ## Cử chỉ và làm mới
 

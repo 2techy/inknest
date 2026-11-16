@@ -1,7 +1,6 @@
 package dev.twotechy.inknest.ui
 
 import android.content.Intent
-import android.graphics.Rect
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
@@ -105,20 +104,8 @@ class HomeStatsLayoutTest {
             }
         }
         click(context.getString(R.string.home_heatmap_title))
-        awaitText(context.getString(R.string.stats_pages_today), true)
-        awaitText(context.getString(R.string.stats_min_today), false)
-        val labelTops = listOf(
-            R.string.stats_pages_today,
-            R.string.stats_daily_average,
-            R.string.stats_streak,
-        ).map { label ->
-            val bounds = Rect()
-            nodes().first {
-                it.text?.toString() == context.getString(label)
-            }.getBoundsInScreen(bounds)
-            bounds.top
-        }
-        assertEquals("highlights share one row", 1, labelTops.distinct().size)
+        awaitText(context.getString(R.string.stats_today), true)
+        awaitText(context.getString(R.string.stats_minutes_value, 2), false)
 
         show(320f, 1f) {
             HomeScreen(

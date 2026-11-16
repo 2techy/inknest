@@ -100,6 +100,10 @@ internal object InkLibraryTokens {
 internal object InkStatsTokens {
     val chartHeight = 112.dp
     val chartAxisWidth = 48.dp
+    val chartDayWidth = 32.dp
+    val chartRangeWidth = 48.dp
+    val chartMonthWidth = 28.dp
+    val menuWidth = 168.dp
     val maxBarWidth = 24.dp
     val heatmapLabelWidth = 48.dp
     val heatmapHorizontalGap = 3.dp
@@ -107,7 +111,6 @@ internal object InkStatsTokens {
     val heatmapCornerRadius = InkRadius.small
     val heatmapEmptyStroke = 0.75.dp
     val heatmapCellSize = 10.dp
-    val rangeMarker = 2.dp
 }
 
 internal object InkChoiceTokens {

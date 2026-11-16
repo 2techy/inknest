@@ -31,14 +31,20 @@ import dev.twotechy.inknest.ui.theme.InkSpacing
 
 // Static popup: unlike Material DropdownMenu it has no scale/fade transition or shadow.
 @Composable
-internal fun ContextMenu(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+internal fun ContextMenu(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    alignToEnd: Boolean = false,
+    content: @Composable () -> Unit,
+) {
     BlockContentGestures()
     Popup(
-        popupPositionProvider = remember { ContextMenuPosition() },
+        popupPositionProvider = remember(alignToEnd) { ContextMenuPosition(alignToEnd) },
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {
         Surface(
+            modifier = modifier,
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(InkBorder.default, MaterialTheme.colorScheme.outlineVariant),
@@ -54,11 +60,16 @@ internal fun ContextMenu(onDismiss: () -> Unit, content: @Composable () -> Unit)
 }
 
 @Composable
-internal fun ContextMenuItem(label: String, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun ContextMenuItem(
+    label: String,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     Text(
         label,
-        Modifier.fillMaxWidth().heightIn(min = InkHeaderTokens.touchTarget).clickable(
+        modifier.fillMaxWidth().heightIn(min = InkHeaderTokens.touchTarget).clickable(
             enabled = enabled,
             role = Role.Button,
             interactionSource = remember { MutableInteractionSource() },
@@ -70,17 +81,18 @@ internal fun ContextMenuItem(label: String, enabled: Boolean = true, onClick: ()
     )
 }
 
-private class ContextMenuPosition : PopupPositionProvider {
+private class ContextMenuPosition(private val alignToEnd: Boolean) : PopupPositionProvider {
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
         popupContentSize: IntSize,
     ): IntOffset {
-        val desiredX = if (layoutDirection == LayoutDirection.Ltr) {
-            anchorBounds.left
-        } else {
+        val alignRight = (layoutDirection == LayoutDirection.Ltr) == alignToEnd
+        val desiredX = if (alignRight) {
             anchorBounds.right - popupContentSize.width
+        } else {
+            anchorBounds.left
         }
         val desiredY = if (anchorBounds.bottom + popupContentSize.height <= windowSize.height) {
             anchorBounds.bottom

@@ -9,19 +9,30 @@ empty snapshot means zero recorded reading. Runtime mock data is not used.
 
 ## Screen and units
 
-One Time/Pages selector controls Today, Daily avg, the streak's activity criterion, period
-totals, heatmap intensity and the chart. Only the selected unit appears in Today. The screen
-orders Today, daily average/streak, trend, activity calendar and period totals.
-Daily average covers the last 30 calendar days including today, with zero-activity days
-included. The streak ends today when today has activity; otherwise yesterday may continue
-it until today ends. Missing page data makes a page-based value unknown, not zero.
+The header's three-dot menu selects Time/Pages with the active choice marked, and offers
+Refresh. Pull-to-refresh remains available. The unit controls Today, Daily avg, the streak's
+activity criterion, period totals, heatmap intensity and the chart. The screen orders three
+outlined icon cards for Today, daily average and current streak, then trend, activity calendar
+and period totals. Sections follow Home: 24dp before the next section divider, 12dp
+from divider to heading, and 12dp from heatmap/totals headings to content. The trend filter
+retains compact internal spacing and its 48dp touch bounds. Daily average covers the last 30 calendar days including today, with
+zero-activity days included. The streak ends today when today has activity; otherwise yesterday
+may continue it until today ends. Missing page data is unknown, not zero.
 
-Reading totals show calendar This week (Monday onward), This month, This year and All time.
-The chart selects calendar granularity: Days (30 recent daily buckets), Weeks (12 Monday-based
-weeks including the current partial week), Months (12 months including this month), and Years
-(one bucket per year from the first recorded year). Zero buckets fill gaps; all modes sum the
-same cached daily amounts without another source fetch. Switching chart granularity does not
-change period totals, average, streak or heatmap. The unit choice applies to every chart mode.
+Reading totals show This week (Monday onward), This month, This year and All time.
+The filter inside Reading trend changes only the chart's range and total:
+
+| Filter | Calendar window | Columns |
+| --- | --- | --- |
+| Week | Current Monday–Sunday | Days |
+| Month | Current month | Monday–Sunday weeks clipped at month edges, labelled by day range |
+| Year | Current year | January–December |
+| All | First recorded year through current year | Years; one current-year column when empty |
+
+Current buckets include only days through today; future slots are blank and past gaps are
+zero. Labels and bars scroll together when needed, while the value axis stays visible.
+Highlights, heatmap and reading totals retain their own periods. All modes use cached daily
+amounts without another source fetch.
 
 The heatmap spans the full content width with a responsive 16–52 Monday–Sunday week
 columns (about 26 weeks at the Tango-sized width). A 48dp weekday-label gutter grows with
@@ -36,10 +47,12 @@ active day), shade 3 keeps that activity visible instead of blending into empty 
 shading reflects relative activity, not fixed minute/page thresholds. Totals and
 recorded page semantics are unchanged.
 
-Library filters and Stats unit tabs share ChoiceTab: 12sp/16sp medium text, a 32dp minimum
-visible surface and at least 48dp touch bounds. Granularity tabs use the same compact typography.
-Text follows system font scale; pages scroll vertically, and overflowing tab strips scroll
-horizontally. Charts cap bar width to avoid large black blocks for sparse data.
+Library filters and Stats period tabs share ChoiceTab: 12sp/16sp medium text, a 32dp minimum
+visible surface and at least 48dp touch bounds. Stats groups its period tabs in one compact outlined
+segmented control; the selected surface fills the visible 32dp frame while the touch bounds
+remain at least 48dp. Its narrow options menu aligns with the trailing header edge. Text follows system font scale; pages scroll vertically, and overflowing
+tab strips and charts scroll horizontally. Charts cap bar width to avoid large black blocks
+for sparse data and use readable minute/hour/page scale steps.
 
 ## Page counting contract
 
@@ -83,7 +96,7 @@ Clear reading cache/disconnect includes statistics, preserving UI preferences an
 Development schema changes rebuild disposable reading data without migrations.
 
 Startup, foreground return and explicit Home/Settings/Stats refresh update statistics. Concurrent
-callers share an application-owned job. Tab, unit, granularity, search and clock changes never read SAF.
+callers share an application-owned job. Tab, unit, chart period, search and clock changes never read SAF.
 The reading-source transition mutex prevents older snapshots repopulating disconnected data.
 
 ## Calendar and state
@@ -97,13 +110,10 @@ independent of the current book. Time arithmetic retains seconds until display.
 
 SQL aggregation and bounded imports run through Room, source/snapshot I/O on IO and dashboard
 projection on Default; no parsing is done by a Screen. Home mini stats and the Stats dashboard share
-the same daily summaries. Unit/granularity changes do not read raw rows, and source changes select
+the same daily summaries. Unit/period changes do not read raw rows, and source changes select
 the corresponding cached generation.
-StatsViewModel owns unit/granularity in SavedStateHandle. Route collects lifecycle-aware state; Screen
+StatsViewModel owns unit/period in SavedStateHandle (restoring legacy granularity choices when no period is saved). Route collects lifecycle-aware state; Screen
 renders state/callbacks. The calendar checks date/timezone at minute resolution; repository timezone maintenance is application-scoped.
-
-The dashboard omits the average-period caption and page-count explanatory paragraph.
-Chart totals show just their value and unit. The calendar fills the content width with a responsive calendar density.
 
 Repository and StatsViewModel use the same injected StatisticsClock. Its shared state checks
 date/zone once per minute; tests use a fake clock and injected dispatchers. Startup refresh

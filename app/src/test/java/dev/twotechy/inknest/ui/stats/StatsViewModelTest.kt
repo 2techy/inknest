@@ -9,7 +9,6 @@ import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
-import dev.twotechy.inknest.model.StatisticsGranularity
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.platform.clock.StatisticsClock
 import dev.twotechy.inknest.platform.clock.StatisticsMoment
@@ -69,7 +68,7 @@ class StatsViewModelTest {
         assertEquals(null, pages.today.pages)
         assertEquals(null, pages.totals[StatisticsPeriod.AllTime]!!.pages)
         assertEquals(null, pages.activity[today]!!.pages)
-        assertEquals(null, pages.chart.last().amount.pages)
+        assertEquals(null, pages.chart.first { it.date == today }.amount.pages)
         assertEquals(0, repository.refreshes)
         vm.unit(StatisticsUnit.Time)
         runCurrent()
@@ -103,6 +102,28 @@ class StatsViewModelTest {
         assertEquals(0, repository.refreshes)
     }
 
+    @Test fun periodSwitchOnlyChangesChartAndNeverFetchesSources() = runTest(dispatcher) {
+        val saved = SavedStateHandle(
+            mapOf(
+                "stats.period" to "AllTime",
+                "stats.granularity" to "Months",
+            ),
+        )
+        val vm = StatsViewModel(repository, saved, clock, dispatcher)
+        store.put("stats", vm)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        assertEquals(StatisticsPeriod.AllTime, vm.uiState.value.options.period)
+        val previous = vm.uiState.value.overview!!
+        vm.period(StatisticsPeriod.ThisWeek)
+        runCurrent()
+        val current = vm.uiState.value.overview!!
+        assertEquals(previous.copy(chart = current.chart), current)
+        assertEquals(7, current.chart.size)
+        assertEquals(0, repository.refreshes)
+        assertEquals("ThisWeek", saved.get<String>("stats.period"))
+    }
+
     @Test fun choicesRestoreAndRefreshErrorsKeepTheExistingDashboard() = runTest(dispatcher) {
         val saved =
             SavedStateHandle(mapOf("stats.unit" to "Pages", "stats.granularity" to "Months"))
@@ -111,8 +132,8 @@ class StatsViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
         runCurrent()
         assertEquals(StatisticsUnit.Pages, vm.uiState.value.options.unit)
-        assertEquals(StatisticsGranularity.Months, vm.uiState.value.options.granularity)
-        vm.granularity(StatisticsGranularity.Weeks)
+        assertEquals(StatisticsPeriod.ThisYear, vm.uiState.value.options.period)
+        vm.period(StatisticsPeriod.ThisMonth)
         vm.unit(StatisticsUnit.Time)
         runCurrent()
         val previous = vm.uiState.value.overview
@@ -122,7 +143,7 @@ class StatsViewModelTest {
         assertTrue(vm.uiState.value.data.sync.stale)
         assertEquals(ReadingSyncIssue.Provider, vm.uiState.value.data.sync.error)
         assertEquals(1, repository.refreshes)
-        assertEquals("Weeks", saved.get<String>("stats.granularity"))
+        assertEquals("ThisMonth", saved.get<String>("stats.period"))
         assertEquals("Time", saved.get<String>("stats.unit"))
     }
 }

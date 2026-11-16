@@ -20,8 +20,6 @@ data class StatisticsData(
     val sync: ReadingSyncStatus = ReadingSyncStatus(),
 )
 
-enum class StatisticsGranularity { Days, Weeks, Months, Years }
-
 enum class StatisticsUnit { Time, Pages }
 
 data class StatisticsAmount(val seconds: Long = 0, val pages: Long? = 0) {
