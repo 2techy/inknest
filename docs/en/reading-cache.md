@@ -17,7 +17,7 @@ Missing both sources or corrupt data cannot masquerade as a successfully empty s
 file missing/outside grants retains its identity and filename with an availability warning.
 No current-book choice is inferred from statistics or basename/title matches.
 
-Room schema 6 is exported in `app/schemas`. During development, schema changes do not carry
+Room schema 7 is exported in `app/schemas`. During development, schema changes do not carry
 migration code: increment the Room version when changing the schema, and allow Room to recreate
 the disposable reading database when no migration exists. Preferences, pins and SAF configuration
 live in the separate DataStore and are unaffected by this cache reset. A foreground refresh
@@ -55,6 +55,19 @@ and source size/mtime. Unchanged known fingerprints reuse metadata and existing 
 fingerprints are reread. Changed files use a new key. Old unreferenced thumbnails are pruned after
 24 hours, allowing concurrent candidate reads to stage files safely. Clear/disconnect removes the
 cover cache along with reading rows. No bitmap is stored in ViewModels or saved state.
+
+## Saved page position
+
+Home derives a page position from the same sidecar's full-precision `percent_finished`
+and positive integer `doc_pages`: round(percent × total). Validated progress in 0..1 keeps the result in 0..total.
+It uses the original fraction before converting progress to a displayed integer percentage.
+This supports EPUB sidecars containing `last_xpointer` without requiring `last_page`.
+Missing or malformed totals leave valid percentage/status metadata usable; absent progress
+leaves the page label unknown. No Statistics/title matching supplies page counts.
+The result is a derived position in KOReader's saved layout, which can change with reader
+settings; it is not a directly recorded current page or a publisher page label.
+Schema 7 adds nullable current/total page columns; upgrading recreates the disposable
+reading, library and statistics cache, then refresh rebuilds it. DataStore is unchanged.
 
 ## Opening the reader
 
@@ -99,4 +112,4 @@ Books-only configurations can also clear/rebuild their inventory; cache size inc
 source parsing.
 
 
-Statistics shares schema 6 but owns its source identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps. See [statistics](statistics.md) and [reliability checks](reliability.md).
+Statistics shares schema 7 but owns its source identity and repository. Cache clear/disconnect includes raw events, daily summaries, import tokens and snapshot timestamps. See [statistics](statistics.md) and [reliability checks](reliability.md).

@@ -69,6 +69,8 @@ internal class ReadingCache(private val dao: ReadingDao) {
                     availability = it.availability.name,
                     author = it.author,
                     progress = it.progress,
+                    currentPage = it.currentPage,
+                    totalPages = it.totalPages,
                     coverUri = it.coverUri,
                     status = it.status.name,
                     lastReadAt = it.lastReadAt,

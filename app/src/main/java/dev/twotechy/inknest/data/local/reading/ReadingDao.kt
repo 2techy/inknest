@@ -13,7 +13,8 @@ private const val CURRENT_QUERY = """
         b.path AS book_path, b.title AS book_title, b.availability AS book_availability,
         b.author AS book_author, b.progress AS book_progress, b.coverUri AS book_coverUri,
         b.status AS book_status, b.lastReadAt AS book_lastReadAt, b.historyOrder AS book_historyOrder,
-        b.fingerprint AS book_fingerprint
+        b.fingerprint AS book_fingerprint,
+        b.currentPage AS book_currentPage, b.totalPages AS book_totalPages
     FROM reading_sources s LEFT JOIN reading_items b
         ON s.sourceId=b.sourceId AND s.snapshotKey=b.snapshotKey AND s.currentPath=b.path
     WHERE s.sourceId=:sourceId AND s.snapshotKey=:snapshotKey

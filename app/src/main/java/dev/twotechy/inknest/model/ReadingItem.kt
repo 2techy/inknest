@@ -11,6 +11,8 @@ data class ReadingItem(
     val availability: BookAvailability = BookAvailability.Available,
     val status: ReadingStatus = ReadingStatus.Unknown,
     val lastReadAt: Long? = null,
+    val currentPage: Int? = null,
+    val totalPages: Int? = null,
 )
 
 data class ReadingStats(val todayMinutes: Int?, val streakDays: Int?)

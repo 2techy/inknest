@@ -1,6 +1,7 @@
 package dev.twotechy.inknest.data.source.lua
 
 import java.io.InputStream
+import kotlin.math.roundToInt
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 
@@ -60,23 +61,45 @@ internal class ReaderLuaDataSource(private val loader: BoundedLuaLoader = Bounde
         return value.tolong()
     }
 
-    suspend fun sidecar(input: InputStream): SidecarDto = loader.read(input) { table ->
-        val percent = table.rawget("percent_finished")
-        val value = if (percent.isnil()) {
-            null
-        } else {
-            if (percent.type() != LuaValue.TNUMBER || !percent.todouble().isFinite() ||
-                percent.todouble() !in 0.0..1.0
-            ) {
-                invalid()
-            }
-            percent.todouble()
+    suspend fun sidecar(input: InputStream): SidecarDto = loader.read(input, ::parseSidecar)
+
+    private fun parseSidecar(table: LuaTable): SidecarDto {
+        val percent = sidecarPercent(table.rawget("percent_finished"))
+        val total = percent?.let { positivePageCount(table.rawget("doc_pages")) }
+        val current = if (percent != null && total != null) (percent * total).roundToInt() else null
+        return SidecarDto(
+            percent,
+            sidecarStatus(table.rawget("summary")),
+            current,
+            total,
+        )
+    }
+
+    private fun sidecarPercent(value: LuaValue): Double? {
+        if (value.isnil()) return null
+        if (value.type() != LuaValue.TNUMBER) invalid()
+        val percent = value.todouble()
+        if (!percent.isFinite()) invalid()
+        if (percent !in 0.0..1.0) invalid()
+        return percent
+    }
+
+    private fun sidecarStatus(summary: LuaValue): String? {
+        if (summary.isnil()) return null
+        if (!summary.istable()) invalid()
+        val status = summary.rawget("status")
+        if (status.isnil()) return null
+        if (status.type() != LuaValue.TSTRING) invalid()
+        return status.tojstring()
+    }
+
+    private fun positivePageCount(value: LuaValue): Int? {
+        if (value.type() != LuaValue.TNUMBER) return null
+        val number = value.todouble()
+        return number.takeIf {
+            it.isFinite() && it in 1.0..Int.MAX_VALUE.toDouble() && it % 1 == 0.0
         }
-        val summary = table.rawget("summary")
-        if (!summary.isnil() && !summary.istable()) invalid()
-        val status = if (summary.isnil()) LuaValue.NIL else summary.rawget("status")
-        if (!status.isnil() && status.type() != LuaValue.TSTRING) invalid()
-        SidecarDto(value, if (status.isnil()) null else status.tojstring())
+            ?.toInt()
     }
 
     private fun strictPath(value: LuaValue): String {
@@ -88,6 +111,11 @@ internal class ReaderLuaDataSource(private val loader: BoundedLuaLoader = Bounde
     private fun invalid(): Nothing = throw LuaSourceException(LuaFailure.InvalidData)
 }
 
-internal data class SidecarDto(val percent: Double?, val status: String?)
+internal data class SidecarDto(
+    val percent: Double?,
+    val status: String?,
+    val currentPage: Int? = null,
+    val totalPages: Int? = null,
+)
 
 internal data class TrackedHistoryDto(val entries: List<HistoryEntryDto>, val skipped: Int = 0)

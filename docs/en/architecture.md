@@ -47,7 +47,7 @@ All build types share download/verification; an unknown version name permits dow
 release without claiming it is newer. The platform APK verifier still rejects non-increasing version
 codes and incompatible signatures before installation.
 
-The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 6
+The production application uses one `:app` module and manual constructor injection. The reading database uses Room schema 7
 with destructive cache fallback during development; preferences, pins and source selections
 remain in DataStore. Stable upgrade compatibility is not promised.
 ViewModels call repositories directly for preference and source operations.

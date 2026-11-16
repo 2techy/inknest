@@ -17,6 +17,7 @@ import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.model.BookAvailability
+import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingStatus
 import dev.twotechy.inknest.model.ReadingSyncIssue
@@ -58,20 +59,16 @@ class ReadingMetadataIntegrationTest {
                 metadataReader = BookMetadataReader(books, covers, cache::metadata),
             )
             val key = checkNotNull(config.readingCacheKey())
-            for (percent in listOf(0.7, 0.3)) {
+            for ((percent, expectedPage) in listOf(0.7 to 700, 0.3 to 300)) {
                 documents.percent = percent
                 val snapshot = source.read(config)
                 cache.save(key, snapshot, 1)
                 val item = checkNotNull(snapshot.current)
                 assertEquals((percent * 100).toInt(), item.progress)
-                assertEquals("Actual title", item.title)
-                assertEquals("Author", item.author)
-                assertEquals(ReadingStatus.Reading, item.status)
-                val file = File(checkNotNull(Uri.parse(item.coverUri).path))
-                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(file.path, bounds)
-                assertTrue(maxOf(bounds.outWidth, bounds.outHeight) <= 480)
-                assertTrue(maxOf(bounds.outWidth, bounds.outHeight) > 0)
+                val cached = checkNotNull(cache.observe(key).first()).book
+                assertEquals(expectedPage, cached?.currentPage)
+                assertEquals(1000, cached?.totalPages)
+                assertBookMetadata(item)
             }
             // Two distinct paths; neither is re-extracted on refresh.
             assertEquals(2, documents.epubReads)
@@ -81,6 +78,8 @@ class ReadingMetadataIntegrationTest {
                 tracked.map { it.path },
             )
             assertEquals(listOf(2000L, 1000L), tracked.map { it.lastReadAt })
+            assertEquals(listOf(300, 600), tracked.map { it.currentPage })
+            assertEquals(listOf(1000, 2000), tracked.map { it.totalPages })
             assertTrue(tracked.map { it.coverUri }.distinct().size == 2)
             documents.archive = epub(legacy = true)
             documents.modified++
@@ -114,6 +113,17 @@ class ReadingMetadataIntegrationTest {
         }
     }
 
+    private fun assertBookMetadata(item: ReadingItem) {
+        assertEquals("Actual title", item.title)
+        assertEquals("Author", item.author)
+        assertEquals(ReadingStatus.Reading, item.status)
+        val file = File(checkNotNull(Uri.parse(item.coverUri).path))
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        assertTrue(maxOf(bounds.outWidth, bounds.outHeight) <= 480)
+        assertTrue(maxOf(bounds.outWidth, bounds.outHeight) > 0)
+    }
+
     private class Documents(var archive: ByteArray) : SourceDocumentReader {
         var percent = 0.7
         var history = """return {
@@ -144,7 +154,11 @@ class ReadingMetadataIntegrationTest {
                 "history.lua" -> history.toByteArray()
 
                 "metadata.epub.lua" ->
-                    "return {percent_finished=$percent,summary={status='reading'}}".toByteArray()
+                    (
+                        "return {percent_finished=$percent,doc_pages=" +
+                            (if ("other" in path) 2000 else 1000) +
+                            ",last_xpointer='/body',summary={status='reading'}}"
+                        ).toByteArray()
 
                 else -> {
                     epubReads++

@@ -33,7 +33,7 @@ Các loại bản dựng dùng chung luồng tải/xác minh. Tên phiên bản 
 tìm thấy, không kết luận là bản mới hơn. Bộ xác minh nền tảng vẫn chặn mã phiên bản APK không tăng
 và chữ ký không tương thích trước khi cài.
 
-Ứng dụng chính chỉ có một module `:app`, dùng cơ chế tiêm phụ thuộc thủ công qua hàm khởi tạo. Cơ sở dữ liệu đọc dùng Room schema 6. Trong giai đoạn phát triển, nếu không có migration phù hợp, Room được phép xóa và tạo lại bộ nhớ đệm; tùy chọn, ứng dụng đã ghim và lựa chọn nguồn vẫn nằm riêng trong DataStore. Dự án chưa cam kết giữ nguyên dữ liệu qua các lần nâng cấp.
+Ứng dụng chính chỉ có một module `:app`, dùng cơ chế tiêm phụ thuộc thủ công qua hàm khởi tạo. Cơ sở dữ liệu đọc dùng Room schema 7. Trong giai đoạn phát triển, nếu không có migration phù hợp, Room được phép xóa và tạo lại bộ nhớ đệm; tùy chọn, ứng dụng đã ghim và lựa chọn nguồn vẫn nằm riêng trong DataStore. Dự án chưa cam kết giữ nguyên dữ liệu qua các lần nâng cấp.
 
 ViewModel gọi trực tiếp repository để thay đổi tùy chọn và cấu hình nguồn. Khi repository gặp lỗi, ứng dụng không được thay giá trị đã lưu hoặc báo thành công giả. Nhãn giao diện dùng tài nguyên chuỗi của Android. Khi xử lý lỗi coroutine, phải tiếp tục truyền tín hiệu hủy tác vụ.
 

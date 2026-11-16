@@ -99,6 +99,44 @@ class ReaderLuaDataSourceTest {
         assertNull(ReaderLuaDataSource().lastFile(source("return {}")))
     }
 
+    @Test fun epubPagesUseFullPrecisionAndHandleBookBoundaries() = runTest {
+        val reader = ReaderLuaDataSource()
+        for ((percent, total, expected) in listOf(
+            Triple(0.3549, 10000, 3549),
+            Triple(0.123456, 100000, 12346),
+            Triple(0.0, 416, 0),
+            Triple(1.0, 416, 416),
+        )) {
+            val result = reader.sidecar(
+                source("return {percent_finished=$percent,doc_pages=$total,last_xpointer='/body'}"),
+            )
+            assertEquals(SidecarDto(percent, null, expected, total), result)
+        }
+    }
+
+    @Test fun missingOrInvalidTotalPagesPreserveProgressAndStatus() = runTest {
+        val reader = ReaderLuaDataSource()
+        val prefix = "percent_finished=0.35,summary={status='reading'},"
+        for (pages in listOf(
+            "",
+            "doc_pages=0",
+            "doc_pages=416.5",
+            "doc_pages='416'",
+            "doc_pages=2147483648",
+            "doc_pages=0/0",
+        )) {
+            assertEquals(
+                pages,
+                SidecarDto(0.35, "reading"),
+                reader.sidecar(source("return {" + prefix + pages + "}")),
+            )
+        }
+        assertEquals(
+            SidecarDto(null, null),
+            reader.sidecar(source("return {doc_pages=416}")),
+        )
+    }
+
     @Test fun `sidecar percent and status are typed and bounded`() = runTest {
         val reader = ReaderLuaDataSource()
         assertEquals(
