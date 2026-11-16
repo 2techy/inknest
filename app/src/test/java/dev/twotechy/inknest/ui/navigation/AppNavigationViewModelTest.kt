@@ -5,6 +5,36 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class AppNavigationViewModelTest {
+    @Test fun settingsReturnsToOriginAfterRecreationAndLegacyDefaultsToHome() {
+        val handle = SavedStateHandle()
+        val vm = AppNavigationViewModel(handle)
+        vm.select(TopLevelDestination.Stats)
+        vm.select(TopLevelDestination.Settings)
+        vm.openSettingsPage("ReadingData")
+        val restored = AppNavigationViewModel(
+            SavedStateHandle(handle.keys().associateWith { handle.get<Any?>(it) }),
+        )
+        restored.leaveSettings()
+        assertEquals(TopLevelDestination.Stats.name, restored.selected.value)
+        assertEquals("Overview", restored.settingsPage.value)
+        val legacy = AppNavigationViewModel(
+            SavedStateHandle(mapOf("selectedDestination" to "Settings")),
+        )
+        legacy.leaveSettings()
+        assertEquals(TopLevelDestination.Home.name, legacy.selected.value)
+    }
+
+    @Test fun librarySearchIsConsumedOnceAndHomeCancelsPendingRequest() {
+        val vm = AppNavigationViewModel(SavedStateHandle())
+        vm.searchLibrary()
+        assertEquals(TopLevelDestination.Library.name, vm.selected.value)
+        assertEquals(true, vm.consumeLibrarySearch())
+        assertEquals(false, vm.consumeLibrarySearch())
+        vm.searchLibrary()
+        vm.goHome()
+        assertEquals(false, vm.consumeLibrarySearch())
+    }
+
     private fun restoredApps() = AppNavigationViewModel(
         SavedStateHandle(mapOf("selectedDestination" to TopLevelDestination.Apps.name)),
     )

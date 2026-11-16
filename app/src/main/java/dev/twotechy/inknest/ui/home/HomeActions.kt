@@ -7,10 +7,12 @@ internal data class HomeActions(
     val openStats: () -> Unit,
     val openApps: () -> Unit,
     val settings: () -> Unit,
+    val searchLibrary: () -> Unit = {},
 )
 
 internal data class HomeNavigation(
     val apps: () -> Unit,
     val stats: () -> Unit,
     val settings: () -> Unit,
+    val searchLibrary: () -> Unit = {},
 )

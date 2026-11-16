@@ -107,14 +107,14 @@ class ContentGesturesIntegrationTest {
 
     @Test fun horizontalSwipeWorksOnClickableItemsAndHonorsSearchAndCancel() {
         drag(Offset(300f, 250f), Offset(80f, 250f))
-        assertEquals(TopLevelDestination.Apps, selected.value)
+        assertEquals(TopLevelDestination.Library, selected.value)
         assertEquals(0, clicks.get())
         drag(Offset(300f, 250f), Offset(80f, 250f), MotionEvent.ACTION_CANCEL)
-        assertEquals(TopLevelDestination.Apps, selected.value)
+        assertEquals(TopLevelDestination.Library, selected.value)
         instrumentation.runOnMainSync { searching.value = true }
         instrumentation.waitForIdleSync()
         drag(Offset(300f, 250f), Offset(80f, 250f))
-        assertEquals(TopLevelDestination.Apps, selected.value)
+        assertEquals(TopLevelDestination.Library, selected.value)
         assertEquals(0, refreshes.get())
         instrumentation.runOnMainSync {
             searching.value = false
@@ -123,7 +123,7 @@ class ContentGesturesIntegrationTest {
         instrumentation.waitForIdleSync()
         drag(Offset(300f, 250f), Offset(80f, 250f))
         drag(Offset(200f, 200f), Offset(200f, 390f))
-        assertEquals(TopLevelDestination.Apps, selected.value)
+        assertEquals(TopLevelDestination.Library, selected.value)
         assertEquals(0, refreshes.get())
         instrumentation.runOnMainSync {
             blocked.value = false
@@ -131,6 +131,15 @@ class ContentGesturesIntegrationTest {
         }
         instrumentation.waitForIdleSync()
         drag(Offset(300f, 250f), Offset(80f, 250f))
+        assertEquals(TopLevelDestination.Library, selected.value)
+    }
+
+    @Test fun swipesWrapAcrossBothEnds() {
+        instrumentation.runOnMainSync { selected.value = TopLevelDestination.Apps }
+        instrumentation.waitForIdleSync()
+        drag(Offset(300f, 250f), Offset(80f, 250f))
+        assertEquals(TopLevelDestination.Home, selected.value)
+        drag(Offset(80f, 250f), Offset(300f, 250f))
         assertEquals(TopLevelDestination.Apps, selected.value)
     }
 

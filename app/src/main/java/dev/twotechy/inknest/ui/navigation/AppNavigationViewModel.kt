@@ -55,7 +55,27 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
         }
     }
 
+    fun searchLibrary() {
+        select(TopLevelDestination.Library)
+        savedState["pendingLibrarySearch"] = true
+    }
+
+    fun consumeLibrarySearch(): Boolean {
+        val pending = savedState.get<Boolean>("pendingLibrarySearch") == true
+        savedState["pendingLibrarySearch"] = false
+        return pending
+    }
+
+    fun leaveSettings() {
+        val previous = savedState.get<String>("settingsReturnDestination")
+        select(MainDestinations.find { it.name == previous } ?: TopLevelDestination.Home)
+    }
+
     fun select(destination: TopLevelDestination) {
+        if (destination == TopLevelDestination.Settings && selected.value != destination.name) {
+            savedState["settingsReturnDestination"] = selected.value
+        }
+        savedState["pendingLibrarySearch"] = false
         session.value++
         savedState["settingsPage"] = "Overview"
         savedState["onboardingVisible"] = false

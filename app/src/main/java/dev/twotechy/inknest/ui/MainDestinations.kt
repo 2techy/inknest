@@ -3,6 +3,7 @@ package dev.twotechy.inknest.ui
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.twotechy.inknest.di.AppContainer
@@ -47,6 +48,7 @@ internal fun HomeDestination(
         modifier = Modifier.fillMaxSize(),
         contentPadding = padding,
         navigation = HomeNavigation(
+            searchLibrary = navigation::searchLibrary,
             apps = { navigation.select(TopLevelDestination.Apps) },
             stats = { navigation.select(TopLevelDestination.Stats) },
             settings = { navigation.select(TopLevelDestination.Settings) },
@@ -73,6 +75,9 @@ internal fun LibraryDestination(
     padding: PaddingValues,
 ) {
     val library: LibraryViewModel = viewModel(factory = container.libraryViewModelFactory)
+    LaunchedEffect(navigation, library) {
+        if (navigation.consumeLibrarySearch()) library.startHomeSearch()
+    }
     LibraryRoute(
         viewModel = library,
         dispatcher = container.readingItemDispatcher,

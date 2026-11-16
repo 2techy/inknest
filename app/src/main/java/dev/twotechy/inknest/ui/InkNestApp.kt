@@ -28,6 +28,7 @@ import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.onboarding.OnboardingRoute
 import dev.twotechy.inknest.ui.onboarding.OnboardingViewModel
 import dev.twotechy.inknest.ui.settings.SettingsEnvironment
+import dev.twotechy.inknest.ui.settings.SettingsNavigation
 import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.settings.SettingsRoute
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
@@ -87,8 +88,7 @@ private fun InkNestContent(
     val openPage = { value: SettingsPage -> navigation.openSettingsPage(value.name) }
     HomeBackHandler(tab, isDefaultLauncher, navigation::goHome)
 
-    val showNavigation = !setupVisible &&
-        (tab != TopLevelDestination.Settings || page == SettingsPage.Overview)
+    val showNavigation = !setupVisible && tab != TopLevelDestination.Settings
     AppScaffold(tab, navigation::select, showNavigation) { padding ->
         if (setupVisible) {
             OnboardingRoute(
@@ -112,8 +112,7 @@ private fun InkNestContent(
 
                     TopLevelDestination.Settings -> SettingsRoute(
                         viewModel = settings,
-                        page = page,
-                        openPage = openPage,
+                        navigation = SettingsNavigation(page, openPage, navigation::leaveSettings),
                         environment = SettingsEnvironment(
                             launcher,
                             container.appLanguageController,

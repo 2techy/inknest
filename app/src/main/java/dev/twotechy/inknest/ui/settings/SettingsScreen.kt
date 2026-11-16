@@ -29,8 +29,8 @@ internal fun SettingsScreen(
         header = {
             ScreenHeader(
                 stringResource(page.title),
-                onBack = if (page == SettingsPage.Overview) null else actions.back,
-                isDetail = page != SettingsPage.Overview,
+                onBack = actions.back,
+                isDetail = true,
             )
         },
     ) {
