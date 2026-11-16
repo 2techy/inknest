@@ -42,7 +42,7 @@ Home/Library share a static book placeholder and IO decoding. Clear/disconnect i
 
 Use shared headers, controls and tokens throughout. Keep primary actions reachable, optional content collapsible and errors/retry visible without replacing successful content. Settings navigation/toggle rows share dividers; read-only metadata has no chevron. Onboarding scrolls above a fixed footer, exposes step/progress semantics and announces save errors; saving disables navigation/completion.
 
-Library status filters and Stats periods use the same equal-width segmented control, with a compact outline, filled selection and horizontal scrolling when labels or font scale need more room. Their header menus share `ContextMenu`: a viewport-constrained surface and aligned icon/text columns sized by `InkMenuTokens`, with accessible touch targets. Selected options use a separate check icon and accessibility selection state. Submenu headers align with the same text column; Refresh follows a divider.
+Library filters and Stats periods share equal-width segments that scroll when needed. Menus reuse shared tokens, accessible touch targets and explicit selection states.
 
 Feature behavior belongs in [setup](setup.md), [Library](library.md) and [Statistics](statistics.md), rather than a second screen specification here.
 
