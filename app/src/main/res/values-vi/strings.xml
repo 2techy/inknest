@@ -303,15 +303,16 @@
     <string name="book_details_time">Thời gian đọc</string>
     <string name="book_details_pages">Trang ghi nhận</string>
     <string name="book_details_days">Số ngày đọc</string>
-    <string name="book_details_last_read_value">Đọc gần nhất: %1$s</string>
-    <string name="book_details_first_read_value">Đọc lần đầu: %1$s</string>
     <string name="book_details_show_more">Xem thêm</string>
     <string name="book_details_show_less">Thu gọn</string>
     <string name="book_details_expanded">Đã mở rộng</string>
     <string name="book_details_collapsed">Đã thu gọn</string>
-    <string name="book_details_more_days">Xem thêm ngày</string>
     <string name="book_details_stats_loading">Đang tải thống kê đọc…</string>
     <string name="book_details_stats_unavailable">Chưa có thống kê đọc. Kết nối nguồn KOReader và làm mới để tải dữ liệu đã ghi nhận.</string>
     <string name="book_details_stats_unlinked">Chưa tìm thấy thống kê đọc khớp với sách này.</string>
     <string name="book_details_no_history">Chưa có ngày đọc được ghi nhận.</string>
+    <string name="book_details_previous_page">Trang lịch sử trước</string>
+    <string name="book_details_next_page">Trang lịch sử sau</string>
+    <string name="book_details_history_page">Trang %1$d / %2$d</string>
+    <string name="book_details_last_read_value">Đọc gần nhất: %1$s</string>
 </resources>

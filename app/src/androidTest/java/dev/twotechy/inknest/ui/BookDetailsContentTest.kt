@@ -2,12 +2,16 @@ package dev.twotechy.inknest.ui
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
@@ -22,6 +26,7 @@ import dev.twotechy.inknest.MainActivity
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.BookDetails
+import dev.twotechy.inknest.model.BookReadingDay
 import dev.twotechy.inknest.model.BookReadingStatistics
 import dev.twotechy.inknest.model.BookStatisticsStatus
 import dev.twotechy.inknest.model.ReadingItem
@@ -36,7 +41,11 @@ import dev.twotechy.inknest.ui.library.LibraryListBook
 import dev.twotechy.inknest.ui.theme.InkNestTheme
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import java.io.File
+import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -83,6 +92,33 @@ class BookDetailsContentTest {
         }
     }
 
+    @Test fun lastReadReturnsBelowProgressWithFullWidthReadingAction() {
+        val time = Instant.parse("2026-11-16T08:24:00Z")
+        val sample = book.copy(title = "Sample book", lastReadAt = time.toEpochMilli())
+        val opened = AtomicInteger()
+        val zone = ZoneId.of("UTC")
+        val date = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+            .withLocale(context.resources.configuration.locales[0]).format(time.atZone(zone))
+        val lastRead = context.getString(R.string.book_details_last_read_value, date)
+        show(412f, 1f) { BookDetailsHero(sample, zone) { opened.incrementAndGet() } }
+        awaitText(lastRead, true)
+        val action = actionBounds(context.getString(R.string.home_continue))
+        val title = Rect().also { rect ->
+            nodes().first { it.text?.toString() == sample.title }.getBoundsInScreen(rect)
+        }
+        assertTrue(action.left < title.left)
+        click(context.getString(R.string.home_continue))
+        assertEquals(1, opened.get())
+        show(412f, 1f) { BookDetailsHero(book, zone) {} }
+        awaitText(lastRead, false)
+    }
+
+    private fun actionBounds(text: String): Rect {
+        var node = nodes().first { it.text?.toString() == text }
+        while (!node.isClickable) node = checkNotNull(node.parent)
+        return Rect().also(node::getBoundsInScreen)
+    }
+
     @Test fun shelfCaptionsOmitStatusAndFinishedReplacesAnyPercentage() {
         val opened = AtomicInteger()
         for (progress in listOf(null, 42, 100)) {
@@ -108,6 +144,7 @@ class BookDetailsContentTest {
                 details = BookDetails(
                     book = book.copy(
                         title = "Sample book",
+                        lastReadAt = Instant.parse("2026-11-16T08:24:00Z").toEpochMilli(),
                         description = "A sample description. ".repeat(40),
                     ),
                     loading = false,
@@ -162,6 +199,80 @@ class BookDetailsContentTest {
         assertTrue(state.value.descriptionExpanded)
     }
 
+    @Test fun historyPagesReplaceRowsAndOmitHistoryDateSummaries() {
+        val days = (0..11).map {
+            BookReadingDay(LocalDate.of(2026, 11, 16).minusDays(it.toLong()), 60, 1)
+        }
+        val statistics = BookReadingStatistics(
+            status = BookStatisticsStatus.Ready,
+            readingDays = days.size,
+            firstRead = days.last().date,
+            lastRead = days.first().date,
+            history = days.take(5),
+            hasMore = true,
+        )
+        val state = mutableStateOf(
+            BookDetailsUiState(
+                details = BookDetails(
+                    book.copy(title = "Sample"),
+                    false,
+                    statistics,
+                ),
+                historyExpanded = true,
+            ),
+        )
+        val actions = BookDetailsActions(
+            back = {},
+            open = {},
+            description = {},
+            history = {},
+            file = {},
+            page = { page ->
+                val updated = statistics.copy(
+                    historyPage = page,
+                    history = days.drop(page * 5).take(5),
+                    hasMore = page < 2,
+                )
+                val details = state.value.details.copy(statistics = updated)
+                state.value = state.value.copy(details = details)
+            },
+            retry = {},
+        )
+        show(412f, 1f) {
+            BookDetailsScreen(state.value, actions, contentPadding = PaddingValues(InkSpacing.lg))
+        }
+        val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(context.resources.configuration.locales[0])
+        val next = context.getString(R.string.book_details_next_page)
+        scrollToText(next)
+        click(next)
+        awaitText(context.getString(R.string.book_details_history_page, 2, 3), true)
+        awaitText(date.format(days.first().date), false)
+        awaitText(date.format(days[5].date), true)
+        click(context.getString(R.string.book_details_previous_page))
+        awaitText(context.getString(R.string.book_details_history_page, 1, 3), true)
+        assertTrue(
+            nodes().none {
+                val text = it.text?.toString().orEmpty()
+                text.startsWith("First read:") || text.startsWith("Last read:")
+            },
+        )
+    }
+
+    @Test fun unmatchedStatisticsHaveNoRetry() {
+        val state = BookDetailsUiState(
+            details = BookDetails(
+                book = book,
+                statistics = BookReadingStatistics(status = BookStatisticsStatus.Unlinked),
+            ),
+        )
+        show(412f, 1f) {
+            BookDetailsScreen(state, BookDetailsActions({}, {}, {}, {}, {}, {}, {}))
+        }
+        awaitText(context.getString(R.string.book_details_stats_unlinked), true)
+        awaitText(context.getString(R.string.book_details_retry), false)
+    }
+
     private fun show(
         width: Float,
         font: Float,
@@ -175,7 +286,13 @@ class BookDetailsContentTest {
                 CompositionLocalProvider(LocalDensity provides Density(density, font)) {
                     InkNestTheme(preferences) {
                         key(width, font) {
-                            Column(Modifier.fillMaxWidth()) { content() }
+                            Column(
+                                Modifier.fillMaxWidth().windowInsetsPadding(
+                                    WindowInsets.safeDrawing,
+                                ),
+                            ) {
+                                content()
+                            }
                         }
                         SideEffect { composed.countDown() }
                     }
@@ -185,6 +302,13 @@ class BookDetailsContentTest {
         assertTrue("fixture composed", composed.await(5, TimeUnit.SECONDS))
         instrumentation.waitForIdleSync()
         instrumentation.uiAutomation.waitForIdle(200, 5_000)
+        val frame = CountDownLatch(1)
+        instrumentation.runOnMainSync {
+            activity.window.decorView.postOnAnimation {
+                activity.window.decorView.postOnAnimation { frame.countDown() }
+            }
+        }
+        assertTrue("frame rendered", frame.await(5, TimeUnit.SECONDS))
     }
 
     private fun nodes(): List<AccessibilityNodeInfo> {
@@ -230,8 +354,12 @@ class BookDetailsContentTest {
 
     private fun click(text: String) {
         val candidates = nodes()
-        var node = candidates.firstOrNull { it.text?.toString() == text }
-            ?: candidates.first { it.text?.toString()?.contains(text) == true }
+        var node = candidates.firstOrNull {
+            it.text?.toString() == text || it.contentDescription?.toString() == text
+        } ?: candidates.first {
+            it.text?.toString()?.contains(text) == true ||
+                it.contentDescription?.toString()?.contains(text) == true
+        }
         while (!node.isClickable) node = checkNotNull(node.parent)
         assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))
         instrumentation.waitForIdleSync()

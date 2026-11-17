@@ -26,6 +26,8 @@ enum class ReadingStatus { Reading, Finished, Abandoned, Unknown }
 
 enum class BookStatisticsStatus { Loading, Unavailable, Unlinked, Ready }
 
+const val BOOK_HISTORY_PAGE_SIZE = 5
+
 data class BookReadingDay(val date: LocalDate, val seconds: Long, val pages: Long?)
 
 data class BookReadingStatistics(
@@ -37,8 +39,15 @@ data class BookReadingStatistics(
     val lastRead: LocalDate? = null,
     val history: List<BookReadingDay> = emptyList(),
     val hasMore: Boolean = false,
+    val historyPage: Int = 0,
+    val historyLoading: Boolean = status == BookStatisticsStatus.Loading,
     val error: ReadingSyncIssue? = null,
-)
+) {
+    val canChangeHistoryPage: Boolean
+        get() = status == BookStatisticsStatus.Ready && !historyLoading && error == null
+    val historyPageCount: Int get() = (readingDays.coerceAtLeast(1) - 1) / BOOK_HISTORY_PAGE_SIZE +
+        1
+}
 
 data class BookDetails(
     val book: ReadingItem? = null,

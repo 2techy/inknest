@@ -1,7 +1,9 @@
 package dev.twotechy.inknest.ui.library
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,12 +27,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.BookReadingStatistics
 import dev.twotechy.inknest.model.BookStatisticsStatus
@@ -57,7 +63,7 @@ internal data class BookDetailsActions(
     val description: () -> Unit,
     val history: () -> Unit,
     val file: () -> Unit,
-    val more: () -> Unit,
+    val page: (Int) -> Unit,
     val retry: () -> Unit,
 )
 
@@ -78,7 +84,7 @@ internal fun BookDetailsScreen(
     ) {
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(InkSpacing.md),
         ) {
             val book = state.details.book
             if (book == null) {
@@ -92,7 +98,7 @@ internal fun BookDetailsScreen(
                 return@Column
             }
             BookDetailsHero(book, state.zone, actions.open)
-            Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
+            Column {
                 book.description?.let {
                     BookDescription(it, state.descriptionExpanded, actions.description)
                 }
@@ -114,7 +120,7 @@ internal fun BookDetailsScreen(
                 if (state.historyExpanded) {
                     BookDetailsHistory(
                         state.details.statistics,
-                        actions.more,
+                        actions.page,
                     )
                 }
                 HorizontalDivider()
@@ -153,7 +159,7 @@ private fun BookFileInformation(book: dev.twotechy.inknest.model.ReadingItem) {
 @Composable
 private fun BookDescription(value: String, expanded: Boolean, toggle: () -> Unit) {
     var overflows by remember(value) { mutableStateOf(false) }
-    Column {
+    Column(Modifier.padding(bottom = if (expanded || overflows) 0.dp else InkSpacing.md)) {
         Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {
             Text(
                 stringResource(R.string.book_details_description),
@@ -233,17 +239,13 @@ private fun BookDetailsStatistics(statistics: BookReadingStatistics, retry: () -
         } else {
             Text(
                 stringResource(
-                    when (statistics.status) {
-                        BookStatisticsStatus.Loading -> R.string.book_details_stats_loading
-                        BookStatisticsStatus.Unavailable -> R.string.book_details_stats_unavailable
-                        else -> R.string.book_details_stats_unlinked
-                    },
+                    statistics.status.emptyLabel(),
                 ),
                 style = InkTextStyles.bodyMedium,
             )
         }
         statistics.error?.let { Text(readingIssueMessage(it), style = InkTextStyles.bodySmall) }
-        if (statistics.error != null || statistics.status == BookStatisticsStatus.Unlinked) {
+        if (statistics.error != null) {
             ActionButton(stringResource(R.string.book_details_retry), onClick = retry)
         }
     }
@@ -272,7 +274,7 @@ private fun BookMetric(label: Int, value: String, modifier: Modifier) {
 }
 
 @Composable
-private fun BookDetailsHistory(statistics: BookReadingStatistics, more: () -> Unit) {
+private fun BookDetailsHistory(statistics: BookReadingStatistics, page: (Int) -> Unit) {
     Column(
         Modifier.padding(top = InkSpacing.xs, bottom = InkSpacing.md),
         verticalArrangement = Arrangement.spacedBy(InkSpacing.sm),
@@ -280,21 +282,9 @@ private fun BookDetailsHistory(statistics: BookReadingStatistics, more: () -> Un
         val date = DateTimeFormatter.ofLocalizedDate(
             FormatStyle.MEDIUM,
         ).withLocale(currentUiLocale())
-        statistics.firstRead?.let {
-            Text(
-                stringResource(R.string.book_details_first_read_value, date.format(it)),
-                style = InkTextStyles.bodySmall,
-            )
-        }
-        statistics.lastRead?.let {
-            Text(
-                stringResource(R.string.book_details_last_read_value, date.format(it)),
-                style = InkTextStyles.bodySmall,
-            )
-        }
         if (statistics.history.isEmpty()) {
             Text(
-                stringResource(R.string.book_details_no_history),
+                stringResource(statistics.status.emptyLabel()),
                 style = InkTextStyles.bodyMedium,
             )
         }
@@ -319,12 +309,68 @@ private fun BookDetailsHistory(statistics: BookReadingStatistics, more: () -> Un
             }
             HorizontalDivider()
         }
-        if (statistics.hasMore) {
-            ActionButton(
-                stringResource(R.string.book_details_more_days),
-                Modifier.fillMaxWidth(),
-                onClick = more,
-            )
-        }
+        if (statistics.historyPageCount > 1) BookHistoryPager(statistics, page)
     }
+}
+
+@Composable
+private fun BookHistoryPager(statistics: BookReadingStatistics, page: (Int) -> Unit) {
+    val enabled = statistics.canChangeHistoryPage
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        BookHistoryPageButton(
+            stringResource(R.string.book_details_previous_page),
+            backwards = true,
+            enabled = enabled && statistics.historyPage > 0,
+        ) { page(statistics.historyPage - 1) }
+        Text(
+            stringResource(
+                R.string.book_details_history_page,
+                statistics.historyPage + 1,
+                statistics.historyPageCount,
+            ),
+            Modifier.weight(1f),
+            textAlign = TextAlign.Center,
+            style = InkTextStyles.bodySmall,
+        )
+        BookHistoryPageButton(
+            stringResource(R.string.book_details_next_page),
+            backwards = false,
+            enabled = enabled && statistics.hasMore,
+        ) { page(statistics.historyPage + 1) }
+    }
+}
+
+@Composable
+private fun BookHistoryPageButton(
+    label: String,
+    backwards: Boolean,
+    enabled: Boolean,
+    click: () -> Unit,
+) {
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val colors = MaterialTheme.colorScheme
+    Box(
+        Modifier.size(InkHeaderTokens.touchTarget).clickable(
+            enabled = enabled,
+            role = Role.Button,
+            interactionSource = null,
+            indication = null,
+            onClick = click,
+        ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_chevron_right),
+            label,
+            Modifier.size(InkHeaderTokens.iconSize).rotate(if (backwards != rtl) 180f else 0f),
+            tint = if (enabled) colors.onSurface else colors.outline,
+        )
+    }
+}
+
+private fun BookStatisticsStatus.emptyLabel(): Int = when (this) {
+    BookStatisticsStatus.Loading -> R.string.book_details_stats_loading
+    BookStatisticsStatus.Unavailable -> R.string.book_details_stats_unavailable
+    BookStatisticsStatus.Unlinked -> R.string.book_details_stats_unlinked
+    BookStatisticsStatus.Ready -> R.string.book_details_no_history
 }

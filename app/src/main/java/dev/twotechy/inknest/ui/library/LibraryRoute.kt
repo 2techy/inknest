@@ -50,7 +50,7 @@ internal fun LibraryRoute(
                     detailsViewModel::toggleDescription,
                     detailsViewModel::toggleHistory,
                     detailsViewModel::toggleFile,
-                    detailsViewModel::moreHistory,
+                    detailsViewModel::historyPage,
                     detailsViewModel::retry,
                 ),
                 modifier,

@@ -22,9 +22,10 @@ Names normalize whitespace/case without removing accents, splitting creator stri
 
 The reading button opens the original document through the [shared opening flow](reading-cache.md). Missing books and inaccessible sources have explicit states.
 
+- Last-read appears below progress when known; history omits first/last-read summaries. The filled reading action stays below the hero at full width. Books without progress use a compact cover; unmatched statistics show a plain empty state, with Retry reserved for errors.
 - EPUB descriptions are cleaned to plain text, preserve paragraphs and cap at 32 KiB. They expand inline from four lines; absent descriptions reserve no space.
-- Statistics shows total time, recorded pages and reading-day count. Expand history for first/last dates and newest-first daily totals, 30 days at a time; file details shows format, path and availability.
-- Description/expander state and history limit restore with the selected book identity.
+- Statistics shows total time, recorded pages and reading-day count. Expand history for newest-first daily totals, five days per page with Previous/Next controls; file details shows format, path and availability.
+- Description/expander state and history page restore with the selected book identity.
 
 Statistics links imported KOReader IDs by compatible partialMD5 within the source, never title/author. Only the selected book is sampled, at most 12 KiB, without a full-file copy. Providers without seek support leave statistics unlinked. Checksum-cache hits recheck grants, containment and file fingerprints; cache clear prevents pending work restoring deleted rows. Multiple matching IDs retain [book/day/layout page semantics](statistics.md). Unavailable statistics differs from successfully empty history.
 

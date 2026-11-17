@@ -51,10 +51,16 @@ import java.time.format.FormatStyle
 internal fun BookDetailsHero(book: ReadingItem, zone: ZoneId, open: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.md)) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val cover = (maxWidth * 0.23f).coerceIn(
-                InkReadingTokens.coverMinWidth,
-                InkReadingTokens.coverMaxWidth,
-            )
+            val hasProgress =
+                book.progress != null || (book.currentPage != null && book.totalPages != null)
+            val cover = if (!hasProgress) {
+                InkReadingTokens.coverMinWidth
+            } else {
+                (maxWidth * 0.23f).coerceIn(
+                    InkReadingTokens.coverMinWidth,
+                    InkReadingTokens.coverMaxWidth,
+                )
+            }
             val minText = InkReadingTokens.minDetailsWidth * LocalDensity.current.fontScale
             val stacked = maxWidth < cover + InkSpacing.lg + minText
             if (stacked) {
@@ -103,12 +109,12 @@ private fun BookHeroText(book: ReadingItem, zone: ZoneId, modifier: Modifier = M
         val label = listOfNotNull(status ?: progress, pages).joinToString(" · ")
         if (label.isNotEmpty()) Text(label, style = InkTextStyles.labelLarge)
         book.progress?.let { BookDetailsProgress(it) }
-        book.lastReadAt?.let {
+        book.lastReadAt?.let { timestamp ->
             val formatted = DateTimeFormatter.ofLocalizedDateTime(
                 FormatStyle.MEDIUM,
                 FormatStyle.SHORT,
             )
-                .withLocale(currentUiLocale()).format(Instant.ofEpochMilli(it).atZone(zone))
+                .withLocale(currentUiLocale()).format(Instant.ofEpochMilli(timestamp).atZone(zone))
             Text(
                 stringResource(R.string.book_details_last_read_value, formatted),
                 style = InkTextStyles.bodySmall,
