@@ -14,12 +14,12 @@ import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.BookCatalogSource
-import dev.twotechy.inknest.data.source.BookMetadata
-import dev.twotechy.inknest.data.source.CatalogBook
-import dev.twotechy.inknest.data.source.EnrichedReadingItem
-import dev.twotechy.inknest.data.source.SourceDocument
-import dev.twotechy.inknest.data.source.impl.SafTreeReader
+import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.BookMetadata
+import dev.twotechy.inknest.data.source.books.CatalogBook
+import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingStatus
@@ -133,8 +133,8 @@ class FolderLibraryIntegrationTest {
                 val readingCache = dev.twotechy.inknest.data.repository.CachedReadingRepository(
                     config,
                     dev.twotechy.inknest.data.local.reading.ReadingCache(database.readingDao()),
-                    dev.twotechy.inknest.data.source.CurrentReadingSource {
-                        dev.twotechy.inknest.data.source.CurrentReadingSnapshot(null)
+                    dev.twotechy.inknest.data.source.koreader.CurrentReadingSource {
+                        dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot(null)
                     },
                     scope,
                 )

@@ -2,8 +2,8 @@ package dev.twotechy.inknest.data.source.stats.impl
 
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
-import dev.twotechy.inknest.data.source.MissingSourceFile
-import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
 import dev.twotechy.inknest.data.source.stats.StatisticsBookIdentity
 import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
@@ -77,7 +77,7 @@ internal class StatisticsSnapshotProbe(
                 ) {
                     throw error
                 } catch (
-                    error: dev.twotechy.inknest.data.source.SourceLimitExceeded,
+                    error: dev.twotechy.inknest.data.source.io.SourceLimitExceeded,
                 ) {
                     throw error
                 } catch (error: IOException) {

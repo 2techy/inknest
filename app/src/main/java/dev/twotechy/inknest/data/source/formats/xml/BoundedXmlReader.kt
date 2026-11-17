@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.data.source.formats.xml
 
-import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
 import java.io.IOException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory

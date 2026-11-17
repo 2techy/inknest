@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import dev.twotechy.inknest.data.source.AppReleaseJson
+import dev.twotechy.inknest.data.source.updates.AppReleaseJson
 import dev.twotechy.inknest.model.UpdateSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged

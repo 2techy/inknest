@@ -9,10 +9,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.MissingSourceFile
-import dev.twotechy.inknest.data.source.SourceDocument
-import dev.twotechy.inknest.data.source.SourceDocumentReader
-import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.model.OpenResult
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingOpenPreparation

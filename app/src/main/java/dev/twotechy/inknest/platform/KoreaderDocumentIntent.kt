@@ -4,7 +4,7 @@ import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
-import dev.twotechy.inknest.data.source.PrimaryTreePath
+import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 
 // Some devices expose SAF descriptors as /mnt/user/... paths that KOReader's Lua runtime
 // cannot reopen. Its own FileProvider resolves the same original file in the reader's namespace.

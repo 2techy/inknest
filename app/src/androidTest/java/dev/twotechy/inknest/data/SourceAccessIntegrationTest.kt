@@ -7,7 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.InkNestApplication
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.ReadingRefreshException
+import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.IOException

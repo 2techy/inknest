@@ -4,10 +4,10 @@ import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
 import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
-import dev.twotechy.inknest.data.source.BookCatalogSource
-import dev.twotechy.inknest.data.source.CatalogBook
-import dev.twotechy.inknest.data.source.EnrichedReadingItem
-import dev.twotechy.inknest.data.source.SourceDocument
+import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.CatalogBook
+import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.File
 import java.io.IOException

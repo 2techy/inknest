@@ -2,9 +2,9 @@ package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.data.local.reading.LibraryDao
 import dev.twotechy.inknest.data.local.reading.StatisticsDao
-import dev.twotechy.inknest.data.source.BookChecksum
-import dev.twotechy.inknest.data.source.BookChecksumSource
-import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.books.BookChecksum
+import dev.twotechy.inknest.data.source.books.BookChecksumSource
+import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.model.BOOK_HISTORY_PAGE_SIZE
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.BookDetails

@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data.source
 
+import dev.twotechy.inknest.data.source.books.partialBookMd5
 import java.nio.file.Files
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch

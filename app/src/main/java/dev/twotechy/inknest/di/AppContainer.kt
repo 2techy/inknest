@@ -17,7 +17,7 @@ import dev.twotechy.inknest.data.repository.SourceSettingsRepository
 import dev.twotechy.inknest.data.repository.StatisticsRepository
 import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.data.repository.UserPreferencesRepository
-import dev.twotechy.inknest.data.source.SafSourceAccess
+import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLanguageController
 import dev.twotechy.inknest.platform.AppLauncher

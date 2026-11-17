@@ -2,9 +2,9 @@ package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
 import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
-import dev.twotechy.inknest.data.source.BookCatalogSource
-import dev.twotechy.inknest.data.source.EnrichedReadingItem
-import dev.twotechy.inknest.data.source.ResolvedBook
+import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.books.ResolvedBook
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncStatus

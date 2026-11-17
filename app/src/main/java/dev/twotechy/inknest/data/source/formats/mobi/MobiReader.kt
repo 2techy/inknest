@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.source.formats.mobi
 
-import dev.twotechy.inknest.data.source.BookMetadataProbeResult
-import dev.twotechy.inknest.data.source.InvalidBookMetadata
+import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.formats.InvalidBookMetadata
 import dev.twotechy.inknest.data.source.formats.optionalCover
 import dev.twotechy.inknest.data.source.formats.plainDescription
 import java.io.File

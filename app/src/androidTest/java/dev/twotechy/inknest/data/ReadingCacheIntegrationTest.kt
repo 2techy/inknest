@@ -12,9 +12,9 @@ import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.CurrentReadingSnapshot
-import dev.twotechy.inknest.data.source.CurrentReadingSource
-import dev.twotechy.inknest.data.source.ReadingRefreshException
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingSource
+import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig

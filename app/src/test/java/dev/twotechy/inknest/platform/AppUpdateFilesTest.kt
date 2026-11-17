@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.platform
 
-import dev.twotechy.inknest.data.source.AppReleaseSource
+import dev.twotechy.inknest.data.source.updates.AppReleaseSource
 import dev.twotechy.inknest.model.AppRelease
 import java.io.File
 import java.io.IOException

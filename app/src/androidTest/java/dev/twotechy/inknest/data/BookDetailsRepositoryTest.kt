@@ -14,8 +14,8 @@ import dev.twotechy.inknest.data.repository.LibraryRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.StatisticsRepository
-import dev.twotechy.inknest.data.source.BookChecksum
-import dev.twotechy.inknest.data.source.BookChecksumSource
+import dev.twotechy.inknest.data.source.books.BookChecksum
+import dev.twotechy.inknest.data.source.books.BookChecksumSource
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.BookStatisticsStatus
 import dev.twotechy.inknest.model.ReadingItem

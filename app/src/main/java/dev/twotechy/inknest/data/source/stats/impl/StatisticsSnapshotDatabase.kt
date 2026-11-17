@@ -2,7 +2,7 @@ package dev.twotechy.inknest.data.source.stats.impl
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
-import dev.twotechy.inknest.data.source.cancellableQuery
+import dev.twotechy.inknest.data.source.io.cancellableQuery
 import dev.twotechy.inknest.data.source.stats.StatisticsProbeResult
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema

@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.local.reading
 
-import dev.twotechy.inknest.data.source.BookMetadata
-import dev.twotechy.inknest.data.source.CurrentReadingSnapshot
+import dev.twotechy.inknest.data.source.books.BookMetadata
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.security.MessageDigest
