@@ -20,7 +20,7 @@ Commit replacement history, current pointer and order in one Room transaction. U
 
 Sidecars reread on refresh: finite `percent_finished` in [0, 1] may decrease. Explicit `reading`, `complete`, `abandoned` map to known states; 100% alone is not Finished.
 
-EPUB title/author survive missing/unsupported artwork. [Bounded extraction](koreader-integration.md) produces private PNG thumbnails, longest edge at most 480px, through temporary write/atomic rename. Keys include source/partition, canonical path and size/mtime. Known unchanged fingerprints reuse metadata/covers; unknown ones reread and changed files use new keys. Prune unreferenced thumbnails after 24 hours to allow concurrent candidate staging. Clear/disconnect removes covers. No bitmap belongs in ViewModels/saved state; decoded-cache rules are in [design system](design-system.md).
+Book title/author survive missing/unsupported artwork. [Bounded extraction](koreader-integration.md) produces private PNG thumbnails, longest edge at most 480px, through temporary write/atomic rename. Keys include source/partition, canonical path and size/mtime. Known unchanged fingerprints reuse metadata/covers; unknown ones reread and changed files use new keys. Prune unreferenced thumbnails after 24 hours to allow concurrent candidate staging. Clear/disconnect removes covers. No bitmap belongs in ViewModels/saved state; decoded-cache rules are in [design system](design-system.md).
 
 ## Saved page position
 
@@ -37,6 +37,8 @@ Distinct failures cover missing app/file/grant, unsupported handler and changed 
 On Tango 2, ExternalStorageProvider descriptors can resolve in KOReader to inaccessible `/mnt/user/...` paths. After SAF validation, primary-storage documents use `content://org.koreader.launcher.provider/external/` only when that authority belongs to the selected reader. It resolves the same file via `/storage/emulated/0/...`, without copying/importing. Data/ClipData remain consistent; foreign grant flags are removed because the receiver owns the provider. Otherwise retain the original SAF intent; never use `file://`.
 
 Reject malformed/traversal IDs and other volumes. Regression coverage includes encoded names, exact path/MIME, provider ownership and grants. See [device acceptance](reliability.md) for actual opening/return checks.
+
+Known book extensions use reader-compatible MIME types (including `application/fb2`), even when SAF reports `application/octet-stream` or an incompatible alias. Unknown extensions retain the provider MIME, falling back to `application/octet-stream`. This does not establish reader support for a format.
 
 ## Refresh and failures
 

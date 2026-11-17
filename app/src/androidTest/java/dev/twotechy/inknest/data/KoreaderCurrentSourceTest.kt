@@ -1,12 +1,12 @@
 package dev.twotechy.inknest.data
 
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.source.BookProbeDataSource
-import dev.twotechy.inknest.data.source.KoreaderCurrentSource
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.ReadingRefreshException
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.impl.KoreaderCurrentSource
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue

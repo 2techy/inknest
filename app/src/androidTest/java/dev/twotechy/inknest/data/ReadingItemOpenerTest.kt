@@ -9,10 +9,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.BookProbeDataSource
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
 import dev.twotechy.inknest.model.OpenResult
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingOpenPreparation
@@ -54,6 +54,38 @@ class ReadingItemOpenerTest {
                 assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
             }
             assertEquals(3, intents.size)
+            assertEquals(0, fixture.documents.reads)
+        } finally {
+            fixture.close()
+        }
+    }
+
+    @Test fun recognizedFormatsDispatchWithReaderMimeWithoutReadingContents() = runBlocking {
+        val fixture = Fixture()
+        try {
+            fixture.configure()
+            val intents = mutableListOf<Intent>()
+            val opener = fixture.recordingOpener(intents)
+            val formats = mapOf(
+                "book.FB2" to "application/fb2",
+                "book.cbz" to "application/vnd.comicbook+zip",
+                "book.mobi" to "application/x-mobipocket-ebook",
+                "book.pdf" to "application/pdf",
+            )
+            for (providerMime in listOf(
+                null,
+                "application/octet-stream",
+                "application/x-fictionbook+xml",
+            )) {
+                fixture.documents.mime = providerMime
+                for ((name, expected) in formats) {
+                    assertEquals(OpenResult.Dispatched, opener.open(fixture.id(name)))
+                    assertEquals(expected, intents.last().type)
+                }
+            }
+            fixture.documents.mime = "application/custom-book"
+            opener.open(fixture.id("book.custom"))
+            assertEquals("application/custom-book", intents.last().type)
             assertEquals(0, fixture.documents.reads)
         } finally {
             fixture.close()
@@ -197,6 +229,7 @@ class ReadingItemOpenerTest {
     }
 
     private class Documents : SourceDocumentReader {
+        var mime: String? = "application/epub+zip"
         var missing = false
         var denied = false
         var reads = 0
@@ -207,7 +240,7 @@ class ReadingItemOpenerTest {
             if (missing) throw MissingSourceFile()
             val id = "primary:Download/" + path.joinToString("/")
             val uri = DocumentsContract.buildDocumentUriUsingTree(Uri.parse(tree), id)
-            return SourceDocument(uri.toString(), "application/epub+zip", 1L, 1L)
+            return SourceDocument(uri.toString(), mime, 1L, 1L)
         }
         override suspend fun <T> read(
             tree: String,

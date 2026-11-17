@@ -20,7 +20,7 @@ Ghi danh sách mới, con trỏ hiện tại và thứ tự trong một giao d�
 
 Sidecar đọc lại khi làm mới: `percent_finished` hữu hạn trong [0, 1] có thể giảm. Trạng thái rõ `reading`, `complete`, `abandoned` được ánh xạ; 100% riêng lẻ không là Đã đọc.
 
-Tên/tác giả EPUB giữ khi thiếu/không hỗ trợ bìa. [Trích xuất có giới hạn](koreader-integration.md) tạo PNG riêng, cạnh dài tối đa 480px, ghi tạm/đổi tên nguyên tử. Khóa gồm nguồn/phân vùng, đường dẫn chuẩn và size/mtime. Fingerprint đã biết không đổi dùng lại metadata/bìa; chưa biết thì đọc lại, tệp đổi dùng khóa mới. Dọn ảnh không còn tham chiếu sau 24 giờ để ứng viên đồng thời ghi tạm an toàn. Xóa cache/ngắt kết nối xóa bìa. Không giữ bitmap trong ViewModel/saved state; cache giải mã theo [hệ thống thiết kế](design-system.md).
+Tên/tác giả sách giữ khi thiếu/không hỗ trợ bìa. [Trích xuất có giới hạn](koreader-integration.md) tạo PNG riêng, cạnh dài tối đa 480px, ghi tạm/đổi tên nguyên tử. Khóa gồm nguồn/phân vùng, đường dẫn chuẩn và size/mtime. Fingerprint đã biết không đổi dùng lại metadata/bìa; chưa biết thì đọc lại, tệp đổi dùng khóa mới. Dọn ảnh không còn tham chiếu sau 24 giờ để ứng viên đồng thời ghi tạm an toàn. Xóa cache/ngắt kết nối xóa bìa. Không giữ bitmap trong ViewModel/saved state; cache giải mã theo [hệ thống thiết kế](design-system.md).
 
 ## Vị trí trang đã lưu
 
@@ -37,6 +37,8 @@ Lỗi phân biệt thiếu ứng dụng/tệp/quyền, handler chưa hỗ trợ 
 Trên Tango 2, descriptor ExternalStorageProvider có thể được KOReader phân giải thành `/mnt/user/...` không mở được. Sau xác thực SAF, tài liệu bộ nhớ chính chỉ dùng `content://org.koreader.launcher.provider/external/` khi authority thuộc trình đọc đã chọn. Nó mở cùng tệp qua `/storage/emulated/0/...`, không sao chép/nhập lại. Data/ClipData nhất quán; bỏ cờ quyền ngoài vì bên nhận sở hữu provider. Trường hợp khác giữ intent SAF gốc; không dùng `file://`.
 
 Từ chối ID sai/thoát thư mục và volume khác. Kiểm thử gồm tên mã hóa, đúng đường dẫn/MIME, chủ provider và quyền. Xem [nghiệm thu thiết bị](reliability.md) để kiểm tra mở/quay lại thực tế.
+
+Đuôi sách đã biết dùng MIME tương thích với trình đọc (gồm `application/fb2`), kể cả khi SAF báo `application/octet-stream` hoặc alias không tương thích. Đuôi chưa biết giữ MIME của provider, mặc định `application/octet-stream`. Điều này không xác lập khả năng đọc định dạng của ứng dụng đọc.
 
 ## Làm mới và lỗi
 

@@ -12,8 +12,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.DataStoreAppUpdateStore
 import dev.twotechy.inknest.data.source.AppReleaseJson
-import dev.twotechy.inknest.data.source.GitHubReleaseSource
 import dev.twotechy.inknest.data.source.UpdateHttpTransport
+import dev.twotechy.inknest.data.source.impl.GitHubReleaseSource
 import dev.twotechy.inknest.model.AppRelease
 import dev.twotechy.inknest.model.UpdateSnapshot
 import dev.twotechy.inknest.platform.AndroidUpdateApkVerifier

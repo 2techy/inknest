@@ -1,8 +1,9 @@
 package dev.twotechy.inknest.data.repository
 
-import dev.twotechy.inknest.data.source.BookProbeDataSource
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.UnresolvedBookPath
+import dev.twotechy.inknest.data.source.formats.BookMimeTypes
+import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
 import dev.twotechy.inknest.model.OpenResult
 import dev.twotechy.inknest.model.PreparedReadingOpen
 import dev.twotechy.inknest.model.ReadingItemId
@@ -51,11 +52,7 @@ internal class SafReadingOpenRepository(
     private suspend fun resolve(selected: ReadingSourceConfig, item: ReadingItemId) =
         withContext(ioDispatcher) {
             val book = books.resolveIdentity(selected, item.path)
-            val mime = if (book.relative.last().endsWith(".epub", true)) {
-                "application/epub+zip"
-            } else {
-                book.document.mime ?: "application/octet-stream"
-            }
+            val mime = BookMimeTypes.forFile(book.relative.last(), book.document.mime)
             PreparedReadingOpen(selected, book.document.uri, mime)
         }
 

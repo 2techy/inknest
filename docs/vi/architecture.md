@@ -17,7 +17,9 @@ Ranh giới trách nhiệm và vòng đời của module production duy nhất `
 | `ui/components`, `ui/theme` | Điều khiển, cử chỉ và token thiết kế dùng chung. |
 
 Khởi tạo đồ thị phụ thuộc và dọn tệp tạm bị gián đoạn chạy ngoài luồng chính. Thành phần bất đồng bộ nhận dispatcher; repository và StatsViewModel dùng chung `StatisticsClock` có thể thay trong kiểm thử.
-`BookProbeDataSource` dùng chung việc phân giải tài liệu, đọc EPUB/sidecar và lấy mẫu checksum. Helper riêng nằm cạnh tính năng; model sách nằm cùng `ReadingItem`.
+Contract và kiểu dữ liệu tại ranh giới nguồn nằm trong `data/source`; lớp triển khai nằm trong `data/source/impl`. Statistics dùng cùng quy ước với `stats/impl`. `formats/<format>` chứa parser từng định dạng; `formats/xml` và `formats/archive` chứa helper phân tích dùng chung. `BookFileExtensions` và `BookMimeTypes` trong `data/source/formats` quản lý danh mục đuôi tệp dùng chung và ánh xạ MIME khi mở sách.
+
+`BookProbeDataSource` dùng chung việc phân giải tài liệu, đọc metadata/sidecar có giới hạn và lấy mẫu checksum. Helper riêng nằm cạnh tính năng; model sách nằm cùng `ReadingItem`.
 
 ## Lưu trữ và theo dõi
 

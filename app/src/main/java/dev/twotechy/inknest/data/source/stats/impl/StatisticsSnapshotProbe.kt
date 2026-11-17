@@ -1,9 +1,17 @@
-package dev.twotechy.inknest.data.source.stats
+package dev.twotechy.inknest.data.source.stats.impl
 
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
+import dev.twotechy.inknest.data.source.stats.StatisticsBookIdentity
+import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
+import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
+import dev.twotechy.inknest.data.source.stats.StatisticsProbeResult
+import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
+import dev.twotechy.inknest.data.source.stats.UnstableStatisticsSnapshot
+import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
 import dev.twotechy.inknest.model.ReadingEvent
 import java.io.File
 import java.io.IOException
@@ -16,13 +24,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-
-internal data class StatisticsProbeResult(
-    val books: Long,
-    val pageRows: Long,
-    val walPresent: Boolean,
-)
-internal class UnsupportedStatisticsSchema : IOException()
 
 internal class StatisticsSnapshotProbe(
     private val files: SourceDocumentReader,
@@ -95,6 +96,3 @@ internal class StatisticsSnapshotProbe(
         const val MAX_ATTEMPTS = 3
     }
 }
-
-internal class UnstableStatisticsSnapshot : IOException()
-internal class InvalidStatisticsSnapshot : IOException()

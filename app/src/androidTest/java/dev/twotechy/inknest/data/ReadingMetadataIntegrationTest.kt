@@ -11,11 +11,11 @@ import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.BookCoverCache
 import dev.twotechy.inknest.data.source.BookMetadataReader
-import dev.twotechy.inknest.data.source.BookProbeDataSource
-import dev.twotechy.inknest.data.source.KoreaderCurrentSource
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.impl.KoreaderCurrentSource
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig

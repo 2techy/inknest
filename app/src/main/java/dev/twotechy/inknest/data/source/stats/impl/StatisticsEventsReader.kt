@@ -1,8 +1,10 @@
-package dev.twotechy.inknest.data.source.stats
+package dev.twotechy.inknest.data.source.stats.impl
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.stats.StatisticsBookIdentity
+import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
 import dev.twotechy.inknest.data.source.withCancellableSignal
 import dev.twotechy.inknest.model.ReadingEvent
 import kotlinx.coroutines.currentCoroutineContext

@@ -15,7 +15,7 @@ import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
+import dev.twotechy.inknest.data.source.impl.AndroidInstalledAppsDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch

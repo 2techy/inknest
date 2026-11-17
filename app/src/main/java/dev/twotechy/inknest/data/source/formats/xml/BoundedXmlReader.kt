@@ -1,4 +1,4 @@
-package dev.twotechy.inknest.data.source.epub
+package dev.twotechy.inknest.data.source.formats.xml
 
 import dev.twotechy.inknest.data.source.SourceLimitExceeded
 import java.io.IOException

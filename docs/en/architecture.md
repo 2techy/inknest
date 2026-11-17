@@ -17,7 +17,9 @@ Ownership and lifecycle contracts for the single production `:app` module, using
 | `ui/components`, `ui/theme` | Shared controls, gestures and design tokens. |
 
 Graph initialization and interrupted-temp-file cleanup run off main. Asynchronous components receive dispatchers; repository and StatsViewModel share an injectable `StatisticsClock`.
-`BookProbeDataSource` shares document resolution, EPUB/sidecar reads and checksum sampling. Feature-only helpers stay beside their feature; book models live with `ReadingItem`.
+Source contracts and boundary types stay in `data/source`; concrete implementations live in `data/source/impl`. Statistics follows the same convention under `stats/impl`. `formats/<format>` owns each book parser; `formats/xml` and `formats/archive` hold shared parsing helpers. `BookFileExtensions` and `BookMimeTypes` in `data/source/formats` own the shared extension inventory and opening MIME mapping.
+
+`BookProbeDataSource` shares document resolution, bounded metadata/sidecar reads and checksum sampling. Feature-only helpers stay beside their feature; book models live with `ReadingItem`.
 
 ## Storage and observation
 
