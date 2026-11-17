@@ -20,7 +20,7 @@ Home branding/clock use system serif; other text uses system sans-serif. Text us
 
 `AppScaffold` owns insets, gutters, content width and adaptive navigation; `ScreenScaffold` owns headers, scrolling and an optional footer. Routes do not add page padding again. Adapt to window width/font scale, never device model.
 
-- Header actions share full touch targets: the final action is centered and a preceding Search icon aligns toward it for a compact visual gap. Search Close uses the same final column; Options uses a sliders icon. Page and submenu Back icons stay centered. Home keeps its two-row fallback when needed.
+- Header actions share full touch targets: the final action is centered and a preceding Search icon aligns toward it for a compact visual gap. Search Close uses the same final column; Options uses a sliders icon. Page Back artwork aligns with the leading content edge inside a full touch target, with titles following a compact icon slot; submenu Back stays centered. Home keeps its two-row fallback when needed.
 - Main order: Home → Library → Stats → Apps. Bottom navigation becomes a scrollable rail at 600dp window width. Headers align with the content gutter; main pages have no Back button.
 - Settings opens from Home/configuration actions, hides main navigation and returns to the originating tab. Settings details, onboarding and Book details hide main navigation/tab swipes.
 - HOME returns to Home, closes transient UI and invalidates gestures. Preserve destination/query/scroll state where supported.

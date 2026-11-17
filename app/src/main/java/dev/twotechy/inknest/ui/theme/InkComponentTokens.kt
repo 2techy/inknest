@@ -8,6 +8,7 @@ internal object InkHeaderTokens {
     val minHeight = 48.dp
     val iconSize = 24.dp
     val touchTarget = 48.dp
+    val backIconStartInset = 7.25.dp
 }
 internal object InkLayoutTokens {
     val narrowBreakpoint = 360.dp
