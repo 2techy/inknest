@@ -1,22 +1,21 @@
-package dev.twotechy.inknest.data.source
+package dev.twotechy.inknest.data.source.impl
 
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
+import dev.twotechy.inknest.data.source.BookCatalogSource
+import dev.twotechy.inknest.data.source.CatalogBook
+import dev.twotechy.inknest.data.source.PrimaryTreePath
+import dev.twotechy.inknest.data.source.SourceDocument
+import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.cancellableQuery
+import dev.twotechy.inknest.data.source.formats.BookFileExtensions
+import dev.twotechy.inknest.data.source.safProviderOperation
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-
-internal data class CatalogBook(
-    val path: String,
-    val relative: List<String>,
-    val document: SourceDocument,
-)
-internal fun interface BookCatalogSource {
-    suspend fun scan(tree: String): List<CatalogBook>
-}
 
 // Traverses only the granted primary Books tree. No symlinks, sidecars or hidden folders.
 internal class SafBookCatalogSource(private val resolver: ContentResolver) : BookCatalogSource {
@@ -48,7 +47,7 @@ internal class SafBookCatalogSource(private val resolver: ContentResolver) : Boo
                 if (name.startsWith('.') || name.endsWith(".sdr", true)) continue
                 if (document.mime == DocumentsContract.Document.MIME_TYPE_DIR) {
                     queue.add(id)
-                } else if (name.substringAfterLast('.', "").lowercase() in BOOK_EXTENSIONS) {
+                } else if (BookFileExtensions.fromName(name) in BookFileExtensions.recognized) {
                     books.add(CatalogBook(id, relative, document))
                 }
             }
@@ -94,10 +93,4 @@ internal class SafBookCatalogSource(private val resolver: ContentResolver) : Boo
         }
     }
     private data class Child(val id: String, val name: String, val document: SourceDocument)
-    private companion object {
-        val BOOK_EXTENSIONS = setOf(
-            "epub", "pdf", "djvu", "djv", "mobi", "azw", "azw3",
-            "fb2", "txt", "cbz", "cbr", "rtf", "doc", "docx", "html", "htm", "chm", "pdb",
-        )
-    }
 }

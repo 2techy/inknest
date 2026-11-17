@@ -8,8 +8,8 @@ import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.StatisticsBookEntity
 import dev.twotechy.inknest.data.local.reading.StatisticsEventEntity
 import dev.twotechy.inknest.data.local.reading.StatisticsImportEntity
-import dev.twotechy.inknest.data.source.epub.epubDescription
-import dev.twotechy.inknest.data.source.epub.readBoundedXml
+import dev.twotechy.inknest.data.source.formats.epub.epubDescription
+import dev.twotechy.inknest.data.source.formats.xml.readBoundedXml
 import java.nio.file.Files
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first

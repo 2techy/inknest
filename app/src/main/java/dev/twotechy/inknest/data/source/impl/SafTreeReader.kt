@@ -1,8 +1,15 @@
-package dev.twotechy.inknest.data.source
+package dev.twotechy.inknest.data.source.impl
 
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
+import dev.twotechy.inknest.data.source.DirectSourceDocumentReader
+import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.PrimaryTreePath
+import dev.twotechy.inknest.data.source.SourceDocument
+import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.cancellableQuery
+import dev.twotechy.inknest.data.source.safProviderOperation
 import java.io.IOException
 import java.io.InputStream
 import kotlinx.coroutines.CoroutineStart
@@ -157,10 +164,3 @@ internal class SafTreeReader(private val resolver: ContentResolver) : DirectSour
         }
     }
 }
-
-internal data class SourceDocument(
-    val uri: String,
-    val mime: String?,
-    val size: Long?,
-    val modified: Long?,
-)

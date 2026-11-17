@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.data.source
 
-import dev.twotechy.inknest.data.source.epub.archivePath
+import dev.twotechy.inknest.data.source.formats.archive.archivePath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

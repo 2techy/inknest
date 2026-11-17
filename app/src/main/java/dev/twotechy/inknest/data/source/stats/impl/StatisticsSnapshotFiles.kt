@@ -1,11 +1,11 @@
-package dev.twotechy.inknest.data.source.stats
+package dev.twotechy.inknest.data.source.stats.impl
 
 import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.data.source.copyBounded
+import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
 import java.io.File
-import java.io.IOException
 
 // A snapshot attempt is bound to one selected tree; filenames are a fixed local allowlist.
 internal class StatisticsSnapshotFiles(
@@ -47,5 +47,3 @@ internal class StatisticsSnapshotFiles(
         const val DATABASE_NAME = "statistics.sqlite3"
     }
 }
-
-internal class StatisticsSnapshotChanged : IOException()

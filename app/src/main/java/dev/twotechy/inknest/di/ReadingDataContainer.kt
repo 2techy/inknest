@@ -15,12 +15,12 @@ import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
 import dev.twotechy.inknest.data.source.BookCoverCache
 import dev.twotechy.inknest.data.source.BookMetadata
 import dev.twotechy.inknest.data.source.BookMetadataReader
-import dev.twotechy.inknest.data.source.BookProbeDataSource
-import dev.twotechy.inknest.data.source.KoreaderCurrentSource
-import dev.twotechy.inknest.data.source.SafBookCatalogSource
 import dev.twotechy.inknest.data.source.SafSourceAccess
-import dev.twotechy.inknest.data.source.SafTreeReader
-import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
+import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.impl.KoreaderCurrentSource
+import dev.twotechy.inknest.data.source.impl.SafBookCatalogSource
+import dev.twotechy.inknest.data.source.impl.SafTreeReader
+import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.platform.AndroidBookCoverSource
 import dev.twotechy.inknest.platform.BookCoverLoader

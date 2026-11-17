@@ -1,7 +1,15 @@
-package dev.twotechy.inknest.data.source
+package dev.twotechy.inknest.data.source.impl
 
+import dev.twotechy.inknest.data.source.BookMetadata
+import dev.twotechy.inknest.data.source.BookMetadataReader
+import dev.twotechy.inknest.data.source.CurrentReadingSnapshot
+import dev.twotechy.inknest.data.source.CurrentReadingSource
 import dev.twotechy.inknest.data.source.ProbeIssue
 import dev.twotechy.inknest.data.source.ProbeRead
+import dev.twotechy.inknest.data.source.ReadingRefreshException
+import dev.twotechy.inknest.data.source.ResolvedBook
+import dev.twotechy.inknest.data.source.SafSourceAccess
+import dev.twotechy.inknest.data.source.SourceFileReader
 import dev.twotechy.inknest.data.source.lua.HistoryEntryDto
 import dev.twotechy.inknest.data.source.lua.ReaderLuaDataSource
 import dev.twotechy.inknest.data.source.readCapability
@@ -11,22 +19,8 @@ import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.SourceAccessState
-import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-internal data class CurrentReadingSnapshot(
-    val current: ReadingItem?,
-    val warning: ReadingSyncIssue? = null,
-    val history: List<ReadingItem>? = null,
-    val metadata: Map<String, BookMetadata> = emptyMap(),
-    val skippedHistoryEntries: Int = 0,
-)
-internal class ReadingRefreshException(val issue: ReadingSyncIssue, cause: Throwable? = null) :
-    IOException(issue.name, cause)
-internal fun interface CurrentReadingSource {
-    suspend fun read(config: ReadingSourceConfig): CurrentReadingSnapshot
-}
 
 internal class KoreaderCurrentSource(
     private val files: SourceFileReader,

@@ -18,8 +18,8 @@ import dev.twotechy.inknest.data.source.BookCatalogSource
 import dev.twotechy.inknest.data.source.BookMetadata
 import dev.twotechy.inknest.data.source.CatalogBook
 import dev.twotechy.inknest.data.source.EnrichedReadingItem
-import dev.twotechy.inknest.data.source.SafTreeReader
 import dev.twotechy.inknest.data.source.SourceDocument
+import dev.twotechy.inknest.data.source.impl.SafTreeReader
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingStatus

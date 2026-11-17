@@ -1,8 +1,8 @@
 package dev.twotechy.inknest.data.source
 
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
-import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotFiles
-import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
+import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotFiles
+import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException

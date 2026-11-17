@@ -1,17 +1,14 @@
-package dev.twotechy.inknest.data.source
+package dev.twotechy.inknest.data.source.impl
 
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
+import dev.twotechy.inknest.data.source.InstalledAppsDataSource
 import dev.twotechy.inknest.model.AppInfo
 import java.text.Collator
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-interface InstalledAppsDataSource {
-    suspend fun loadInstalledApps(): List<AppInfo>
-}
 
 internal class AndroidInstalledAppsDataSource(
     private val context: Context,

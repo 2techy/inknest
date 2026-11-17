@@ -23,7 +23,7 @@ Names normalize whitespace/case without removing accents, splitting creator stri
 The reading button opens the original document through the [shared opening flow](reading-cache.md). Missing books and inaccessible sources have explicit states.
 
 - Last-read appears below progress when known; history omits first/last-read summaries. The filled reading action stays below the hero at full width. Books without progress use a compact cover; unmatched statistics show a plain empty state, with Retry reserved for errors.
-- EPUB descriptions are cleaned to plain text, preserve paragraphs and cap at 32 KiB. They expand inline from four lines; absent descriptions reserve no space.
+- Book descriptions are cleaned to plain text, preserve paragraphs and cap at 32 KiB. They expand inline from four lines; absent descriptions reserve no space.
 - Statistics shows total time, recorded pages and reading-day count. Expand history for newest-first daily totals, five days per page with Previous/Next controls; file details shows format, path and availability.
 - Description/expander state and history page restore with the selected book identity.
 
@@ -34,7 +34,11 @@ Statistics links imported KOReader IDs by compatible partialMD5 within the sourc
 | Recognized extensions | Metadata and artwork |
 | --- | --- |
 | `epub` | Title, first creator and supported raster cover when available. |
-| `pdf`, `djvu`, `djv`, `mobi`, `azw`, `azw3`, `fb2`, `txt`, `cbz`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Filename and placeholder cover. |
+| `pdf` | Filename and a thumbnail of the first page; password-protected files use a placeholder. |
+| `fb2` | Title, first author, plain-text annotation and referenced raster cover. |
+| `cbz` | ComicInfo Title/Writer/Summary when present; FrontCover or the first naturally sorted image. |
+| `mobi`, `azw3` | Unencrypted KF7/KF8, including hybrid files: title, first author, description and embedded cover/thumbnail. |
+| `djvu`, `djv`, `azw`, `txt`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Filename and placeholder cover. |
 
 Recognition permits listing; opening still needs a compatible KOReader handler. Missing author/progress stays unknown and is omitted from shelf captions.
 

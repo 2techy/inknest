@@ -23,7 +23,7 @@ Tên được chuẩn hóa khoảng trắng/hoa thường, không bỏ dấu, t�
 Nút đọc mở tài liệu gốc qua [luồng mở dùng chung](reading-cache.md). Sách mất hoặc nguồn không truy cập được có trạng thái riêng.
 
 - Đọc gần nhất hiển thị dưới tiến độ khi có dữ liệu; lịch sử không có phần tóm tắt ngày đọc đầu/cuối. Nút đọc dạng fill nằm dưới hero, rộng toàn hàng. Sách thiếu tiến độ dùng bìa gọn hơn; thống kê chưa khớp hiển thị thông báo trống, chỉ có Thử lại khi gặp lỗi.
-- Mô tả EPUB làm sạch thành văn bản, giữ đoạn và giới hạn 32 KiB. Mở rộng tại chỗ từ bốn dòng; thiếu mô tả không chừa khoảng trống.
+- Mô tả sách làm sạch thành văn bản, giữ đoạn và giới hạn 32 KiB. Mở rộng tại chỗ từ bốn dòng; thiếu mô tả không chừa khoảng trống.
 - Thống kê có tổng thời gian, số trang ghi nhận và số ngày đọc. Lịch sử hiển thị tổng ngày mới nhất trước, năm ngày mỗi trang với nút Trước/Sau; thông tin tệp có định dạng, đường dẫn và khả năng truy cập.
 - Trạng thái mô tả/mục mở rộng và trang lịch sử được khôi phục theo định danh sách.
 
@@ -34,7 +34,11 @@ Thống kê ghép ID KOReader đã nhập bằng partialMD5 tương thích trong
 | Phần mở rộng được nhận diện | Thông tin sách và bìa |
 | --- | --- |
 | `epub` | Tên, tác giả đầu tiên và bìa raster được hỗ trợ, nếu có. |
-| `pdf`, `djvu`, `djv`, `mobi`, `azw`, `azw3`, `fb2`, `txt`, `cbz`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Tên tệp và bìa mặc định. |
+| `pdf` | Tên tệp và ảnh trang đầu; tệp có mật khẩu dùng bìa mặc định. |
+| `fb2` | Tên, tác giả đầu tiên, annotation dạng văn bản và bìa raster được tham chiếu. |
+| `cbz` | Title/Writer/Summary từ ComicInfo nếu có; FrontCover hoặc ảnh đầu theo thứ tự tự nhiên. |
+| `mobi`, `azw3` | KF7/KF8 không mã hóa, gồm tệp hybrid: tên, tác giả đầu tiên, mô tả và bìa/thumbnail nhúng. |
+| `djvu`, `djv`, `azw`, `txt`, `cbr`, `rtf`, `doc`, `docx`, `html`, `htm`, `chm`, `pdb` | Tên tệp và bìa mặc định. |
 
 Nhận diện cho phép liệt kê; mở vẫn cần trình xử lý KOReader tương thích. Thiếu tác giả/tiến độ giữ chưa xác định và không hiện trên kệ.
 

@@ -8,11 +8,11 @@ import dev.twotechy.inknest.data.source.MissingSourceFile
 import dev.twotechy.inknest.data.source.SourceDocument
 import dev.twotechy.inknest.data.source.SourceDocumentReader
 import dev.twotechy.inknest.data.source.cancellableQuery
-import dev.twotechy.inknest.data.source.epub.EpubProbe
+import dev.twotechy.inknest.data.source.formats.epub.EpubReader
 import dev.twotechy.inknest.data.source.safProviderOperation
 import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
-import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotProbe
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
+import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -67,14 +67,14 @@ class ReadingProbeTest {
         try {
             val file = File(dir, "book.epub")
             archive(file)
-            val result = EpubProbe().read(file)
+            val result = EpubReader().read(file)
             assertEquals("Tiếng Việt", result.title)
             assertEquals("Author", result.author)
             assertTrue(result.cover)
             for ((cover, dtd) in listOf("../../outside.jpg" to false, "cover.jpg" to true)) {
                 archive(file, cover, dtd)
                 try {
-                    EpubProbe().read(file)
+                    EpubReader().read(file)
                     fail("Unsafe archive should fail")
                 } catch (
                     _: Exception,

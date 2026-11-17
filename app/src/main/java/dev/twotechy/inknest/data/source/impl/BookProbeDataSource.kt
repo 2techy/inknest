@@ -1,45 +1,34 @@
-package dev.twotechy.inknest.data.source
+package dev.twotechy.inknest.data.source.impl
 
 import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
-import dev.twotechy.inknest.data.source.epub.EpubProbe
-import dev.twotechy.inknest.data.source.epub.EpubProbeResult
-import dev.twotechy.inknest.data.source.epub.MAX_EPUB_BYTES
-import dev.twotechy.inknest.data.source.epub.validateEpubSource
+import dev.twotechy.inknest.data.source.BookChecksum
+import dev.twotechy.inknest.data.source.BookChecksumSource
+import dev.twotechy.inknest.data.source.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.BookPathResolver
+import dev.twotechy.inknest.data.source.DirectSourceDocumentReader
+import dev.twotechy.inknest.data.source.InvalidBookMetadata
+import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.data.source.ResolvedBook
+import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.UnresolvedBookPath
+import dev.twotechy.inknest.data.source.copyBounded
+import dev.twotechy.inknest.data.source.fingerprint
+import dev.twotechy.inknest.data.source.formats.BookReader
+import dev.twotechy.inknest.data.source.formats.bookFormatSource
 import dev.twotechy.inknest.data.source.lua.ReaderLuaDataSource
 import dev.twotechy.inknest.data.source.lua.SidecarDto
+import dev.twotechy.inknest.data.source.partialBookMd5
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.nio.ByteBuffer
-import java.nio.channels.SeekableByteChannel
 import java.nio.file.Files
-import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-
-internal data class BookChecksum(val tree: String, val fingerprint: String?, val checksum: String)
-
-internal fun interface BookChecksumSource {
-    suspend fun checksum(
-        config: ReadingSourceConfig,
-        path: String,
-        cached: suspend (String, String) -> String?,
-    ): BookChecksum
-}
-
-internal data class ResolvedBook(
-    val sourcePath: String,
-    val tree: String,
-    val relative: List<String>,
-    val document: SourceDocument,
-)
-internal class UnresolvedBookPath : IOException()
 
 internal class BookProbeDataSource(
     private val files: SourceDocumentReader,
@@ -126,16 +115,16 @@ internal class BookProbeDataSource(
         return files.read(book.tree, path, ReaderLuaDataSource()::sidecar)
     }
 
-    suspend fun epub(
+    suspend fun metadata(
         book: ResolvedBook,
         onCover: suspend (ByteArray) -> Unit = {},
-    ): EpubProbeResult = withContext(ioDispatcher) {
-        validateEpubSource(book.relative.last(), book.document.size)
-        val dir = Files.createTempDirectory(cache.toPath(), "reader-epub-").toFile()
+    ): BookMetadataProbeResult = withContext(ioDispatcher) {
+        val (extension, limit) = bookFormatSource(book.relative.last(), book.document.size)
+        val dir = Files.createTempDirectory(cache.toPath(), "reader-book-").toFile()
         try {
-            val file = File(dir, "source.epub")
+            val file = File(dir, "source.$extension")
             val copy: suspend (java.io.InputStream) -> Unit = { input ->
-                file.outputStream().use { copyBounded(input, it, MAX_EPUB_BYTES) }
+                file.outputStream().use { copyBounded(input, it, limit) }
             }
             if (files is DirectSourceDocumentReader) {
                 files.readDocument(book.document, copy)
@@ -143,7 +132,7 @@ internal class BookProbeDataSource(
                 files.read(book.tree, book.relative, copy)
             }
             try {
-                EpubProbe().read(file, onCover)
+                BookReader().read(file, extension, onCover)
             } catch (
                 error: SourceLimitExceeded,
             ) {
@@ -159,33 +148,5 @@ internal class BookProbeDataSource(
             check(dir.canonicalFile.parentFile == cache.canonicalFile)
             dir.deleteRecursively()
         }
-    }
-}
-internal class UnsupportedBookFormat : IOException()
-
-internal class InvalidBookMetadata : IOException()
-
-// KOReader util.partialMD5: 1 KiB at 0, 1 KiB, 4 KiB, ... 1 GiB (at most 12 KiB read).
-internal suspend fun partialBookMd5(channel: SeekableByteChannel): String {
-    val digest = MessageDigest.getInstance("MD5")
-    val buffer = ByteBuffer.allocate(1024)
-    val offsets = listOf(0L) + (0..10).map { 1024L shl (2 * it) }
-    for (offset in offsets) {
-        currentCoroutineContext().ensureActive()
-        channel.position(offset)
-        readSample(channel, buffer)
-        if (buffer.position() == 0) break
-        digest.update(buffer.array(), 0, buffer.position())
-    }
-    return digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
-}
-
-private suspend fun readSample(channel: SeekableByteChannel, buffer: ByteBuffer) {
-    buffer.clear()
-    while (buffer.hasRemaining()) {
-        currentCoroutineContext().ensureActive()
-        val count = channel.read(buffer)
-        if (count < 0) break
-        if (count == 0) throw IOException("Provider returned no bytes")
     }
 }

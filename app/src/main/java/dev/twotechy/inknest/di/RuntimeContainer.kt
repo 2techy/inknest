@@ -9,9 +9,9 @@ import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
 import dev.twotechy.inknest.data.repository.ForegroundRefreshCoordinator
-import dev.twotechy.inknest.data.source.AndroidInstalledAppsDataSource
-import dev.twotechy.inknest.data.source.GitHubReleaseSource
-import dev.twotechy.inknest.data.source.HttpsUpdateTransport
+import dev.twotechy.inknest.data.source.impl.AndroidInstalledAppsDataSource
+import dev.twotechy.inknest.data.source.impl.GitHubReleaseSource
+import dev.twotechy.inknest.data.source.impl.HttpsUpdateTransport
 import dev.twotechy.inknest.platform.AndroidAppIconSource
 import dev.twotechy.inknest.platform.AndroidUpdateApkVerifier
 import dev.twotechy.inknest.platform.AppIconLoader

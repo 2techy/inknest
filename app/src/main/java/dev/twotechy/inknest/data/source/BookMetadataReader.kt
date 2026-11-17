@@ -1,6 +1,7 @@
 package dev.twotechy.inknest.data.source
 
 import dev.twotechy.inknest.data.source.ProbeRead
+import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.readCapability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -71,18 +72,31 @@ internal class BookMetadataReader(
         if (canReuse(old, fingerprint)) return checkNotNull(old)
         val key = covers.key(config, item.id.path, fingerprint ?: UUID.randomUUID().toString())
         var cover: String? = null
-        val epub = (
-            readCapability {
-                books.epub(book) { bytes -> cover = covers.write(key, bytes) }
-            }.result as? ProbeRead.Success
-            )?.value
+        val result = readCapability {
+            books.metadata(book) { bytes -> cover = covers.write(key, bytes) }
+        }.result
+        checkMetadataSource(result)
+        val parsed = (result as? ProbeRead.Success)?.value
+        if (parsed == null && sameFingerprint(old, fingerprint)) return checkNotNull(old)
         return BookMetadata(
-            fingerprint = fingerprint.takeIf { epub != null },
-            title = epub?.title ?: item.title,
-            author = epub?.author,
+            fingerprint = fingerprint.takeIf { parsed != null },
+            title = parsed?.title ?: item.title,
+            author = parsed?.author,
             coverUri = cover,
-            description = epub?.description,
+            description = parsed?.description,
         )
+    }
+
+    private fun checkMetadataSource(result: ProbeRead<BookMetadataProbeResult>) {
+        if (result !is ProbeRead.Failed) return
+        if (result.issue in setOf(ProbeIssue.ProviderError, ProbeIssue.PermissionLost)) {
+            throw java.io.IOException("Book metadata source unavailable: ${result.issue}")
+        }
+    }
+
+    private fun sameFingerprint(old: BookMetadata?, fingerprint: String?): Boolean {
+        if (fingerprint == null) return false
+        return old?.fingerprint == fingerprint
     }
 
     private suspend fun canReuse(old: BookMetadata?, fingerprint: String?): Boolean {
