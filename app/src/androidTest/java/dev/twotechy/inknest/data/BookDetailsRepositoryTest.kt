@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.StatisticsBookEntity
+import dev.twotechy.inknest.data.local.reading.StatisticsEventEntity
 import dev.twotechy.inknest.data.repository.CachedBookDetailsRepository
 import dev.twotechy.inknest.data.repository.LibraryCatalog
 import dev.twotechy.inknest.data.repository.LibraryRepository
@@ -90,6 +91,7 @@ class BookDetailsRepositoryTest {
                         source,
                         clock,
                     )
+                verifyPages(repository, id, database)
                 verifyBooks(repository, id, config, source)
             } finally {
                 database.close()
@@ -128,38 +130,75 @@ class BookDetailsRepositoryTest {
         database.statisticsDao().putBooks(listOf(StatisticsBookEntity("g", 1, "matching")))
     }
 
+    private suspend fun verifyPages(
+        repository: CachedBookDetailsRepository,
+        id: ReadingItemId,
+        database: ReadingDatabase,
+    ) {
+        val dao = database.statisticsDao()
+        dao.putEvents(
+            (0 until 12).map { day ->
+                StatisticsEventEntity("g", day, day.toLong() + 1, 60, 1, 1, 100, day.toLong())
+            },
+        )
+        val pages = (0..2).map { page ->
+            repository.observe(id, page).first {
+                it.statistics.status == BookStatisticsStatus.Ready
+            }.statistics
+        }
+        assertEquals(listOf(5, 5, 2), pages.map { it.history.size })
+        assertEquals(
+            (0..11).reversed().map(Int::toLong),
+            pages.flatMap {
+                it.history
+            }.map { it.date.toEpochDay() },
+        )
+        assertTrue(pages.all { it.seconds == 720L && it.readingDays == 12 })
+        val clamped = repository.observe(id, Int.MAX_VALUE).first {
+            it.statistics.status ==
+                BookStatisticsStatus.Ready
+        }
+        assertEquals(2, clamped.statistics.historyPage)
+        dao.deleteEvents("g")
+        val empty = repository.observe(id, 2).first {
+            it.statistics.status ==
+                BookStatisticsStatus.Ready
+        }
+        assertEquals(0, empty.statistics.historyPage)
+    }
+
     private suspend fun verifyBooks(
         repository: CachedBookDetailsRepository,
         id: ReadingItemId,
         config: ReadingSourceConfigRepository,
         source: TestBookChecksumSource,
     ) {
-        val empty = repository.observe(id, 30).first {
+        val empty = repository.observe(id, 0).first {
             it.statistics.status ==
                 BookStatisticsStatus.Ready
         }
         assertEquals(0, empty.statistics.readingDays)
         assertEquals(0L, empty.statistics.seconds)
         assertEquals("Description", empty.book?.description)
-        repository.observe(id, 30).first {
+        repository.observe(id, 0).first {
             it.statistics.status ==
                 BookStatisticsStatus.Ready
         }
         assertTrue(source.cacheHit)
         source.checksum = "different"
         repository.retry()
-        repository.observe(id, 30).first {
+        repository.observe(id, 0).first {
             it.statistics.status ==
                 BookStatisticsStatus.Unlinked
         }
         source.denied = true
-        val inaccessible = repository.observe(id, 30).first {
+        val inaccessible = repository.observe(id, 0).first {
             it.book?.availability ==
                 BookAvailability.PermissionLost
         }
         assertEquals(BookStatisticsStatus.Unlinked, inaccessible.statistics.status)
         config.disconnect()
-        val disconnected = repository.observe(id, 30).first {
+        val disconnected = repository.observe(id, 0).first {
             it.book?.availability ==
                 BookAvailability.Unresolved
         }

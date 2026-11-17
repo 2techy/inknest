@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 
@@ -32,8 +33,11 @@ internal class BookDetailsViewModel(
     clock: StatisticsClock,
 ) : ViewModel() {
     private val identity = savedState.getStateFlow<ArrayList<String>?>("detailsIdentity", null)
-    private val limit = savedState.getStateFlow("detailsHistoryLimit", 30)
-    private val data = combine(identity, limit) { parts, count -> parts to count }
+    init {
+        savedState.remove<Int>("detailsHistoryLimit")
+    }
+    private val page = savedState.getStateFlow("detailsHistoryPage", 0)
+    private val data = combine(identity, page) { parts, count -> parts to count }
         .flatMapLatest { (parts, count) ->
             val id = parts?.takeIf { it.size == 2 }?.let { ReadingItemId(it[0], it[1]) }
             if (id == null) flowOf(BookDetails()) else repository.observe(id, count)
@@ -42,9 +46,19 @@ internal class BookDetailsViewModel(
                 current.statistics.status == BookStatisticsStatus.Loading &&
                 previous.statistics.status == BookStatisticsStatus.Ready
             ) {
-                current.copy(statistics = previous.statistics)
+                current.copy(
+                    statistics = previous.statistics.copy(
+                        historyLoading = current.statistics.error == null,
+                        error = current.statistics.error,
+                    ),
+                )
             } else {
                 current
+            }
+        }.onEach { details ->
+            val stats = details.statistics
+            if (stats.canChangeHistoryPage) {
+                savedState["detailsHistoryPage"] = stats.historyPage
             }
         }
     val uiState = combine(
@@ -61,7 +75,7 @@ internal class BookDetailsViewModel(
         val value = id?.let { arrayListOf(it.sourceId, it.path) }
         if (savedState.get<ArrayList<String>>("detailsIdentity") == value) return
         savedState["detailsIdentity"] = value
-        savedState["detailsHistoryLimit"] = 30
+        savedState["detailsHistoryPage"] = 0
         listOf("detailsDescription", "detailsHistory", "detailsFile").forEach {
             savedState[it] =
                 false
@@ -73,8 +87,12 @@ internal class BookDetailsViewModel(
     private fun toggle(key: String) {
         savedState[key] = savedState.get<Boolean>(key) != true
     }
-    fun moreHistory() {
-        savedState["detailsHistoryLimit"] = (limit.value + 30).coerceAtMost(1_000_000)
+    fun historyPage(value: Int) {
+        val stats = uiState.value.details.statistics
+        if (!stats.canChangeHistoryPage) {
+            return
+        }
+        savedState["detailsHistoryPage"] = value.coerceIn(0, stats.historyPageCount - 1)
     }
     fun retry() = repository.retry()
 }

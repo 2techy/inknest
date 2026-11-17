@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.local.reading.StatisticsDao
 import dev.twotechy.inknest.data.source.BookChecksum
 import dev.twotechy.inknest.data.source.BookChecksumSource
 import dev.twotechy.inknest.data.source.MissingSourceFile
+import dev.twotechy.inknest.model.BOOK_HISTORY_PAGE_SIZE
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.BookDetails
 import dev.twotechy.inknest.model.BookReadingDay
@@ -35,7 +36,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 
 interface BookDetailsRepository {
-    fun observe(id: ReadingItemId, historyLimit: Int): Flow<BookDetails>
+    fun observe(id: ReadingItemId, historyPage: Int): Flow<BookDetails>
     fun retry()
 }
 
@@ -57,7 +58,7 @@ internal class CachedBookDetailsRepository(
         requests.update { it + 1 }
     }
 
-    override fun observe(id: ReadingItemId, historyLimit: Int): Flow<BookDetails> {
+    override fun observe(id: ReadingItemId, historyPage: Int): Flow<BookDetails> {
         val failed = MutableStateFlow(false)
         val identity = combine(
             config.config,
@@ -81,7 +82,7 @@ internal class CachedBookDetailsRepository(
                 if (identity.finished) {
                     bookStatistics(
                         identity.checksum,
-                        historyLimit,
+                        historyPage,
                     )
                 } else {
                     flowOf(BookReadingStatistics())
@@ -131,7 +132,7 @@ internal class CachedBookDetailsRepository(
         }
     }
 
-    private fun bookStatistics(checksum: BookChecksum?, limit: Int): Flow<BookReadingStatistics> {
+    private fun bookStatistics(checksum: BookChecksum?, page: Int): Flow<BookReadingStatistics> {
         val selection = statistics.data.map {
             StatisticsSelection(it.configured, it.generation, it.sourceTree, it.zone)
         }.distinctUntilChanged()
@@ -156,7 +157,7 @@ internal class CachedBookDetailsRepository(
                     generation,
                     checksum.checksum,
                     moment.today.toEpochDay(),
-                    limit,
+                    page,
                 )
             }
         }
@@ -177,37 +178,45 @@ internal class CachedBookDetailsRepository(
         generation: String,
         checksum: String,
         today: Long,
-        limit: Int,
+        requestedPage: Int,
     ): Flow<BookReadingStatistics> {
         val failed = MutableStateFlow(false)
         val values = combine(
             statisticsDao.observeMatches(generation, checksum),
             statisticsDao.observeBookTotals(generation, checksum, today),
-            statisticsDao.observeBookDays(generation, checksum, today, limit + 1),
-        ) { matches, totals, days ->
-            BookReadingStatistics(
-                status = if (matches ==
-                    0
-                ) {
-                    BookStatisticsStatus.Unlinked
-                } else {
-                    BookStatisticsStatus.Ready
-                },
-                seconds = totals.seconds,
-                pages = totals.pages,
-                readingDays = totals.days,
-                firstRead = totals.firstDay?.let(LocalDate::ofEpochDay),
-                lastRead = totals.lastDay?.let(LocalDate::ofEpochDay),
-                history = days.take(limit).map {
-                    BookReadingDay(LocalDate.ofEpochDay(it.day), it.seconds, it.pages)
-                },
-                hasMore = days.size > limit,
-            )
+        ) { matches, totals -> matches to totals }.flatMapLatest { (matches, totals) ->
+            val lastPage = (totals.days.coerceAtLeast(1) - 1) / BOOK_HISTORY_PAGE_SIZE
+            val page = requestedPage.coerceIn(0, lastPage)
+            statisticsDao.observeBookDays(
+                generation,
+                checksum,
+                today,
+                BOOK_HISTORY_PAGE_SIZE + 1,
+                page * BOOK_HISTORY_PAGE_SIZE,
+            ).map { days ->
+                BookReadingStatistics(
+                    status = if (matches ==
+                        0
+                    ) {
+                        BookStatisticsStatus.Unlinked
+                    } else {
+                        BookStatisticsStatus.Ready
+                    },
+                    seconds = totals.seconds,
+                    pages = totals.pages,
+                    readingDays = totals.days,
+                    firstRead = totals.firstDay?.let(LocalDate::ofEpochDay),
+                    lastRead = totals.lastDay?.let(LocalDate::ofEpochDay),
+                    history = days.take(BOOK_HISTORY_PAGE_SIZE).map {
+                        BookReadingDay(LocalDate.ofEpochDay(it.day), it.seconds, it.pages)
+                    },
+                    hasMore = days.size > BOOK_HISTORY_PAGE_SIZE,
+                    historyPage = page,
+                )
+            }
         }.recoverObservation(retry, onError = { failed.value = true }, onSuccess = {
-            failed.value =
-                false
-        })
-            .onStart { emit(BookReadingStatistics()) }
+            failed.value = false
+        }).onStart { emit(BookReadingStatistics(historyPage = requestedPage)) }
         return combine(values, failed) { snapshot, error ->
             snapshot.copy(error = if (error) ReadingSyncIssue.Cache else null)
         }

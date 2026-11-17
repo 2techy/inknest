@@ -22,9 +22,10 @@ Tên được chuẩn hóa khoảng trắng/hoa thường, không bỏ dấu, t�
 
 Nút đọc mở tài liệu gốc qua [luồng mở dùng chung](reading-cache.md). Sách mất hoặc nguồn không truy cập được có trạng thái riêng.
 
+- Đọc gần nhất hiển thị dưới tiến độ khi có dữ liệu; lịch sử không có phần tóm tắt ngày đọc đầu/cuối. Nút đọc dạng fill nằm dưới hero, rộng toàn hàng. Sách thiếu tiến độ dùng bìa gọn hơn; thống kê chưa khớp hiển thị thông báo trống, chỉ có Thử lại khi gặp lỗi.
 - Mô tả EPUB làm sạch thành văn bản, giữ đoạn và giới hạn 32 KiB. Mở rộng tại chỗ từ bốn dòng; thiếu mô tả không chừa khoảng trống.
-- Thống kê có tổng thời gian, số trang ghi nhận và số ngày đọc. Mở lịch sử để xem ngày đầu/cuối và tổng ngày mới nhất trước, tải 30 ngày mỗi lần; thông tin tệp có định dạng, đường dẫn và khả năng truy cập.
-- Trạng thái mô tả/mục mở rộng và giới hạn lịch sử được khôi phục theo định danh sách.
+- Thống kê có tổng thời gian, số trang ghi nhận và số ngày đọc. Lịch sử hiển thị tổng ngày mới nhất trước, năm ngày mỗi trang với nút Trước/Sau; thông tin tệp có định dạng, đường dẫn và khả năng truy cập.
+- Trạng thái mô tả/mục mở rộng và trang lịch sử được khôi phục theo định danh sách.
 
 Thống kê ghép ID KOReader đã nhập bằng partialMD5 tương thích trong đúng nguồn, không ghép tên sách/tác giả. Chỉ lấy mẫu sách đang chọn, tối đa 12 KiB, không sao chép cả tệp. Provider không seek được thì chưa liên kết. Cache checksum vẫn kiểm tra quyền, phạm vi và fingerprint; xóa cache ngăn tác vụ chờ tạo lại hàng đã xóa. Nhiều ID khớp giữ [quy tắc đếm book/ngày/layout](statistics.md). Thống kê không khả dụng khác lịch sử rỗng thành công.
 

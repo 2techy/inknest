@@ -50,12 +50,13 @@ internal interface StatisticsDao {
         today: Long,
     ): Flow<BookStatisticsTotals>
 
-    @Query("$BOOK_DAYS_SQL ORDER BY r.day DESC LIMIT :limit")
+    @Query("$BOOK_DAYS_SQL ORDER BY r.day DESC LIMIT :limit OFFSET :offset")
     fun observeBookDays(
         generation: String,
         checksum: String,
         today: Long,
         limit: Int,
+        offset: Int = 0,
     ): Flow<List<BookStatisticsDay>>
 
     @Transaction

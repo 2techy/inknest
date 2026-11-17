@@ -37,6 +37,50 @@ class BookDetailsDataTest {
         assertEquals(32 * 1024, parse(large)!!.length)
     }
 
+    @Test fun dayPagesStayBoundedAndTotalsDoNotDependOnOffsets() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val directory = Files.createTempDirectory(context.cacheDir.toPath(), "book-pages-").toFile()
+        val database = Room.databaseBuilder<ReadingDatabase>(
+            context,
+            directory.resolve("reading.db").path,
+        )
+            .setDriver(AndroidSQLiteDriver()).build()
+        try {
+            val dao = database.statisticsDao()
+            for (count in listOf(0, 1, 5, 6, 12)) {
+                val generation = "g$count"
+                dao.putBooks(listOf(StatisticsBookEntity(generation, 1, "hash")))
+                dao.putEvents(
+                    (0 until count).map { day ->
+                        StatisticsEventEntity(
+                            generation,
+                            day,
+                            day.toLong() + 1,
+                            60,
+                            1,
+                            1,
+                            100,
+                            day.toLong(),
+                        )
+                    },
+                )
+                val all = mutableListOf<Long>()
+                for (offset in 0 until count step 5) {
+                    val rows = dao.observeBookDays(generation, "hash", 100, 6, offset).first()
+                    assertEquals(minOf(6, count - offset), rows.size)
+                    all += rows.take(5).map { it.day }
+                }
+                assertEquals((0 until count).reversed().map(Int::toLong), all)
+                val totals = dao.observeBookTotals(generation, "hash", 100).first()
+                assertEquals(count, totals.days)
+                assertEquals(count * 60L, totals.seconds)
+            }
+        } finally {
+            database.close()
+            directory.deleteRecursively()
+        }
+    }
+
     @Test fun bookQueriesDeduplicateAndIsolateSnapshots() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val directory = Files.createTempDirectory(
