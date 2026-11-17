@@ -20,7 +20,7 @@ Thương hiệu/đồng hồ Trang chủ dùng serif hệ thống; phần khác 
 
 `AppScaffold` quản lý inset, lề, chiều rộng và điều hướng thích ứng; `ScreenScaffold` quản lý header, cuộn và footer tùy chọn. Route không thêm lề trang lần nữa. Thích ứng theo chiều rộng/cỡ chữ, không theo model thiết bị.
 
-- Action header dùng chung vùng chạm đầy đủ: action cuối căn giữa, icon Tìm kiếm đứng trước căn về phía nó để khoảng cách nhìn gọn hơn. Nút đóng tìm kiếm dùng cùng cột cuối; Tùy chọn dùng icon thanh điều chỉnh. Back của trang và submenu căn giữa. Trang chủ giữ cách xuống hai hàng khi cần.
+- Action header dùng chung vùng chạm đầy đủ: action cuối căn giữa, icon Tìm kiếm đứng trước căn về phía nó để khoảng cách nhìn gọn hơn. Nút đóng tìm kiếm dùng cùng cột cuối; Tùy chọn dùng icon thanh điều chỉnh. Nét Back của trang căn theo mép đầu nội dung trong vùng chạm đầy đủ, tiêu đề nằm sát sau slot icon gọn; Back submenu giữ căn giữa. Trang chủ giữ cách xuống hai hàng khi cần.
 - Thứ tự chính: Trang chủ → Thư viện → Thống kê → Ứng dụng. Điều hướng đáy đổi sang rail cuộn được tại chiều rộng cửa sổ 600dp. Header căn theo lề nội dung; trang chính không có nút Back.
 - Cài đặt mở từ Trang chủ/thao tác cấu hình, ẩn điều hướng chính và về tab xuất phát. Chi tiết Cài đặt, thiết lập ban đầu và Chi tiết sách ẩn điều hướng chính/vuốt tab.
 - HOME về Trang chủ, đóng UI tạm và vô hiệu cử chỉ. Giữ đích/từ khóa/vị trí cuộn khi được hỗ trợ.

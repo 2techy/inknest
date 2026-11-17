@@ -279,7 +279,12 @@ class HomeStatsLayoutTest {
         )
         assertEquals(homeEnd.width(), back.width())
         assertEquals(homeEnd.height(), back.height())
-        assertTrue(!Rect.intersects(back, title))
+        val arrow = bounds(
+            nodes().first {
+                it.contentDescription?.toString() == context.getString(R.string.back)
+            },
+        )
+        assertTrue(!Rect.intersects(arrow, title))
         click(context.getString(R.string.back))
         assertEquals(3, clicked.get())
         show(width, font, direction = direction) {
