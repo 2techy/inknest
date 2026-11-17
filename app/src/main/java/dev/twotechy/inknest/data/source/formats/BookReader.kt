@@ -1,8 +1,8 @@
 package dev.twotechy.inknest.data.source.formats
 
-import dev.twotechy.inknest.data.source.BookMetadataProbeResult
-import dev.twotechy.inknest.data.source.UnsupportedBookFormat
 import dev.twotechy.inknest.data.source.formats.BookFileExtensions
+import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.formats.UnsupportedBookFormat
 import dev.twotechy.inknest.data.source.formats.cbz.CbzReader
 import dev.twotechy.inknest.data.source.formats.epub.EpubReader
 import dev.twotechy.inknest.data.source.formats.fb2.Fb2Reader

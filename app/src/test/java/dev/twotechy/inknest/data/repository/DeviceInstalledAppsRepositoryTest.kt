@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
-import dev.twotechy.inknest.data.source.InstalledAppsDataSource
+import dev.twotechy.inknest.data.source.apps.InstalledAppsDataSource
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import java.io.IOException

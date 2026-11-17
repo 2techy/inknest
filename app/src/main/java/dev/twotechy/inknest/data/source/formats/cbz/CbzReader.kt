@@ -1,13 +1,13 @@
 package dev.twotechy.inknest.data.source.formats.cbz
 
-import dev.twotechy.inknest.data.source.BookMetadataProbeResult
-import dev.twotechy.inknest.data.source.SourceLimitExceeded
-import dev.twotechy.inknest.data.source.copyBounded
 import dev.twotechy.inknest.data.source.formats.BookFileExtensions
+import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
 import dev.twotechy.inknest.data.source.formats.optionalCover
 import dev.twotechy.inknest.data.source.formats.plainDescription
 import dev.twotechy.inknest.data.source.formats.xml.XmlNode
 import dev.twotechy.inknest.data.source.formats.xml.readBoundedXml
+import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.io.copyBounded
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException

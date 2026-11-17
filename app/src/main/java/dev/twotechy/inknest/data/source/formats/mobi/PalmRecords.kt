@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.source.formats.mobi
 
-import dev.twotechy.inknest.data.source.InvalidBookMetadata
-import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.formats.InvalidBookMetadata
+import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
 import java.io.RandomAccessFile
 
 internal class PalmRecords(private val input: RandomAccessFile) {

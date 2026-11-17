@@ -4,12 +4,12 @@ import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.source.MissingSourceFile
-import dev.twotechy.inknest.data.source.SourceDocument
-import dev.twotechy.inknest.data.source.SourceDocumentReader
-import dev.twotechy.inknest.data.source.cancellableQuery
 import dev.twotechy.inknest.data.source.formats.epub.EpubReader
-import dev.twotechy.inknest.data.source.safProviderOperation
+import dev.twotechy.inknest.data.source.io.cancellableQuery
+import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
+import dev.twotechy.inknest.data.source.saf.safProviderOperation
 import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe

@@ -17,7 +17,9 @@ Ownership and lifecycle contracts for the single production `:app` module, using
 | `ui/components`, `ui/theme` | Shared controls, gestures and design tokens. |
 
 Graph initialization and interrupted-temp-file cleanup run off main. Asynchronous components receive dispatchers; repository and StatsViewModel share an injectable `StatisticsClock`.
-Source contracts and boundary types stay in `data/source`; concrete implementations live in `data/source/impl`. Statistics follows the same convention under `stats/impl`. `formats/<format>` owns each book parser; `formats/xml` and `formats/archive` hold shared parsing helpers. `BookFileExtensions` and `BookMimeTypes` in `data/source/formats` own the shared extension inventory and opening MIME mapping.
+`data/source` is grouped by responsibility: `apps`, `updates`, `books`, `saf`, `koreader`, `formats` and `stats`. Contracts and boundary types stay within their owning group; concrete contract implementations live in its `impl` subpackage. Shared bounded/cancellable I/O lives in `io`, and capability results/error mapping in `capability`. KOReader Lua parsing lives in `koreader/lua`.
+
+`formats/<format>` owns each book parser; `formats/xml` and `formats/archive` hold shared parsing helpers. `BookFileExtensions` and `BookMimeTypes` live in `formats` alongside the metadata result/errors.
 
 `BookProbeDataSource` shares document resolution, bounded metadata/sidecar reads and checksum sampling. Feature-only helpers stay beside their feature; book models live with `ReadingItem`.
 

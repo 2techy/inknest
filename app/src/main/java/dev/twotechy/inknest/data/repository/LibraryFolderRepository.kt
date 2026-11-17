@@ -5,10 +5,10 @@ import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
 import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
-import dev.twotechy.inknest.data.source.BookCatalogSource
-import dev.twotechy.inknest.data.source.CatalogBook
-import dev.twotechy.inknest.data.source.EnrichedReadingItem
-import dev.twotechy.inknest.data.source.ResolvedBook
+import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.CatalogBook
+import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.books.ResolvedBook
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId

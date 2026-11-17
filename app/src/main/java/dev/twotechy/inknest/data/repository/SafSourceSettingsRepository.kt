@@ -2,11 +2,11 @@ package dev.twotechy.inknest.data.repository
 
 import android.net.Uri
 import android.provider.DocumentsContract
-import dev.twotechy.inknest.data.source.BookCoverCache
-import dev.twotechy.inknest.data.source.MissingSourceFile
-import dev.twotechy.inknest.data.source.PrimaryTreePath
-import dev.twotechy.inknest.data.source.SafSourceAccess
-import dev.twotechy.inknest.data.source.SourceDocumentReader
+import dev.twotechy.inknest.data.source.books.BookCoverCache
+import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
+import dev.twotechy.inknest.data.source.saf.SafSourceAccess
+import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.File
 import java.io.IOException

@@ -2,14 +2,14 @@ package dev.twotechy.inknest.data.source.formats.epub
 
 import android.graphics.BitmapFactory
 import android.text.Html
-import dev.twotechy.inknest.data.source.BookMetadataProbeResult
-import dev.twotechy.inknest.data.source.SourceLimitExceeded
-import dev.twotechy.inknest.data.source.UnsupportedBookFormat
-import dev.twotechy.inknest.data.source.copyBounded
 import dev.twotechy.inknest.data.source.formats.BookFileExtensions
+import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.formats.UnsupportedBookFormat
 import dev.twotechy.inknest.data.source.formats.archive.archivePath
 import dev.twotechy.inknest.data.source.formats.xml.XmlNode
 import dev.twotechy.inknest.data.source.formats.xml.readBoundedXml
+import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.io.copyBounded
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException

@@ -1,9 +1,9 @@
 package dev.twotechy.inknest.data
 
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.formats.BookReader
 import dev.twotechy.inknest.data.source.formats.cbz.naturalCompare
-import dev.twotechy.inknest.data.source.impl.BookProbeDataSource
 import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.runBlocking
@@ -43,7 +43,7 @@ class BookReaderTest {
             context.cacheDir.toPath(),
             "cancel-metadata-",
         ).toFile()
-        val documents = object : dev.twotechy.inknest.data.source.SourceDocumentReader {
+        val documents = object : dev.twotechy.inknest.data.source.saf.SourceDocumentReader {
             override suspend fun describe(tree: String, path: List<String>) =
                 error("Already resolved")
             override suspend fun <T> read(
@@ -53,15 +53,15 @@ class BookReaderTest {
             ): T = throw kotlinx.coroutines.CancellationException("Source changed")
         }
         try {
-            val source = dev.twotechy.inknest.data.source.impl.BookProbeDataSource(
+            val source = dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource(
                 documents,
                 directory,
             )
-            val book = dev.twotechy.inknest.data.source.ResolvedBook(
+            val book = dev.twotechy.inknest.data.source.books.ResolvedBook(
                 "primary:Books/book.mobi",
                 "tree",
                 listOf("book.mobi"),
-                dev.twotechy.inknest.data.source.SourceDocument(
+                dev.twotechy.inknest.data.source.saf.SourceDocument(
                     "content://fixture/book",
                     null,
                     null,

@@ -1,8 +1,8 @@
 package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.data.local.AppUpdateStore
-import dev.twotechy.inknest.data.source.AppReleaseSource
-import dev.twotechy.inknest.data.source.UpdateRateLimitException
+import dev.twotechy.inknest.data.source.updates.AppReleaseSource
+import dev.twotechy.inknest.data.source.updates.UpdateRateLimitException
 import dev.twotechy.inknest.model.AppRelease
 import dev.twotechy.inknest.model.AppUpdateError
 import dev.twotechy.inknest.model.AppUpdateState

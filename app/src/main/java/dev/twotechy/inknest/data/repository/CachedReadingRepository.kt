@@ -4,10 +4,10 @@ import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
-import dev.twotechy.inknest.data.source.BookCoverCache
-import dev.twotechy.inknest.data.source.CurrentReadingSnapshot
-import dev.twotechy.inknest.data.source.CurrentReadingSource
-import dev.twotechy.inknest.data.source.ReadingRefreshException
+import dev.twotechy.inknest.data.source.books.BookCoverCache
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingSource
+import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.IOException

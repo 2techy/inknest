@@ -3,7 +3,7 @@ package dev.twotechy.inknest.data.source.formats.pdf
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
-import dev.twotechy.inknest.data.source.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException

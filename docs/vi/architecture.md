@@ -17,7 +17,9 @@ Ranh giới trách nhiệm và vòng đời của module production duy nhất `
 | `ui/components`, `ui/theme` | Điều khiển, cử chỉ và token thiết kế dùng chung. |
 
 Khởi tạo đồ thị phụ thuộc và dọn tệp tạm bị gián đoạn chạy ngoài luồng chính. Thành phần bất đồng bộ nhận dispatcher; repository và StatsViewModel dùng chung `StatisticsClock` có thể thay trong kiểm thử.
-Contract và kiểu dữ liệu tại ranh giới nguồn nằm trong `data/source`; lớp triển khai nằm trong `data/source/impl`. Statistics dùng cùng quy ước với `stats/impl`. `formats/<format>` chứa parser từng định dạng; `formats/xml` và `formats/archive` chứa helper phân tích dùng chung. `BookFileExtensions` và `BookMimeTypes` trong `data/source/formats` quản lý danh mục đuôi tệp dùng chung và ánh xạ MIME khi mở sách.
+`data/source` chia theo trách nhiệm: `apps`, `updates`, `books`, `saf`, `koreader`, `formats` và `stats`. Contract và kiểu dữ liệu tại ranh giới nằm trong nhóm sở hữu; lớp triển khai contract nằm trong package con `impl` của nhóm đó. I/O có giới hạn/hỗ trợ hủy dùng chung nằm trong `io`; kết quả capability và ánh xạ lỗi nằm trong `capability`. Parser Lua của KOReader nằm trong `koreader/lua`.
+
+`formats/<format>` chứa parser từng định dạng; `formats/xml` và `formats/archive` chứa helper phân tích dùng chung. `BookFileExtensions` và `BookMimeTypes` nằm trong `formats` cùng kết quả/lỗi metadata.
 
 `BookProbeDataSource` dùng chung việc phân giải tài liệu, đọc metadata/sidecar có giới hạn và lấy mẫu checksum. Helper riêng nằm cạnh tính năng; model sách nằm cùng `ReadingItem`.
 

@@ -1,11 +1,11 @@
 package dev.twotechy.inknest.data.source.formats.fb2
 
 import android.util.Base64
-import dev.twotechy.inknest.data.source.BookMetadataProbeResult
-import dev.twotechy.inknest.data.source.InvalidBookMetadata
-import dev.twotechy.inknest.data.source.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.formats.InvalidBookMetadata
 import dev.twotechy.inknest.data.source.formats.optionalCover
 import dev.twotechy.inknest.data.source.formats.plainDescription
+import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
 import java.io.File
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive

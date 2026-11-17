@@ -1,9 +1,9 @@
 package dev.twotechy.inknest.data.source.stats.impl
 
-import dev.twotechy.inknest.data.source.MissingSourceFile
-import dev.twotechy.inknest.data.source.SourceDocument
-import dev.twotechy.inknest.data.source.SourceDocumentReader
-import dev.twotechy.inknest.data.source.copyBounded
+import dev.twotechy.inknest.data.source.io.copyBounded
+import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
 import java.io.File
 
