@@ -23,6 +23,7 @@ import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.platform.AndroidBookCoverSource
+import dev.twotechy.inknest.platform.AppOperationTrace
 import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.ReadingItemDispatcher
 import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
@@ -69,6 +70,7 @@ internal class ReadingDataContainer(
         SafBookCatalogSource(appContext.contentResolver),
         scope,
         reading,
+        AppOperationTrace.tracer,
         libraryMetadata::readBook,
     )
     private val statisticsSnapshot =

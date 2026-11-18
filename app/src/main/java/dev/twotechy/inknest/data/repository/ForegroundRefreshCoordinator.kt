@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
+import dev.twotechy.inknest.platform.OperationTracer
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -14,6 +15,7 @@ internal class ForegroundRefreshCoordinator(
     private val reading: ReadingRepository,
     private val statistics: ReadingStatsRepository,
     private val scope: CoroutineScope,
+    private val tracer: OperationTracer = OperationTracer(),
 ) {
     private val requests = Mutex()
     private var request: Deferred<Unit>? = null
@@ -26,13 +28,14 @@ internal class ForegroundRefreshCoordinator(
         pending.await()
     }
 
-    private suspend fun refreshSources() {
+    private suspend fun refreshSources() = tracer.begin(OperationTracer.FOREGROUND_REFRESH).use {
         supervisorScope {
             listOf(
                 async { refreshSource(reading::refresh) },
                 async { refreshSource(statistics::refresh) },
             ).awaitAll()
         }
+        Unit
     }
 
     private suspend fun refreshSource(action: suspend () -> Unit) {

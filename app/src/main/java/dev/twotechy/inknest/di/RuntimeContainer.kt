@@ -16,6 +16,7 @@ import dev.twotechy.inknest.platform.AndroidAppIconSource
 import dev.twotechy.inknest.platform.AndroidUpdateApkVerifier
 import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.AppLauncher
+import dev.twotechy.inknest.platform.AppOperationTrace
 import dev.twotechy.inknest.platform.AppUpdateInstaller
 import dev.twotechy.inknest.platform.LauncherModeController
 import dev.twotechy.inknest.platform.PackageChangeReceiver
@@ -61,6 +62,7 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
             readerData.reading,
             readerData.statistics,
             scope,
+            AppOperationTrace.tracer,
         ),
         libraryRepository = readerData.library,
         readingOpenRepository = readerData.opening,

@@ -16,6 +16,7 @@ import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingStatus
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
+import dev.twotechy.inknest.platform.OperationTracer
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +47,7 @@ internal class LibraryFolderRepository(
     private val source: BookCatalogSource,
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
+    private val tracer: OperationTracer = OperationTracer(),
     private val enrich: suspend (
         ReadingSourceConfig,
         ResolvedBook,
@@ -195,7 +197,7 @@ internal class LibraryFolderRepository(
         selected: ReadingSourceConfig,
         active: LibraryFolderKey,
         onlyIncomplete: Boolean,
-    ) {
+    ): Unit = tracer.begin(OperationTracer.LIBRARY_SCAN).use {
         val token = Any()
         running.value = active to token
         try {

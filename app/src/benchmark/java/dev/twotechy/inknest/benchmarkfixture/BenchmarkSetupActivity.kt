@@ -17,6 +17,7 @@ import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.source.apps.impl.AndroidInstalledAppsDataSource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,11 +25,12 @@ import kotlinx.coroutines.withContext
 // Exported only in performance variants and protected by the shell's DUMP permission.
 class BenchmarkSetupActivity : ComponentActivity() {
     private val dataset = BenchmarkDataset()
+    private var preparation: Job? = null
     private val picker =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val uri = result.data?.data
             if (result.resultCode == Activity.RESULT_OK && uri != null) {
-                configure(uri)
+                preparation = lifecycleScope.launch { configure(uri) }
             } else {
                 status("Benchmark folder selection cancelled")
             }
@@ -36,11 +38,31 @@ class BenchmarkSetupActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        status("Preparing benchmark")
-        lifecycleScope.launch {
+        prepare()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        prepare()
+    }
+
+    private fun prepare() {
+        val previous = preparation
+        previous?.cancel()
+        preparation = lifecycleScope.launch {
+            previous?.join()
+            status("Preparing benchmark")
             check(packageName.endsWith(".benchmark"))
             if (Build.VERSION.SDK_INT >= 30) check(Environment.isExternalStorageManager())
             withContext(Dispatchers.IO) { dataset.ensure() }
+            val operation = intent.getStringExtra("operation") ?: "prepare"
+            withContext(Dispatchers.IO) { dataset.update(changed = operation == "mutate") }
+            if (operation != "prepare") {
+                check(operation == "reset" || operation == "mutate")
+                ready()
+                return@launch
+            }
             val tree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, dataset.documentId)
             val granted = contentResolver.persistedUriPermissions.any {
                 it.uri == tree &&
@@ -65,7 +87,7 @@ class BenchmarkSetupActivity : ComponentActivity() {
         )
     }
 
-    private fun configure(uri: Uri) = lifecycleScope.launch {
+    private suspend fun configure(uri: Uri) {
         check(DocumentsContract.getTreeDocumentId(uri) == dataset.documentId)
         contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val preferences = DataStoreUserPreferencesRepository(userPreferencesDataStore)
@@ -79,8 +101,10 @@ class BenchmarkSetupActivity : ComponentActivity() {
         AndroidInstalledAppsDataSource(applicationContext).loadInstalledApps().take(4).forEach {
             preferences.pin(it.componentId)
         }
-        status("Benchmark ready")
+        ready()
     }
+
+    private fun ready() = status("Benchmark ready ${intent.getStringExtra("request")}")
 
     private fun status(message: String) {
         setContentView(
