@@ -28,6 +28,25 @@ import org.junit.runners.MethodSorters
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class SourceAccessIntegrationTest {
+    @Test fun dConfiguredStatisticsCanRefresh() = runBlocking {
+        assumeTrue(enabled())
+        withTimeout(60_000) {
+            val startedAt = System.currentTimeMillis()
+            val container = container()
+            val config = checkNotNull(container.readingSourceConfigRepository)
+            val before = config.config.first()
+            assumeTrue(before.koreaderTreeUri != null)
+            container.statisticsRepository.refresh()
+            val result = container.statisticsRepository.data.first {
+                !it.sync.running && (it.sync.lastAttemptAt ?: 0) >= startedAt &&
+                    (it.updatedAt != null || it.sync.error != null)
+            }
+            assertTrue("Statistics refresh failed: ${result.sync.error}", result.sync.error == null)
+            assertTrue("Statistics import did not publish", result.updatedAt != null)
+            assertTrue("Selected source must remain unchanged", before == config.config.first())
+        }
+    }
+
     private fun enabled() =
         InstrumentationRegistry.getArguments().getString("source_access_integration") == "true"
     private fun container(): dev.twotechy.inknest.di.AppContainer {

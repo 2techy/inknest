@@ -100,6 +100,11 @@ function Get-MeasureScenarios {
     return @('coldStartup', 'warmStartup', 'mainTabNavigation', 'homeReturnUnchanged', 'homeReturnChanged', 'libraryScanAndEnrich', 'libraryGridScroll')
 }
 
+function Get-MeasureIterations {
+    if ($TestFilter -match 'RefreshBenchmark') { return 1 }
+    return 5
+}
+
 function Write-PerformanceMetadata {
     param([string]$ReportPath, [string]$Variant, [string]$OriginalHome, [hashtable]$Outcome)
     $metadata = [ordered]@{
@@ -122,7 +127,7 @@ function Write-PerformanceMetadata {
         dataset = (Invoke-Adb @('shell', 'cat', '/sdcard/Download/InkNestBenchmark/dataset-version')) -join ''
         homeReturn = 'Explicit HOME intent to benchmark MainActivity; not a physical HOME key press.'
         scenarios = if ($Mode -eq 'Measure') { Get-MeasureScenarios } else { @() }
-        iterations = if ($Mode -eq 'Profile') { 3 } elseif ($Mode -eq 'Measure') { 5 } else { 1 }
+        iterations = if ($Mode -eq 'Profile') { 3 } elseif ($Mode -eq 'Measure') { Get-MeasureIterations } else { 1 }
         originalHome = $originalHome
         limitation = 'PSS/RSS checkpoints and emulator timings are sampled observations, not physical peak guarantees.'
     }

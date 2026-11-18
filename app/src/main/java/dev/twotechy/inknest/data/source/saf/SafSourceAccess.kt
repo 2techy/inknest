@@ -28,7 +28,7 @@ internal class SafSourceAccess(
             if (PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(uri)) == null) {
                 return@withContext SourceAccessState.Unsupported
             }
-            if (resolver.persistedUriPermissions.none { it.uri == uri && it.isReadPermission }) {
+            if (!hasPersistedReadGrant(uri, resolver::readableTreeUris)) {
                 return@withContext SourceAccessState.PermissionLost
             }
             val document = DocumentsContract.buildDocumentUriUsingTree(

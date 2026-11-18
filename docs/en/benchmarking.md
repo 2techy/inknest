@@ -39,6 +39,8 @@ Setup entry points and broad file permission exist only in benchmark/profile var
 
 `StartupBenchmark` uses `CompilationMode.None` and five iterations per scenario. Fixture preparation and validation precede each test.
 
+For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `RefreshBenchmark#statisticsRefresh` or `RefreshBenchmark#clearCacheAndRefresh` with the full package prefix `dev.twotechy.inknest.perf.`. Each runs one iteration and includes data-readiness validation; statistics refresh requires a newly published import.
+
 | Scenario | Procedure / metric |
 | --- | --- |
 | Cold / warm startup | `StartupMode.COLD` / `WARM`; initial display time. |

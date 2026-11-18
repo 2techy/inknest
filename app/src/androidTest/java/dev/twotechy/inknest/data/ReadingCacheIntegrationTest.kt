@@ -22,6 +22,7 @@ import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
@@ -65,7 +67,9 @@ class ReadingCacheIntegrationTest {
             try {
                 h.repository.refresh()
             } catch (_: ReadingRefreshException) { }
-            val failed = h.repository.sync.first { it.error == ReadingSyncIssue.PermissionLost }
+            val failed = h.repository.sync.first {
+                it.error == ReadingSyncIssue.PermissionLost && it.lastAttemptAt == 400L
+            }
             assertEquals(400L, failed.lastAttemptAt)
             assertEquals(saved.lastSuccessAt, failed.lastSuccessAt)
             assertCurrent(h.repository, "B.epub")
@@ -94,6 +98,10 @@ class ReadingCacheIntegrationTest {
             val release = CompletableDeferred<Unit>()
             h.load =
                 { config ->
+                    assertEquals(
+                        "reading-permissions-1",
+                        currentCoroutineContext()[CoroutineName]?.name,
+                    )
                     started.complete(Unit)
                     release.await()
                     snapshot(config, "A.epub")
@@ -105,18 +113,21 @@ class ReadingCacheIntegrationTest {
             release.complete(Unit)
             second.await()
             assertEquals(1, h.reads)
+            assertEquals(1, h.permissionSnapshots)
             assertCurrent(h.repository, "A.epub")
             h.load = { throw ReadingRefreshException(ReadingSyncIssue.PermissionLost) }
             try {
                 h.repository.refresh()
             } catch (_: ReadingRefreshException) { }
             val failed = h.repository.sync.first { it.error == ReadingSyncIssue.PermissionLost }
+            assertEquals(2, h.permissionSnapshots)
             assertTrue(failed.stale)
             assertCurrent(h.repository, "A.epub")
             h.load = { snapshot(it, "B.epub") }
             h.repository.refresh()
             assertCurrent(h.repository, "B.epub")
             h.repository.sync.first { !it.running && it.error == null }
+            assertEquals(3, h.permissionSnapshots)
         }
     }
 
@@ -227,6 +238,7 @@ class ReadingCacheIntegrationTest {
         var scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         var database = openDatabase()
         var reads = 0
+        var permissionSnapshots = 0
         var time = 1L
         var load: suspend (
             ReadingSourceConfig,
@@ -244,6 +256,7 @@ class ReadingCacheIntegrationTest {
             },
             scope,
             now = { time },
+            permissionSnapshot = { CoroutineName("reading-permissions-${++permissionSnapshots}") },
         )
         suspend fun reopen() {
             scope.coroutineContext.job.cancelAndJoin()

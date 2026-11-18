@@ -11,6 +11,8 @@ import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class CachedReadingRepository(
@@ -43,6 +46,7 @@ internal class CachedReadingRepository(
     private val covers: BookCoverCache? = null,
     private val transition: Mutex = Mutex(),
     private val now: () -> Long = System::currentTimeMillis,
+    private val permissionSnapshot: suspend () -> CoroutineContext = { EmptyCoroutineContext },
 ) : ReadingRepository {
     private val requests = Mutex()
     private val jobs = mutableMapOf<ReadingCacheKey, Deferred<Unit>>()
@@ -148,7 +152,7 @@ internal class CachedReadingRepository(
             withActiveSource(active) {
                 cache.attempt(active, attempt)
             }
-            val result = source.read(selected)
+            val result = withContext(permissionSnapshot()) { source.read(selected) }
             withActiveSource(active) {
                 cache.save(active, result, attempt)
                 writeErrors.update { it - active }
