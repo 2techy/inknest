@@ -3,6 +3,7 @@ package dev.twotechy.inknest.data.source.saf.impl
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.core.net.toUri
 import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
 import dev.twotechy.inknest.data.source.io.cancellableQuery
 import dev.twotechy.inknest.data.source.saf.DirectSourceDocumentReader
@@ -12,6 +13,7 @@ import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
 import java.io.IOException
 import java.io.InputStream
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -21,21 +23,24 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class SafTreeReader(private val resolver: ContentResolver) : DirectSourceDocumentReader {
+internal class SafTreeReader(
+    private val resolver: ContentResolver,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : DirectSourceDocumentReader {
     override suspend fun <T> read(
         tree: String,
         path: List<String>,
         parse: suspend (InputStream) -> T,
-    ): T = withContext(Dispatchers.IO) {
-        val document = Uri.parse(describe(tree, path).uri)
+    ): T = withContext(ioDispatcher) {
+        val document = describe(tree, path).uri.toUri()
         readUri(document, parse)
     }
 
     override suspend fun <T> readDocument(
         document: SourceDocument,
         parse: suspend (InputStream) -> T,
-    ): T = withContext(Dispatchers.IO) {
-        val uri = Uri.parse(document.uri)
+    ): T = withContext(ioDispatcher) {
+        val uri = document.uri.toUri()
         val tree = DocumentsContract.buildTreeDocumentUri(
             uri.authority,
             DocumentsContract.getTreeDocumentId(uri),
@@ -70,7 +75,7 @@ internal class SafTreeReader(private val resolver: ContentResolver) : DirectSour
     }
 
     override suspend fun describe(tree: String, path: List<String>): SourceDocument =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             describeInTree(tree, path)
         }
 
@@ -91,7 +96,7 @@ internal class SafTreeReader(private val resolver: ContentResolver) : DirectSour
     }
 
     private fun checkedTreeUri(tree: String): Uri {
-        val uri = Uri.parse(tree)
+        val uri = tree.toUri()
         require(
             uri.authority == "com.android.externalstorage.documents" &&
                 DocumentsContract.isTreeUri(uri),

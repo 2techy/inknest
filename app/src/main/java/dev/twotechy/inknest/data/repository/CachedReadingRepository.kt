@@ -42,6 +42,7 @@ internal class CachedReadingRepository(
     private val scope: CoroutineScope,
     private val covers: BookCoverCache? = null,
     private val transition: Mutex = Mutex(),
+    private val now: () -> Long = System::currentTimeMillis,
 ) : ReadingRepository {
     private val requests = Mutex()
     private val jobs = mutableMapOf<ReadingCacheKey, Deferred<Unit>>()
@@ -140,7 +141,7 @@ internal class CachedReadingRepository(
     }
 
     private suspend fun refreshSource(selected: ReadingSourceConfig, active: ReadingCacheKey) {
-        val attempt = System.currentTimeMillis()
+        val attempt = now()
         val token = Any()
         running.update { it + (active to token) }
         try {
@@ -229,7 +230,7 @@ internal class CachedReadingRepository(
 
     private suspend fun saveCandidate(before: ReadingSourceConfig, staged: StagedReading) {
         val next = staged.key ?: return
-        staged.snapshot?.let { cache.save(next, it, System.currentTimeMillis()) }
+        staged.snapshot?.let { cache.save(next, it, now()) }
         val previous = before.readingCacheKey() ?: return
         staged.issue?.let { cache.carryForward(previous, next, it) }
     }

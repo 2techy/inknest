@@ -3,6 +3,7 @@ package dev.twotechy.inknest.data.source.books.impl
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.core.net.toUri
 import dev.twotechy.inknest.data.source.books.BookCatalogSource
 import dev.twotechy.inknest.data.source.books.CatalogBook
 import dev.twotechy.inknest.data.source.formats.BookFileExtensions
@@ -12,15 +13,19 @@ import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 // Traverses only the granted primary Books tree. No symlinks, sidecars or hidden folders.
-internal class SafBookCatalogSource(private val resolver: ContentResolver) : BookCatalogSource {
-    override suspend fun scan(tree: String): List<CatalogBook> = withContext(Dispatchers.IO) {
-        val uri = Uri.parse(tree)
+internal class SafBookCatalogSource(
+    private val resolver: ContentResolver,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : BookCatalogSource {
+    override suspend fun scan(tree: String): List<CatalogBook> = withContext(ioDispatcher) {
+        val uri = tree.toUri()
         if (resolver.persistedUriPermissions.none { it.uri == uri && it.isReadPermission }) {
             throw SecurityException("Books folder permission lost")
         }

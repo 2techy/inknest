@@ -11,13 +11,50 @@ import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.InputStream
+import java.util.concurrent.Executors
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.fail
 import org.junit.Test
 
 class KoreaderCurrentSourceTest {
+    @Test fun injectedIoDispatcherPreservesReadCancellation() = runBlocking {
+        withTimeout(10_000) {
+            Executors.newSingleThreadExecutor { Thread(it, "reading-source-test") }
+                .asCoroutineDispatcher().use { dispatcher ->
+                    val started = CompletableDeferred<String>()
+                    val stopped = CompletableDeferred<Unit>()
+                    val files = Files().apply {
+                        beforeRead = {
+                            started.complete(Thread.currentThread().name)
+                            try {
+                                awaitCancellation()
+                            } finally {
+                                stopped.complete(Unit)
+                            }
+                        }
+                    }
+                    val context = InstrumentationRegistry.getInstrumentation().targetContext
+                    val source = KoreaderCurrentSource(
+                        files,
+                        BookProbeDataSource(files, context.cacheDir, dispatcher),
+                        ioDispatcher = dispatcher,
+                    )
+                    val reading = async { source.read(config) }
+                    assertEquals("reading-source-test", started.await())
+                    reading.cancelAndJoin()
+                    stopped.await()
+                }
+        }
+    }
+
     private val config = ReadingSourceConfig(
         sourceId = "test",
         koreaderTreeUri = "content://com.android.externalstorage.documents/tree/primary%3Akoreader",
@@ -70,6 +107,7 @@ class KoreaderCurrentSourceTest {
     }
 
     private class Files : SourceDocumentReader {
+        var beforeRead: suspend () -> Unit = {}
         var settings: String? = null
         var history = "return {}"
         var bookMissing = false
@@ -82,6 +120,7 @@ class KoreaderCurrentSourceTest {
             path: List<String>,
             parse: suspend (InputStream) -> T,
         ): T {
+            beforeRead()
             val text = if (path.single() ==
                 "settings.reader.lua"
             ) {

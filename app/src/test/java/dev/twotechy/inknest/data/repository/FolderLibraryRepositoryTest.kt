@@ -41,6 +41,25 @@ import org.junit.rules.TemporaryFolder
 class FolderLibraryRepositoryTest {
     @get:Rule val folder = TemporaryFolder()
 
+    @Test fun scanTimestampUsesSharedClockAndFailedScanRetainsPreviousTime() = runBlocking {
+        withTimeout(10_000) {
+            withHarness { h ->
+                h.time = 100L
+                h.add("A")
+                h.loaded(1)
+                val key = LibraryFolderKey(checkNotNull(h.config.config.first().sourceId), "A")
+                assertEquals(100L, h.inventory.observeFolder(key).first()?.updatedAt)
+                h.time = 200L
+                h.repository.refresh()
+                assertEquals(200L, h.inventory.observeFolder(key).first()?.updatedAt)
+                h.time = 300L
+                h.responses["A"] = { throw SecurityException("grant lost") }
+                h.repository.refresh()
+                assertEquals(200L, h.inventory.observeFolder(key).first()?.updatedAt)
+            }
+        }
+    }
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     @Test
     fun queuedResumeSkipsFolderCompletedWhileWaitingForScanGate() = runTest {
@@ -179,6 +198,7 @@ class FolderLibraryRepositoryTest {
     }
 
     private class Harness(directory: File, scope: CoroutineScope) {
+        var time = 1L
         val config =
             ReadingSourceConfigRepository(
                 testPreferencesDataStore(File(directory, "source.preferences_pb"), scope),
@@ -199,6 +219,7 @@ class FolderLibraryRepositoryTest {
             },
             scope,
             reading,
+            now = { time },
         ) { _, _, item -> EnrichedReadingItem(item, null) }
 
         suspend fun add(tree: String) {

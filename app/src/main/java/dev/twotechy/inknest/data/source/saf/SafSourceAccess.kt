@@ -4,16 +4,21 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.core.net.toUri
 import dev.twotechy.inknest.data.source.io.cancellableQuery
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class SafSourceAccess(private val resolver: ContentResolver) {
-    suspend fun inspect(raw: String?): SourceAccessState = withContext(Dispatchers.IO) {
+internal class SafSourceAccess(
+    private val resolver: ContentResolver,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
+    suspend fun inspect(raw: String?): SourceAccessState = withContext(ioDispatcher) {
         if (raw == null) return@withContext SourceAccessState.NotSelected
-        val uri = Uri.parse(raw)
+        val uri = raw.toUri()
         if (uri.authority != "com.android.externalstorage.documents" ||
             !DocumentsContract.isTreeUri(uri)
         ) {
@@ -58,9 +63,9 @@ internal class SafSourceAccess(private val resolver: ContentResolver) {
         }
     }
 
-    suspend fun releaseUnused(uri: String, retained: Set<String>) = withContext(Dispatchers.IO) {
+    suspend fun releaseUnused(uri: String, retained: Set<String>) = withContext(ioDispatcher) {
         if (uri in retained) return@withContext
-        val parsed = Uri.parse(uri)
+        val parsed = uri.toUri()
         if (resolver.persistedUriPermissions.any { it.uri == parsed && it.isReadPermission }) {
             // Source config is already committed. An expired grant must not turn a successful
             // source change into a false save failure.
@@ -73,7 +78,7 @@ internal class SafSourceAccess(private val resolver: ContentResolver) {
         }
     }
 
-    suspend fun persist(uri: Uri, resultFlags: Int) = withContext(Dispatchers.IO) {
+    suspend fun persist(uri: Uri, resultFlags: Int) = withContext(ioDispatcher) {
         require(resultFlags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
         require(resultFlags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION != 0)
         require(

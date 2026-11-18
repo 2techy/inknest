@@ -20,6 +20,7 @@ import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.SourceAccessState
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -29,9 +30,10 @@ internal class KoreaderCurrentSource(
     private val lua: ReaderLuaDataSource = ReaderLuaDataSource(),
     private val access: SafSourceAccess? = null,
     private val metadataReader: BookMetadataReader? = null,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : CurrentReadingSource {
     override suspend fun read(config: ReadingSourceConfig): CurrentReadingSnapshot =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val tree = checkNotNull(config.koreaderTreeUri)
             when (access?.inspect(tree)) {
                 SourceAccessState.PermissionLost ->

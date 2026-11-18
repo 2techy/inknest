@@ -41,6 +41,7 @@ internal class FolderLibraryRepository(
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
     private val tracer: OperationTracer = OperationTracer(),
+    private val now: () -> Long = System::currentTimeMillis,
     private val enrich: suspend (
         ReadingSourceConfig,
         ResolvedBook,
@@ -103,8 +104,9 @@ internal class FolderLibraryRepository(
                     source,
                     child,
                     reading,
-                    tracer,
-                    enrich,
+                    tracer = tracer,
+                    now = now,
+                    enrich = enrich,
                 ),
             )
         }
