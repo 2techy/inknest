@@ -16,7 +16,8 @@ Ranh giới trách nhiệm và vòng đời của module production duy nhất `
 | `di` | DataStore, Room, bộ tải ảnh, đồng hồ, dispatcher dùng chung và factory ViewModel. |
 | `ui/components`, `ui/theme` | Điều khiển, cử chỉ và token thiết kế dùng chung. |
 
-Khởi tạo đồ thị phụ thuộc và dọn tệp tạm bị gián đoạn chạy ngoài luồng chính. Thành phần bất đồng bộ nhận dispatcher; repository và StatsViewModel dùng chung `StatisticsClock` có thể thay trong kiểm thử.
+Khởi tạo dependency dùng chung ngoài luồng chính và truyền dispatcher/clock qua constructor trong `ReadingDataContainer`. Dùng dispatcher I/O cho truy cập nguồn/tệp, dispatcher mặc định cho chuẩn bị cache reading. Truyền hàm mili giây epoch cho thời điểm refresh/scan và `StatisticsClock` cho ngày/múi giờ statistics.
+
 `data/source` chia theo trách nhiệm: `apps`, `updates`, `books`, `saf`, `koreader`, `formats` và `stats`. Contract và kiểu dữ liệu tại ranh giới nằm trong nhóm sở hữu; lớp triển khai contract nằm trong package con `impl` của nhóm đó. I/O có giới hạn/hỗ trợ hủy dùng chung nằm trong `io`; kết quả capability và ánh xạ lỗi nằm trong `capability`. Parser Lua của KOReader nằm trong `koreader/lua`.
 
 `formats/<format>` chứa parser từng định dạng; `formats/xml` và `formats/archive` chứa helper phân tích dùng chung. `BookFileExtensions` và `BookMimeTypes` nằm trong `formats` cùng kết quả/lỗi metadata.

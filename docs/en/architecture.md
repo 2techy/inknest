@@ -16,7 +16,8 @@ Ownership and lifecycle contracts for the single production `:app` module, using
 | `di` | Shared DataStore, Room, loaders, clocks, dispatchers and ViewModel factories. |
 | `ui/components`, `ui/theme` | Shared controls, gestures and design tokens. |
 
-Graph initialization and interrupted-temp-file cleanup run off main. Asynchronous components receive dispatchers; repository and StatsViewModel share an injectable `StatisticsClock`.
+Initialize shared dependencies off main and wire dispatchers/clocks through constructors in `ReadingDataContainer`. Use the I/O dispatcher for source/file access and the default dispatcher for reading-cache preparation. Supply an epoch-millisecond function for refresh/scan timestamps and `StatisticsClock` for statistics dates/zones.
+
 `data/source` is grouped by responsibility: `apps`, `updates`, `books`, `saf`, `koreader`, `formats` and `stats`. Contracts and boundary types stay within their owning group; concrete contract implementations live in its `impl` subpackage. Shared bounded/cancellable I/O lives in `io`, and capability results/error mapping in `capability`. KOReader Lua parsing lives in `koreader/lua`.
 
 `formats/<format>` owns each book parser; `formats/xml` and `formats/archive` hold shared parsing helpers. `BookFileExtensions` and `BookMimeTypes` live in `formats` alongside the metadata result/errors.

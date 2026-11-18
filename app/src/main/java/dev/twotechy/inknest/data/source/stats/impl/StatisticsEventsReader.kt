@@ -98,9 +98,11 @@ private fun Cursor.numericColumn(index: Int) =
 private fun validInteger(value: Double, max: Double): Boolean =
     value.isFinite() && value >= 0 && value <= max && value == value.toLong().toDouble()
 
+private val BOOK_CHECKSUM = Regex("[0-9a-f]{32}")
+
 private fun Cursor.bookIdentity(): StatisticsBookIdentity? {
     if (getType(0) != Cursor.FIELD_TYPE_INTEGER) return null
     val checksum = getString(1)?.lowercase() ?: return null
-    if (!checksum.matches(Regex("[0-9a-f]{32}"))) return null
+    if (!checksum.matches(BOOK_CHECKSUM)) return null
     return StatisticsBookIdentity(getLong(0), checksum)
 }

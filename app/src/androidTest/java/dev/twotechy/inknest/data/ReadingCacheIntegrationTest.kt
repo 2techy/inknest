@@ -40,6 +40,38 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReadingCacheIntegrationTest {
+    @Test fun refreshCapturesAttemptTimeBeforeReadAndCandidateUsesCurrentClock() = runBlocking {
+        withHarness { h ->
+            h.time = 100L
+            h.load = {
+                h.time = 200L
+                snapshot(it, "A.epub")
+            }
+            h.repository.refresh()
+            assertEquals(100L, h.repository.sync.first { it.lastAttemptAt == 100L }.lastAttemptAt)
+            h.time = 300L
+            h.load = { snapshot(it, "B.epub") }
+            val before = h.config.config.first()
+            val candidate = h.config.treeCandidate(
+                before,
+                SourceFolder.Books,
+                "content://test/other",
+            )
+            h.repository.replaceSource(before, candidate)
+            assertCurrent(h.repository, "B.epub")
+            val saved = h.repository.sync.first { it.lastAttemptAt == 300L }
+            h.time = 400L
+            h.load = { throw ReadingRefreshException(ReadingSyncIssue.PermissionLost) }
+            try {
+                h.repository.refresh()
+            } catch (_: ReadingRefreshException) { }
+            val failed = h.repository.sync.first { it.error == ReadingSyncIssue.PermissionLost }
+            assertEquals(400L, failed.lastAttemptAt)
+            assertEquals(saved.lastSuccessAt, failed.lastSuccessAt)
+            assertCurrent(h.repository, "B.epub")
+        }
+    }
+
     @Test fun currentChangesAndDiskCacheSurviveRepositoryRestart() = runBlocking {
         withHarness { h ->
             for (path in listOf("A.epub", "B.epub", "A.epub")) {
@@ -195,6 +227,7 @@ class ReadingCacheIntegrationTest {
         var scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         var database = openDatabase()
         var reads = 0
+        var time = 1L
         var load: suspend (
             ReadingSourceConfig,
         ) -> CurrentReadingSnapshot = { snapshot(it, "A.epub") }
@@ -210,6 +243,7 @@ class ReadingCacheIntegrationTest {
                 load(it)
             },
             scope,
+            now = { time },
         )
         suspend fun reopen() {
             scope.coroutineContext.job.cancelAndJoin()

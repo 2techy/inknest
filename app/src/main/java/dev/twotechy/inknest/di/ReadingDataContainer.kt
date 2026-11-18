@@ -40,38 +40,47 @@ internal class ReadingDataContainer(
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+    now: () -> Long = System::currentTimeMillis,
 ) {
     val statisticsClock = SystemStatisticsClock(scope, defaultDispatcher)
     private val appContext = context.applicationContext
     val config = ReadingSourceConfigRepository(appContext.userPreferencesDataStore)
-    val access = SafSourceAccess(appContext.contentResolver)
-    private val files = SafTreeReader(appContext.contentResolver)
+    val access = SafSourceAccess(appContext.contentResolver, ioDispatcher)
+    private val files = SafTreeReader(appContext.contentResolver, ioDispatcher)
     private val books = BookProbeDataSource(files, appContext.cacheDir, ioDispatcher)
     private val database = ReadingDatabase.create(appContext)
-    private val cache = ReadingCache(database.readingDao())
+    private val cache = ReadingCache(database.readingDao(), defaultDispatcher)
     private val coverDirectory = File(appContext.filesDir, "reading-covers")
     val coverLoader = BookCoverLoader(AndroidBookCoverSource(coverDirectory))
-    private val covers = BookCoverCache(coverDirectory, coverLoader::clear)
+    private val covers = BookCoverCache(coverDirectory, coverLoader::clear, ioDispatcher)
     private val metadata = BookMetadataReader(books, covers, cache::metadata)
     private val transition = Mutex()
     val reading = CachedReadingRepository(
         config,
         cache,
-        KoreaderCurrentSource(files, books, access = access, metadataReader = metadata),
+        KoreaderCurrentSource(
+            files,
+            books,
+            access = access,
+            metadataReader = metadata,
+            ioDispatcher = ioDispatcher,
+        ),
         scope,
         covers,
         transition,
+        now = now,
     )
     private val libraryDao = database.libraryDao()
     private val libraryMetadata = BookMetadataReader(books, covers, ::cachedMetadata)
     val library = FolderLibraryRepository(
         config,
         RoomLibraryInventoryStore(libraryDao),
-        SafBookCatalogSource(appContext.contentResolver),
+        SafBookCatalogSource(appContext.contentResolver, ioDispatcher),
         scope,
         reading,
-        AppOperationTrace.tracer,
-        libraryMetadata::readBook,
+        tracer = AppOperationTrace.tracer,
+        now = now,
+        enrich = libraryMetadata::readBook,
     )
     private val statisticsSnapshot =
         StatisticsSnapshotProbe(files, appContext.cacheDir, ioDispatcher)

@@ -5,6 +5,7 @@ import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.security.MessageDigest
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -25,7 +26,10 @@ internal fun ReadingSourceConfig.readingCacheKey(): ReadingCacheKey? {
 }
 
 // Candidate tree assignments have their own partition, so staging never overwrites active cache.
-internal class ReadingCache(private val dao: ReadingDao) {
+internal class ReadingCache(
+    private val dao: ReadingDao,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) {
     suspend fun clearAll() = dao.clearAll()
     suspend fun carryForward(
         previous: ReadingCacheKey,
@@ -57,7 +61,7 @@ internal class ReadingCache(private val dao: ReadingDao) {
     }
 
     suspend fun save(key: ReadingCacheKey, snapshot: CurrentReadingSnapshot, attempt: Long) =
-        withContext(Dispatchers.Default) {
+        withContext(defaultDispatcher) {
             val item = snapshot.current
             val history = snapshot.history.orEmpty().distinctBy { it.id.path }
             val order = history.mapIndexed { index, book -> book.id.path to index }.toMap()

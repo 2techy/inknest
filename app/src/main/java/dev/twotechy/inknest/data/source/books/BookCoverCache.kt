@@ -3,6 +3,8 @@ package dev.twotechy.inknest.data.source.books
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.saf.fingerprint
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -12,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -20,7 +23,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 // Private, immutable thumbnails: source identity and file fingerprint determine the filename.
-internal class BookCoverCache(private val directory: File, private val onClear: () -> Unit = {}) {
+internal class BookCoverCache(
+    private val directory: File,
+    private val onClear: () -> Unit = {},
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
     private val writes = Mutex()
     private val generation = AtomicLong()
     fun key(config: ReadingSourceConfig, path: String, fingerprint: String?): String {
@@ -30,11 +37,11 @@ internal class BookCoverCache(private val directory: File, private val onClear: 
         }
     }
 
-    suspend fun exists(uri: String?): Boolean = withContext(Dispatchers.IO) {
-        uri == null || File(checkNotNull(Uri.parse(uri).path)).isFile
+    suspend fun exists(uri: String?): Boolean = withContext(ioDispatcher) {
+        uri == null || File(checkNotNull(uri.toUri().path)).isFile
     }
 
-    suspend fun write(key: String, bytes: ByteArray): String = withContext(Dispatchers.IO) {
+    suspend fun write(key: String, bytes: ByteArray): String = withContext(ioDispatcher) {
         val epoch = generation.get()
         if (!directory.isDirectory &&
             !directory.mkdirs()
@@ -50,11 +57,10 @@ internal class BookCoverCache(private val directory: File, private val onClear: 
         val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
             ?: throw IOException("Invalid cover")
         val ratio = minOf(1f, 480f / maxOf(decoded.width, decoded.height))
-        val thumbnail = Bitmap.createScaledBitmap(
-            decoded,
+        val thumbnail = decoded.scale(
             maxOf(1, (decoded.width * ratio).toInt()),
             maxOf(1, (decoded.height * ratio).toInt()),
-            true,
+            filter = true,
         )
         val temporary = File.createTempFile("cover-", ".tmp", directory)
         try {
@@ -87,11 +93,11 @@ internal class BookCoverCache(private val directory: File, private val onClear: 
         }
     }
 
-    suspend fun sizeBytes(): Long = withContext(Dispatchers.IO) {
+    suspend fun sizeBytes(): Long = withContext(ioDispatcher) {
         directory.listFiles()?.sumOf { it.length() } ?: 0L
     }
 
-    suspend fun clear() = withContext(Dispatchers.IO) {
+    suspend fun clear() = withContext(ioDispatcher) {
         writes.withLock {
             generation.incrementAndGet()
             directory.listFiles()?.forEach { it.delete() }
@@ -99,8 +105,8 @@ internal class BookCoverCache(private val directory: File, private val onClear: 
         }
     }
 
-    suspend fun prune(uris: Set<String>) = withContext(Dispatchers.IO) {
-        val names = uris.mapNotNull { Uri.parse(it).lastPathSegment }.toSet()
+    suspend fun prune(uris: Set<String>) = withContext(ioDispatcher) {
+        val names = uris.mapNotNull { it.toUri().lastPathSegment }.toSet()
         // A concurrent candidate may have just produced an uncommitted thumbnail.
         val cutoff = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
         writes.withLock {

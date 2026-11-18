@@ -48,6 +48,7 @@ internal class LibraryFolderRepository(
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
     private val tracer: OperationTracer = OperationTracer(),
+    private val now: () -> Long = System::currentTimeMillis,
     private val enrich: suspend (
         ReadingSourceConfig,
         ResolvedBook,
@@ -211,7 +212,7 @@ internal class LibraryFolderRepository(
                     LibraryFolderEntity(
                         active.source,
                         active.tree,
-                        System.currentTimeMillis(),
+                        now(),
                         true,
                     ),
                 )
@@ -242,7 +243,7 @@ internal class LibraryFolderRepository(
         }
         commit(active) {
             inventoryStore.replace(
-                LibraryFolderEntity(active.source, active.tree, System.currentTimeMillis()),
+                LibraryFolderEntity(active.source, active.tree, now()),
                 rows,
             )
         }

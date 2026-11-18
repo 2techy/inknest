@@ -101,6 +101,14 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
 - Use meaningful implementation names, such as `SafReadingOpenRepository` and
   `DataStoreUserPreferencesRepository`. Keep feature helpers beside their feature;
   put genuinely shared behavior in `ui/components`.
+- When changing a component, use role suffixes: `Repository`, `DataSource`, `Parser`
+  for format parsing, `Reader` for SAF I/O, `Store` for local persistence and `Decoder`
+  for images. Prefix implementations with their backing technology, such as `Saf`,
+  `Room`, `DataStore`, `Android` or `Koreader`. Apply renames within the current task.
+- Keep interfaces and implementations in separate files, with one primary type per
+  file named after that type. Small private helpers and sealed branches may share a file.
+  Use `Exception` suffixes and group related exceptions in one file. Use `Statistics`
+  in data/model and `Stats` in UI; narrow visibility only when callers allow it.
 - Use string resources and `ui/theme` tokens, including gesture thresholds. Preserve
   static E-Ink transitions; Standard changes icon color, not navigation/layout contracts.
 - Add dependencies to the appropriate commented catalog group and use module aliases.
@@ -113,6 +121,8 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
 - For code changes, run format checks, relevant tests and affected debug/release builds
   and lint. Do not edit Kotlin while lint is running. For documentation-only work,
   validate links, commands and the diff rather than rerunning a device matrix.
+- Review lint warnings in changed files even when the task succeeds. Resolve applicable
+  KTX and code-quality suggestions within scope; do not suppress warnings to pass checks.
 - Use CodeScene safeguard on the complete code change set and review new/substantially
   changed classes when the integration is available. Fix degradation and report missing
   tooling explicitly; there is no Gradle task replacing the MCP safeguard.
