@@ -23,27 +23,57 @@ internal class BenchmarkDataset {
     private val marker get() = File(directory, "dataset-version")
 
     fun ensure() {
-        if (marker.isFile && marker.readText() == VERSION) return
+        if (marker.isFile && marker.readText() == BenchmarkFixture.VERSION) return
+        val downloads = Environment
+            .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).canonicalFile
+        check(directory.canonicalFile == File(downloads, "InkNestBenchmark"))
+        if (directory.exists()) check(directory.deleteRecursively())
         check(directory.mkdirs() || directory.isDirectory)
-        val books = File(directory, "books").apply { check(mkdirs() || isDirectory) }
-        repeat(BOOKS) { index -> writeBook(File(books, "book-%03d.epub".format(index)), index) }
-        val current = File(books, "book-000.epub").absolutePath
-        File(directory, "settings.reader.lua").writeText("""return { lastfile = "$current" }""")
-        File(
-            directory,
-            "history.lua",
-        ).writeText("""return { { file = "$current", time = 1793534400 } }""")
-        val sidecar = File(books, "book-000.sdr").apply { mkdirs() }
-        File(
-            sidecar,
-            "metadata.epub.lua",
-        ).writeText("""return { percent_finished = 0.37, summary = { status = "reading" } }""")
+        File(directory, "books/a/b/c").apply { check(mkdirs() || isDirectory) }
+        repeat(BenchmarkFixture.BOOKS) { index -> writeBook(book(index), index) }
+        writeReading(changed = false)
         writeStatistics()
-        marker.writeText(VERSION)
+        marker.writeText(BenchmarkFixture.VERSION)
+    }
+
+    private fun book(index: Int) = File(directory, "books/a/b/c/book-%04d.epub".format(index))
+
+    private fun writeReading(changed: Boolean) {
+        val current = book(0).absolutePath
+        File(directory, "settings.reader.lua").writeText("""return { lastfile = "$current" }""")
+        val time = if (changed) 1793534460 else 1793534400
+        val history = (0 until BenchmarkFixture.HISTORY).joinToString(
+            prefix = "return {\n",
+            postfix = "\n}",
+            separator = ",\n",
+        ) { "{ file = \"${book(it).absolutePath}\", time = ${time - it} }" }
+        File(directory, "history.lua").writeText(history)
+        repeat(if (changed) 1 else BenchmarkFixture.HISTORY) { index ->
+            val sidecar = File(book(index).path.removeSuffix(".epub") + ".sdr")
+                .apply { check(mkdirs() || isDirectory) }
+            val progress = if (changed && index == 0) 0.38 else 0.37
+            File(sidecar, "metadata.epub.lua").writeText(
+                """return { percent_finished = $progress, doc_pages = 300, summary = { status = "reading" } }""",
+            )
+        }
+    }
+
+    fun update(changed: Boolean) {
+        writeReading(changed)
+        SQLiteDatabase.openDatabase(
+            File(directory, "settings/statistics.sqlite3").path,
+            null,
+            SQLiteDatabase.OPEN_READWRITE,
+        ).use { db ->
+            db.execSQL("DELETE FROM page_stat_data WHERE start_time > 1793534400")
+            if (changed) {
+                db.execSQL("INSERT INTO page_stat_data VALUES(1, 1793534460, 77, 301, 400)")
+            }
+        }
     }
 
     private fun writeBook(file: File, index: Int) {
-        val title = "Benchmark Book %03d".format(index + 1)
+        val title = "Benchmark Book %04d".format(index + 1)
         val container = """<container><rootfiles>
             <rootfile full-path="OPS/book.opf"/>
             </rootfiles></container>"""
@@ -108,9 +138,9 @@ internal class BenchmarkDataset {
                 db.compileStatement(
                     "INSERT INTO book VALUES(?, ?, 'Benchmark Author')",
                 ).use { book ->
-                    repeat(BOOKS) {
+                    repeat(BenchmarkFixture.BOOKS) {
                         book.bindLong(1, (it + 1).toLong())
-                        book.bindString(2, "Benchmark Book %03d".format(it + 1))
+                        book.bindString(2, "Benchmark Book %04d".format(it + 1))
                         book.executeInsert()
                     }
                 }
@@ -125,19 +155,13 @@ internal class BenchmarkDataset {
     private fun insertEvents(db: SQLiteDatabase) {
         val anchor = Instant.parse("2026-11-01T12:00:00Z").epochSecond
         db.compileStatement("INSERT INTO page_stat_data VALUES(?, ?, ?, ?, 300)").use { event ->
-            repeat(EVENTS) { index ->
-                event.bindLong(1, (index % BOOKS + 1).toLong())
+            repeat(BenchmarkFixture.EVENTS) { index ->
+                event.bindLong(1, (index % BenchmarkFixture.BOOKS + 1).toLong())
                 event.bindLong(2, anchor - (index % 180) * 86_400L)
                 event.bindLong(3, (15 + index % 75).toLong())
                 event.bindLong(4, (index % 300 + 1).toLong())
                 event.executeInsert()
             }
         }
-    }
-
-    companion object {
-        const val BOOKS = 100
-        const val EVENTS = 50_000
-        private const val VERSION = "1:100:50000:2026-11-01"
     }
 }

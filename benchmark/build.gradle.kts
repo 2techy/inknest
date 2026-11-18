@@ -25,6 +25,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+    sourceSets.getByName("main").kotlin.directories += "src/fixture/java"
 }
 
 androidComponents {

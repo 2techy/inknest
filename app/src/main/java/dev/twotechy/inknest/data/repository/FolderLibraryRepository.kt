@@ -8,6 +8,7 @@ import dev.twotechy.inknest.data.source.books.ResolvedBook
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncStatus
+import dev.twotechy.inknest.platform.OperationTracer
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,7 @@ internal class FolderLibraryRepository(
     private val source: BookCatalogSource,
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
+    private val tracer: OperationTracer = OperationTracer(),
     private val enrich: suspend (
         ReadingSourceConfig,
         ResolvedBook,
@@ -101,6 +103,7 @@ internal class FolderLibraryRepository(
                     source,
                     child,
                     reading,
+                    tracer,
                     enrich,
                 ),
             )

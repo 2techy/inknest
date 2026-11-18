@@ -1,12 +1,10 @@
 # Startup and memory measurements
 
-[Tiếng Việt](../vi/benchmarking.md) · [Documentation](README.md)
-
-Run isolated smoke tests, compare startup/memory and generate app profiles. Production stays in `:app`; `:benchmark` is a self-instrumenting Android test module.
+[Tiếng Việt](../vi/benchmarking.md) · [Documentation](README.md) · [Results](benchmark-results.md)
 
 ## Run
 
-Use [Java 21 and the Gradle wrapper](development.md), plus an authorized Android 11+ ADB device. On Windows:
+Use [Java 21 and the Gradle wrapper](development.md), an authorized Android 11+ ADB device or emulator, and a distinct label for each run. Keep display settings and background workload consistent between comparisons.
 
 ```powershell
 ./scripts/benchmark.ps1 -Mode Smoke -Device SERIAL -Label smoke
@@ -15,39 +13,49 @@ Use [Java 21 and the Gradle wrapper](development.md), plus an authorized Android
 ./scripts/benchmark.ps1 -Mode VerifyProfile -Device SERIAL -Label installation
 ```
 
-- `-SkipBuild` reuses APKs. `-AllowEmulator` permits functional emulator runs; it does not suppress other failures or establish physical performance.
-- Use a quiet physical device for comparisons. Keep font scale, resolution, installed apps, firmware, thermal/charging conditions unchanged; stop unrelated readers and concurrent Gradle/benchmark work. AndroidX requires at least 25% battery; record battery/temperature and inspect thermal warnings.
-- The script installs APKs, prepares data and collects traces, JSON, checkpoint meminfo and device/commit metadata under ignored `benchmark/build/reports/<label>-<mode>`.
-- Production preferences/grants are untouched. On emulators with production InkNest as default HOME, the script temporarily selects Pixel Launcher and restores HOME in `finally`; other launchers stay unchanged.
+- `-AllowEmulator`: run on an emulator.
+- `-SkipBuild`: reuse existing APKs.
+- `-TestFilter`: select AndroidJUnitRunner classes or methods, separated by commas.
+
+Run one scenario:
+
+```powershell
+./scripts/benchmark.ps1 -Mode Measure -Device emulator-5554 -AllowEmulator -SkipBuild -Label scroll -TestFilter 'dev.twotechy.inknest.perf.StartupBenchmark#libraryGridScroll'
+```
+
+The script installs APKs, prepares the fixture and exports results to ignored `benchmark/build/reports/<label>-<mode>/`: instrumentation log, metadata, benchmark JSON, traces and memory checkpoints. On test failure it attempts to export partial results with `runStatus: failed`; inspect the log before retrying the failed scenario.
+
+On emulators where InkNest is the default HOME, the runner temporarily selects Pixel Launcher and restores the original HOME when it exits. Keep the emulator open and avoid interacting during measurement.
 
 ## Dataset and isolation
 
-The `benchmark` target uses release R8 optimization, debug signing, application ID `dev.twotechy.inknest.benchmark` and shell profiling. `profile` disables shrinking for readable rules. Neither enables debug diagnostics; [release signing](release.md) is separate.
+Setup creates 1,000 synthetic EPUBs under `Download/InkNestBenchmark/books/a/b/c`, 200 history entries with sidecars and a KOReader-compatible SQLite database with 50,000 events anchored to 2026-11-01. A fixture-version change rebuilds `Download/InkNestBenchmark`.
 
-Setup creates 100 numbered synthetic EPUBs with 240×336 PNGs and a KOReader-compatible SQLite DB of 50,000 events, anchored to 2026-11-01. A marker versions the fixture; only `Download/InkNestBenchmark` is written. No private books/URIs or production Room schema changes are used.
+The picker grants access to this fixture. Measurements use real SAF, parsers, Room, thumbnails and UI. The optimized `benchmark` target uses application ID `dev.twotechy.inknest.benchmark`; `profile` disables shrinking for profile generation. Their preferences and grants are separate from production.
 
-The real picker grants the isolated target access and configures its own DataStore. Real SAF, EPUB/Lua parsing, Room import, thumbnails and UI run without fake repositories. Setup supports AOSP and Tango root-first Select/Confirm pickers and validates the exact fixture tree. The setup Activity/broad file permission exist only in benchmark/profile source sets; the Activity requires shell DUMP permission. Never distribute these variants.
+Setup entry points and broad file permission exist only in benchmark/profile variants; control entry points require shell DUMP permission. Do not distribute these APKs.
 
 ## Comparison and interpretation
 
-`StartupBenchmark` runs five cold starts, five warm starts with `CompilationMode.None`, and five Home → Library → Apps → Stats → Home journeys. Dataset preparation performs that initial journey before each test; this compilation mode adds no compilation warm-up iterations.
+`StartupBenchmark` uses `CompilationMode.None` and five iterations per scenario. Fixture preparation and validation precede each test.
 
-| Metric | Interpretation |
+| Scenario | Procedure / metric |
 | --- | --- |
-| Initial display | Compare medians; this is not full content readiness. |
-| Navigation CPU frames | Compare sampled percentiles; inspect traces for repeatable timing regressions over 10%. |
-| Memory | `dumpsys meminfo` after Home readiness on each startup and each complete journey: 15 checkpoints. Report PSS/RSS separately and their sampled maxima, not continuous peaks or OEM historical maxima. |
+| Cold / warm startup | `StartupMode.COLD` / `WARM`; initial display time. |
+| Main tabs | Home → Library → Apps → Stats → Home; CPU frame percentiles. |
+| Unchanged HOME return | Open system Settings, return through an explicit HOME intent; foreground refresh span. |
+| Changed HOME return | Update history/current sidecar and add a 77-second statistics event before returning; foreground refresh span. |
+| Library scan/enrich | Clear target cache while Library is visible; scan span and CPU frames. |
+| Library grid scroll | Six gestures down and six up within the grid; require visible book titles to change; CPU frames. |
 
-Compare an isolated checkout of the recorded baseline commit with only the harness/build overlay, keeping architecture code, fixture, package, compilation mode, device and five repetitions fixed. Archive metadata/raw reports locally, outside Git. Small samples and emulator GPU/host scheduling limit conclusions; repeat on Tango for device RAM claims. Architecture/reliability changes alone do not prove speed or memory gains.
+The harness validates completed refreshes, imported progress, 200 tracked items, statistics totals and the full catalog. `TraceSectionMetric` reports summed `InkNest.foregroundRefresh` / `InkNest.libraryScan` spans and their counts. Each completed iteration saves a `dumpsys meminfo` checkpoint; report sampled PSS/RSS separately.
+
+Compare the same fixture, harness, compilation mode, display settings and device/host conditions. Keep dated summaries in [results](benchmark-results.md), including build identity and source run; retain raw artifacts outside Git. Memory files use shared device storage, so select checkpoints belonging to the measured scenarios and run.
 
 ## App profiles
 
-`BaselineProfileGenerator` collects startup/navigation separately on unminified `profile`, requiring two stable iterations within three attempts. Retain InkNest classes only, excluding fixture classes. Profile mode writes versioned generated rules under `app/src/main/generated/baselineProfiles/`: merged `baseline-prof.txt` and separate `startup-prof.txt`; never hand-edit them.
+`Profile` collects startup/navigation rules on the unminified target, requiring two stable iterations within three attempts. It writes generated InkNest rules, excluding fixtures, to `app/src/main/generated/baselineProfiles/baseline-prof.txt` and `startup-prof.txt`.
 
-AGP uses these for release R8 startup layout/ART packaging; ProfileInstaller installs the baseline on supported Android versions. Regenerate after significant startup/navigation changes, review the diff and rebuild release. The None-mode A/B test does not measure baseline compilation benefits.
+Regenerate after significant startup/navigation changes, review the generated diff and rebuild release. Do not edit profile rules by hand.
 
-`ProfileInstallationTest.packagedProfileCompilesAndStarts` separately verifies packaged-profile installation/compilation on optimized `benchmark` with `CompilationMode.Partial(BaselineProfileMode.Require)` and zero JIT warm-up. Its single startup sample is not an A/B result.
-
-Firmware broadcast result 0 instead of ProfileInstaller install/skip delivery fails verification. Keep logs and record the limitation; do not suppress assertions or claim compilation from unprofiled measurements. Packaged assets and success on another device do not prove installation on that firmware.
-
-Signed-release opening, HOME return and long reader sessions require [physical acceptance](reliability.md); synthetic results do not certify them.
+`VerifyProfile` checks packaged-profile installation and startup on optimized `benchmark` using `CompilationMode.Partial(BaselineProfileMode.Require)`, without JIT warm-up. If verification fails, inspect the instrumentation log and ProfileInstaller broadcast result before regenerating or retrying.

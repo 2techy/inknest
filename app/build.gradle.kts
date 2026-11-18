@@ -69,8 +69,10 @@ android {
     sourceSets {
         getByName("main").baselineProfiles.directories += "src/main/generated/baselineProfiles"
         getByName("benchmark").kotlin.directories += "src/release/java"
+        getByName("benchmark").kotlin.directories += "../benchmark/src/fixture/java"
         getByName("profile") {
             kotlin.directories += setOf("src/release/java", "src/benchmark/java")
+            kotlin.directories += "../benchmark/src/fixture/java"
             manifest.srcFile("src/benchmark/AndroidManifest.xml")
         }
     }

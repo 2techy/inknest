@@ -1,12 +1,10 @@
 # Đo thời gian khởi động và bộ nhớ
 
-[English](../en/benchmarking.md) · [Mục lục](README.md)
-
-Chạy smoke test cách ly, so sánh khởi động/bộ nhớ và tạo profile. Production ở `:app`; `:benchmark` là module Android test tự chạy instrumentation.
+[English](../en/benchmarking.md) · [Mục lục](README.md) · [Kết quả](benchmark-results.md)
 
 ## Chạy công cụ
 
-Dùng [Java 21 và Gradle wrapper](development.md), thiết bị Android 11+ đã cấp quyền ADB. Trên Windows:
+Dùng [Java 21 và Gradle wrapper](development.md), thiết bị Android 11+ hoặc emulator đã cấp quyền ADB và label riêng cho mỗi lượt. Giữ cấu hình hiển thị và tải nền nhất quán giữa các lần so sánh.
 
 ```powershell
 ./scripts/benchmark.ps1 -Mode Smoke -Device SERIAL -Label smoke
@@ -15,39 +13,49 @@ Dùng [Java 21 và Gradle wrapper](development.md), thiết bị Android 11+ đ�
 ./scripts/benchmark.ps1 -Mode VerifyProfile -Device SERIAL -Label installation
 ```
 
-- `-SkipBuild` dùng lại APK. `-AllowEmulator` cho phép chạy chức năng trên giả lập; không bỏ lỗi khác hay chứng minh hiệu năng thật.
-- So sánh trên thiết bị thật ít tác vụ nền. Giữ cỡ chữ, độ phân giải, app cài, firmware, nhiệt độ/điều kiện sạc; đóng trình đọc khác, không chạy Gradle/benchmark đồng thời. AndroidX cần pin ít nhất 25%; ghi pin/nhiệt và xem cảnh báo nhiệt.
-- Script cài APK, tạo dữ liệu, thu trace, JSON, meminfo tại checkpoint và metadata thiết bị/commit vào `benchmark/build/reports/<label>-<mode>` được Git bỏ qua.
-- Không đổi tùy chọn/quyền production. Trên giả lập có InkNest production làm HOME, script tạm chọn Pixel Launcher và khôi phục trong `finally`; launcher khác giữ nguyên.
+- `-AllowEmulator`: chạy trên emulator.
+- `-SkipBuild`: dùng lại APK hiện có.
+- `-TestFilter`: chọn class hoặc method AndroidJUnitRunner, phân cách bằng dấu phẩy.
+
+Chạy một case:
+
+```powershell
+./scripts/benchmark.ps1 -Mode Measure -Device emulator-5554 -AllowEmulator -SkipBuild -Label scroll -TestFilter 'dev.twotechy.inknest.perf.StartupBenchmark#libraryGridScroll'
+```
+
+Script cài APK, chuẩn bị fixture và xuất kết quả vào `benchmark/build/reports/<label>-<mode>/` được Git bỏ qua: log instrumentation, metadata, JSON benchmark, trace và memory checkpoint. Khi test lỗi, script thử xuất kết quả một phần với `runStatus: failed`; xem log trước khi chạy lại case lỗi.
+
+Trên emulator dùng InkNest làm HOME mặc định, runner tạm chọn Pixel Launcher và khôi phục HOME ban đầu khi kết thúc. Giữ emulator mở và tránh thao tác trong lúc đo.
 
 ## Bộ dữ liệu và cách ly
 
-Target `benchmark` dùng tối ưu R8 release, ký debug, application ID `dev.twotechy.inknest.benchmark` và cho shell profiling. `profile` tắt shrinking để quy tắc dễ đọc. Cả hai không bật chẩn đoán debug; [ký release](release.md) tách riêng.
+Setup tạo 1.000 EPUB giả tại `Download/InkNestBenchmark/books/a/b/c`, 200 history kèm sidecar và database SQLite tương thích KOReader với 50.000 events, mốc 2026-11-01. Khi phiên bản fixture đổi, setup dựng lại `Download/InkNestBenchmark`.
 
-Setup tạo 100 EPUB giả đánh số, chứa PNG 240×336 và DB SQLite tương thích KOReader có 50.000 sự kiện, mốc 2026-11-01. Marker ghi phiên bản fixture; chỉ ghi `Download/InkNestBenchmark`. Không dùng sách/URI riêng hoặc đổi Room schema production.
+Picker cấp quyền truy cập fixture này. Phép đo dùng SAF, parser, Room, thumbnail và UI thật. Target `benchmark` tối ưu dùng application ID `dev.twotechy.inknest.benchmark`; `profile` tắt shrinking để tạo profile. Tùy chọn và quyền của các target này tách khỏi production.
 
-Picker thật cấp quyền cho target cách ly, cấu hình DataStore riêng. SAF, phân tích EPUB/Lua, nhập Room, thumbnail và UI thật chạy không thay repository giả. Setup hỗ trợ picker AOSP và Tango chọn gốc trước rồi Select/Confirm, kiểm tra đúng cây fixture. Activity setup/quyền tệp rộng chỉ ở source set benchmark/profile; Activity cần quyền DUMP của shell. Không phân phối các biến thể này.
+Điểm setup và quyền tệp rộng chỉ có trong biến thể benchmark/profile; điểm điều khiển cần quyền DUMP của shell. Không phân phối các APK này.
 
 ## So sánh và diễn giải
 
-`StartupBenchmark` chạy năm cold start, năm warm start với `CompilationMode.None`, và năm lượt Trang chủ → Thư viện → Ứng dụng → Thống kê → Trang chủ. Chuẩn bị dữ liệu thực hiện lượt đầu đó trước mỗi test; chế độ này không thêm vòng làm nóng biên dịch.
+`StartupBenchmark` dùng `CompilationMode.None`, năm vòng mỗi case. Chuẩn bị và kiểm tra fixture diễn ra trước mỗi test.
 
-| Chỉ số | Diễn giải |
+| Case | Thao tác / chỉ số |
 | --- | --- |
-| Hiển thị đầu tiên | So trung vị; chưa phải nội dung sẵn sàng đầy đủ. |
-| CPU frame điều hướng | So phân vị lấy mẫu; xem trace khi chậm trên 10% có thể lặp lại. |
-| Bộ nhớ | `dumpsys meminfo` sau Trang chủ sẵn sàng mỗi lần khởi động và sau mỗi lượt điều hướng: 15 checkpoint. Báo PSS/RSS riêng và cực đại lấy mẫu, không phải đỉnh liên tục/lịch sử OEM. |
+| Cold / warm startup | `StartupMode.COLD` / `WARM`; thời gian hiển thị đầu. |
+| Các tab chính | Home → Library → Apps → Stats → Home; phân vị CPU frame. |
+| HOME return nguồn không đổi | Mở Settings hệ thống, quay lại bằng HOME intent tường minh; span foreground refresh. |
+| HOME return nguồn thay đổi | Sửa history/sidecar hiện tại và thêm event statistics 77 giây trước khi quay lại; span foreground refresh. |
+| Quét/enrich Thư viện | Xóa cache target khi Thư viện hiển thị; span scan và CPU frame. |
+| Cuộn lưới Thư viện | Sáu cử chỉ xuống và sáu lên trong lưới; yêu cầu tên sách hiển thị thay đổi; CPU frame. |
 
-So với checkout cách ly của commit baseline đã ghi, chỉ phủ harness/build; giữ code kiến trúc, fixture, package, chế độ biên dịch, thiết bị và năm lần lặp. Lưu metadata/báo cáo gốc cục bộ ngoài Git. Mẫu ít và GPU/lịch chạy host giả lập giới hạn kết luận; đo lại Tango để khẳng định RAM thiết bị. Đổi kiến trúc/độ tin cậy tự nó không chứng minh tăng tốc/giảm RAM.
+Harness kiểm tra refresh hoàn tất, tiến độ đã import, 200 mục tracked, tổng statistics và catalog đầy đủ. `TraceSectionMetric` báo tổng span `InkNest.foregroundRefresh` / `InkNest.libraryScan` cùng số lần chạy. Mỗi vòng hoàn tất lưu một checkpoint `dumpsys meminfo`; báo PSS/RSS lấy mẫu riêng biệt.
+
+So sánh cùng fixture, harness, chế độ biên dịch, cấu hình hiển thị và điều kiện thiết bị/host. Lưu bản tóm tắt có ngày trong [kết quả](benchmark-results.md), kèm định danh build và lượt nguồn; giữ artifact gốc ngoài Git. File memory dùng vùng lưu chung trên thiết bị nên cần chọn checkpoint đúng case và lượt đo.
 
 ## Profile ứng dụng
 
-`BaselineProfileGenerator` thu riêng startup/navigation trên `profile` chưa minify, cần hai vòng ổn định trong ba lần thử. Chỉ giữ lớp InkNest, loại lớp fixture. Chế độ Profile ghi quy tắc sinh có quản lý phiên bản tại `app/src/main/generated/baselineProfiles/`: `baseline-prof.txt` gộp và `startup-prof.txt` riêng; không sửa tay.
+`Profile` thu quy tắc startup/navigation trên target chưa minify, cần hai vòng ổn định trong ba lần thử. Công cụ ghi quy tắc InkNest được sinh, loại fixture, vào `app/src/main/generated/baselineProfiles/baseline-prof.txt` và `startup-prof.txt`.
 
-AGP dùng chúng cho bố cục startup R8/đóng gói ART release; ProfileInstaller cài baseline trên Android hỗ trợ. Tạo lại khi đổi lớn startup/navigation, rà diff và build release lại. A/B chế độ None không đo lợi ích biên dịch baseline.
+Tạo lại sau thay đổi lớn startup/navigation, kiểm tra diff được sinh và build lại release. Không sửa tay quy tắc profile.
 
-`ProfileInstallationTest.packagedProfileCompilesAndStarts` xác minh riêng cài/biên dịch profile đóng gói trên `benchmark` tối ưu, dùng `CompilationMode.Partial(BaselineProfileMode.Require)`, không làm nóng JIT. Một mẫu startup không phải kết quả A/B.
-
-Firmware trả broadcast 0 thay vì chuyển install/skip ProfileInstaller làm xác minh thất bại. Giữ log và ghi giới hạn; không bỏ assertion hay kết luận biên dịch từ phép đo không profile. Có asset và đạt trên máy khác không chứng minh cài được trên firmware đó.
-
-Mở sách release đã ký, về HOME và phiên đọc dài cần [nghiệm thu thật](reliability.md); dữ liệu giả không chứng nhận các luồng này.
+`VerifyProfile` kiểm tra cài profile đóng gói và khởi động trên `benchmark` tối ưu bằng `CompilationMode.Partial(BaselineProfileMode.Require)`, không làm nóng JIT. Nếu xác minh lỗi, xem log instrumentation và kết quả broadcast ProfileInstaller trước khi tạo lại hoặc chạy lại.
