@@ -15,6 +15,8 @@ import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
 import java.io.IOException
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -52,9 +54,12 @@ internal class KoreaderStatisticsRepository(
     transition: Mutex = Mutex(),
     private val clock: StatisticsClock = SystemStatisticsClock(scope),
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    permissionSnapshot: suspend () -> CoroutineContext = { EmptyCoroutineContext },
 ) : StatisticsRepository {
     private val importer =
-        StatisticsImporter(config, dao, source, transition) { clock.moments.value.zone }
+        StatisticsImporter(config, dao, source, transition, permissionSnapshot) {
+            clock.moments.value.zone
+        }
     private val requests = Mutex()
     private var request: Pair<String, Deferred<Unit>>? = null
     private val status =

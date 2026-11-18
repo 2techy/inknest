@@ -49,13 +49,10 @@ class BenchmarkControlProvider : ContentProvider() {
                     val app = checkNotNull(context).applicationContext as InkNestApplication
                     phase = "container"
                     val container = app.awaitContainer()
-                    when (method) {
-                        "clear" -> clear(container)
-                        "prepare" -> prepare(container)
-                        "validate" -> Unit
-                        else -> error("Unknown benchmark operation")
+                    AppOperationTrace.tracer.begin("InkNest.control.$method").use {
+                        execute(container, method)
+                        validate(container, changed = arg == "changed")
                     }
-                    validate(container, changed = arg == "changed")
                     phase = "complete"
                     Bundle().apply { putBoolean("valid", true) }
                 }
@@ -65,6 +62,18 @@ class BenchmarkControlProvider : ContentProvider() {
                 "Benchmark validation timed out at $phase; state=$arg",
                 error,
             )
+        }
+    }
+
+    private suspend fun execute(container: AppContainer, method: String) {
+        phase = method
+        when (method) {
+            "clear" -> clear(container)
+            "prepare" -> prepare(container)
+            "refresh-library" -> container.libraryRepository.refresh()
+            "refresh-statistics" -> refreshStatistics(container)
+            "validate" -> Unit
+            else -> error("Unknown benchmark operation")
         }
     }
 
@@ -78,6 +87,15 @@ class BenchmarkControlProvider : ContentProvider() {
         ) {
             clear(container)
         }
+    }
+
+    private suspend fun refreshStatistics(container: AppContainer) {
+        val before = container.statisticsRepository.data.value.updatedAt
+        container.statisticsRepository.refresh()
+        val result = container.statisticsRepository.data.first {
+            !it.sync.running && (it.updatedAt != before || it.sync.error != null)
+        }
+        check(result.sync.error == null)
     }
 
     private suspend fun clear(container: AppContainer) {

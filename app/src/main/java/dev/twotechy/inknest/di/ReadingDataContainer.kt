@@ -69,6 +69,7 @@ internal class ReadingDataContainer(
         covers,
         transition,
         now = now,
+        permissionSnapshot = files::permissionSnapshot,
     )
     private val libraryDao = database.libraryDao()
     private val libraryMetadata = BookMetadataReader(books, covers, ::cachedMetadata)
@@ -92,6 +93,7 @@ internal class ReadingDataContainer(
         transition,
         statisticsClock,
         defaultDispatcher,
+        permissionSnapshot = files::permissionSnapshot,
     )
     val bookDetails = CachedBookDetailsRepository(
         library,

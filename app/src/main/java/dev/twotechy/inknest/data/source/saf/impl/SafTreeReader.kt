@@ -9,7 +9,10 @@ import dev.twotechy.inknest.data.source.io.cancellableQuery
 import dev.twotechy.inknest.data.source.saf.DirectSourceDocumentReader
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
+import dev.twotechy.inknest.data.source.saf.SafPermissionSnapshot
 import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.hasPersistedReadGrant
+import dev.twotechy.inknest.data.source.saf.readableTreeUris
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
 import java.io.IOException
 import java.io.InputStream
@@ -26,7 +29,12 @@ import kotlinx.coroutines.withContext
 internal class SafTreeReader(
     private val resolver: ContentResolver,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val readableTrees: () -> Set<String> = resolver::readableTreeUris,
 ) : DirectSourceDocumentReader {
+    suspend fun permissionSnapshot(): SafPermissionSnapshot = withContext(ioDispatcher) {
+        SafPermissionSnapshot(readableTrees())
+    }
+
     override suspend fun <T> read(
         tree: String,
         path: List<String>,
@@ -82,8 +90,33 @@ internal class SafTreeReader(
     private suspend fun describeInTree(tree: String, path: List<String>): SourceDocument {
         validatePath(path)
         val uri = checkedTreeUri(tree)
-        val id = resolveDocumentId(uri, path)
-        return readMetadata(DocumentsContract.buildDocumentUriUsingTree(uri, id))
+        val rootId = DocumentsContract.getTreeDocumentId(uri)
+        val id = rootId + when {
+            path.isEmpty() -> ""
+            rootId == "primary:" -> path.joinToString("/")
+            else -> "/" + path.joinToString("/")
+        }
+        val root = requireNotNull(PrimaryTreePath.parse(rootId))
+        if (PrimaryTreePath.parse(id)?.relativeTo(root) == null) throw IOException("Outside tree")
+        val direct = readDirectMetadata(DocumentsContract.buildDocumentUriUsingTree(uri, id))
+        if (direct != null) return direct
+        val resolved = resolveDocumentId(uri, path)
+        return readMetadata(DocumentsContract.buildDocumentUriUsingTree(uri, resolved))
+            ?: throw IOException("No metadata")
+    }
+
+    private suspend fun readDirectMetadata(document: Uri): SourceDocument? = try {
+        readMetadata(document)
+    } catch (error: IOException) {
+        // OEM enforceTree may reject a missing ID before queryDocument can return an empty row.
+        // Exact child traversal distinguishes absence from a failure to read an existing file.
+        if (error is MissingSourceFile ||
+            error.cause is IllegalArgumentException
+        ) {
+            null
+        } else {
+            throw error
+        }
     }
 
     private fun validatePath(path: List<String>) {
@@ -95,14 +128,14 @@ internal class SafTreeReader(
         )
     }
 
-    private fun checkedTreeUri(tree: String): Uri {
+    private suspend fun checkedTreeUri(tree: String): Uri {
         val uri = tree.toUri()
         require(
             uri.authority == "com.android.externalstorage.documents" &&
                 DocumentsContract.isTreeUri(uri),
         )
         requireNotNull(PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(uri)))
-        if (resolver.persistedUriPermissions.none { it.uri == uri && it.isReadPermission }) {
+        if (!hasPersistedReadGrant(uri, readableTrees)) {
             throw SecurityException("Persisted folder access was lost")
         }
         return uri
@@ -124,7 +157,7 @@ internal class SafTreeReader(
         return id
     }
 
-    private suspend fun readMetadata(document: Uri): SourceDocument {
+    private suspend fun readMetadata(document: Uri): SourceDocument? {
         val columns = arrayOf(
             DocumentsContract.Document.COLUMN_MIME_TYPE,
             DocumentsContract.Document.COLUMN_SIZE,
@@ -134,7 +167,7 @@ internal class SafTreeReader(
             val cursor = safProviderOperation {
                 resolver.query(document, columns, null, null, null, signal)
             }
-                ?: throw IOException("No metadata")
+                ?: return@cancellableQuery null
             cursor.use {
                 if (!it.moveToFirst()) throw MissingSourceFile()
                 val size = if (it.isNull(1)) null else it.getLong(1)

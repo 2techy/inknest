@@ -12,6 +12,10 @@ Only primary internal storage through Android ExternalStorageProvider is support
 
 ## Parsers and limits
 
+Resolve configured primary-storage paths by querying the document ID directly. If it is unavailable, traverse child documents once using exact display names. Preserve case and Unicode; do not add case folding or fuzzy matching. Validate containment for both direct and fallback IDs.
+
+Each reading refresh and statistics import captures persisted read grants once for that operation. Provider query/open calls still enforce access if a grant is revoked mid-operation. Opening a book and computing its checksum check current grants independently.
+
 | Input | Bounds and behavior |
 | --- | --- |
 | Lua | LuaJ 3.0.1, fresh globals without standard libraries, at most 8 MiB and 5 million instructions. A private DebugLib instruction hook is initialized before its bootstrap globals are removed; cancellation interrupts evaluation. Only typed Kotlin DTOs leave the source. |

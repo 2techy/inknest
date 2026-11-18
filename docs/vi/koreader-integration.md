@@ -12,6 +12,10 @@ Chỉ hỗ trợ bộ nhớ trong chính qua ExternalStorageProvider Android; t�
 
 ## Parser và giới hạn
 
+Phân giải đường dẫn trong bộ nhớ chính đã cấu hình bằng cách query document ID trực tiếp. Nếu không tìm được, duyệt document con một lần theo đúng display name. Giữ hoa thường và Unicode; không thêm case folding hoặc khớp gần đúng. Kiểm tra containment cho cả ID trực tiếp và ID fallback.
+
+Mỗi lần refresh reading và import statistics lấy snapshot quyền đọc đã lưu một lần cho operation đó. Query/open của provider vẫn kiểm tra truy cập khi quyền bị thu hồi giữa chừng. Mở sách và tính checksum kiểm tra quyền hiện tại độc lập.
+
 | Đầu vào | Giới hạn và hành vi |
 | --- | --- |
 | Lua | LuaJ 3.0.1, globals mới không thư viện chuẩn, tối đa 8 MiB và 5 triệu lệnh. Hook DebugLib riêng khởi tạo trước khi xóa globals bootstrap; hủy ngắt thực thi. Chỉ DTO Kotlin có kiểu ra khỏi tầng nguồn. |

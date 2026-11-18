@@ -44,6 +44,8 @@ internal class BenchmarkControl {
     fun validate(changed: Boolean = false) = call("validate", changed)
     fun prepare() = call("prepare", changed = false)
     fun clear() = call("clear", changed = false)
+    fun refreshLibrary() = call("refresh-library", changed = false)
+    fun refreshStatistics() = call("refresh-statistics", changed = false)
 
     private fun call(method: String, changed: Boolean) = withShellIdentity {
         val result = instrumentation.context.contentResolver.call(

@@ -39,6 +39,8 @@ Picker cấp quyền truy cập fixture này. Phép đo dùng SAF, parser, Room,
 
 `StartupBenchmark` dùng `CompilationMode.None`, năm vòng mỗi case. Chuẩn bị và kiểm tra fixture diễn ra trước mỗi test.
 
+Để đo tổng thời gian refresh/rebuild, chọn `RefreshBenchmark#libraryRefresh`, `RefreshBenchmark#statisticsRefresh` hoặc `RefreshBenchmark#clearCacheAndRefresh` với tiền tố package đầy đủ `dev.twotechy.inknest.perf.`. Mỗi case chạy một vòng, gồm kiểm tra dữ liệu sẵn sàng; refresh statistics yêu cầu lần import mới đã publish.
+
 | Case | Thao tác / chỉ số |
 | --- | --- |
 | Cold / warm startup | `StartupMode.COLD` / `WARM`; thời gian hiển thị đầu. |

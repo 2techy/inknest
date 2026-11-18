@@ -19,12 +19,14 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -82,6 +84,7 @@ private class ImportFixture {
     private val dao = database.statisticsDao()
     private var zone = ZoneId.of("UTC")
     private var calls = 0
+    private var permissionSnapshots = 0
     private var failAfterBatch = false
     private var retry = false
     private var entered: CompletableDeferred<Unit>? = null
@@ -92,6 +95,10 @@ private class ImportFixture {
             consume: suspend (StatisticsEventReader) -> T,
         ): T {
             calls++
+            assertEquals(
+                "statistics-permissions-$calls",
+                currentCoroutineContext()[CoroutineName]?.name,
+            )
             val previous = dao.source(tree)
             val first = StatisticsEventReader { batch ->
                 batch(List(500) { event("2026-11-01T05:30:00Z", page = 1) })
@@ -122,7 +129,13 @@ private class ImportFixture {
             }
         }
     }
-    val importer = StatisticsImporter(config, dao, source, Mutex()) { zone }
+    val importer = StatisticsImporter(
+        config,
+        dao,
+        source,
+        Mutex(),
+        permissionSnapshot = { CoroutineName("statistics-permissions-${++permissionSnapshots}") },
+    ) { zone }
 
     suspend fun select() {
         val before = config.config.first()

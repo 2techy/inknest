@@ -11,6 +11,8 @@ import dev.twotechy.inknest.model.ReadingEvent
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -25,6 +27,7 @@ internal class StatisticsImporter(
     private val dao: StatisticsDao,
     private val source: StatisticsEventSource,
     private val transition: Mutex,
+    private val permissionSnapshot: suspend () -> CoroutineContext = { EmptyCoroutineContext },
     private val currentZone: () -> ZoneId = ZoneId::systemDefault,
 ) {
     private val mutex = Mutex()
@@ -34,27 +37,32 @@ internal class StatisticsImporter(
         initialize()
         val zone = currentZone()
         stage(tree, zone) { operation, generations ->
-            source.withEvents(tree) { reader ->
-                val generation = newGeneration(generations)
-                reader.forEachBookBatch { books ->
-                    require(books.size <= StatisticsEventReader.BATCH_SIZE)
-                    dao.appendBooks(
-                        operation,
-                        books.map {
-                            StatisticsBookEntity(
-                                generation,
-                                it.bookId,
-                                it.checksum,
-                            )
-                        },
-                    )
+            withContext(permissionSnapshot()) {
+                source.withEvents(tree) { reader ->
+                    val generation = newGeneration(generations)
+                    reader.forEachBookBatch { books ->
+                        require(books.size <= StatisticsEventReader.BATCH_SIZE)
+                        dao.appendBooks(
+                            operation,
+                            books.map {
+                                StatisticsBookEntity(
+                                    generation,
+                                    it.bookId,
+                                    it.checksum,
+                                )
+                            },
+                        )
+                    }
+                    var position = 0
+                    reader.forEachBatch { events ->
+                        require(events.size <= StatisticsEventReader.BATCH_SIZE)
+                        dao.append(
+                            operation,
+                            events.map { it.entity(generation, position++, zone) },
+                        )
+                    }
+                    StatisticsSourceEntity(tree, generation, System.currentTimeMillis(), zone.id)
                 }
-                var position = 0
-                reader.forEachBatch { events ->
-                    require(events.size <= StatisticsEventReader.BATCH_SIZE)
-                    dao.append(operation, events.map { it.entity(generation, position++, zone) })
-                }
-                StatisticsSourceEntity(tree, generation, System.currentTimeMillis(), zone.id)
             }
         }
     }
