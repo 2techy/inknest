@@ -12,7 +12,9 @@ import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -114,9 +116,11 @@ class FolderLibraryRepositoryTest {
         }
     }
 
-    @Test fun addingRootDoesNotRescanExistingRootAndFailedRootKeepsCache() = runBlocking {
-        withTimeout(10000) {
-            withHarness { h ->
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun addingRootDoesNotRescanExistingRootAndFailedRootKeepsCache() =
+        runTest(timeout = 10.seconds) {
+            withHarness(StandardTestDispatcher(testScheduler)) { h ->
                 h.add("A")
                 h.loaded(1)
                 val reads = h.reads["A"]
@@ -125,6 +129,8 @@ class FolderLibraryRepositoryTest {
                 assertEquals(reads, h.reads["A"])
                 assertEquals(2, merged.books.map { it.id }.distinct().size)
                 assertEquals(1, merged.books.map { it.title }.distinct().size)
+                // A published idle state can precede completion of the shared scan job.
+                runCurrent()
                 h.responses["B"] = { throw SecurityException("grant lost") }
                 h.repository.refresh()
                 val stale = h.repository.catalog.first {
@@ -136,7 +142,6 @@ class FolderLibraryRepositoryTest {
                 assertEquals(null, stale.folders.first { it.uri == "A" }.sync.error)
             }
         }
-    }
 
     @Test fun removingRootWhileProviderFinishesCannotRestoreRemovedBooks() = runBlocking {
         withTimeout(10000) {
@@ -188,8 +193,11 @@ class FolderLibraryRepositoryTest {
         }
     }
 
-    private suspend fun withHarness(block: suspend (Harness) -> Unit) {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private suspend fun withHarness(
+        dispatcher: CoroutineDispatcher = Dispatchers.Default,
+        block: suspend (Harness) -> Unit,
+    ) {
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
         try {
             block(Harness(folder.newFolder(), scope))
         } finally {

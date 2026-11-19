@@ -3,10 +3,10 @@ package dev.twotechy.inknest.data.source.books
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
-import dev.twotechy.inknest.data.source.saf.fingerprint
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import java.io.File
 import java.io.IOException
@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 // Private, immutable thumbnails: source identity and file fingerprint determine the filename.
-internal class BookCoverCache(
+internal class FileBookCoverStore(
     private val directory: File,
     private val onClear: () -> Unit = {},
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -31,23 +31,47 @@ internal class BookCoverCache(
     private val writes = Mutex()
     private val generation = AtomicLong()
     fun key(config: ReadingSourceConfig, path: String, fingerprint: String?): String {
-        val input = "${config.readingCacheKey()}\n$path\n$fingerprint"
-        return MessageDigest.getInstance("SHA-256").digest(input.toByteArray()).joinToString("") {
+        val input = "$THUMBNAIL_FORMAT_VERSION\n${config.readingCacheKey()}\n$path\n$fingerprint"
+        val digest = MessageDigest.getInstance(
+            "SHA-256",
+        ).digest(input.toByteArray()).joinToString("") {
             "%02x".format(it)
         }
+        return "v$THUMBNAIL_FORMAT_VERSION-$digest"
     }
 
     suspend fun exists(uri: String?): Boolean = withContext(ioDispatcher) {
-        uri == null || File(checkNotNull(uri.toUri().path)).isFile
+        isReusable(uri?.toUri())
+    }
+
+    private fun isReusable(uri: Uri?): Boolean {
+        if (uri == null) return true
+        if (uri.scheme != "file") return false
+        val file = uri.path?.let(::File)?.canonicalFile ?: return false
+        return file.parentFile == directory.canonicalFile &&
+            file.name.matches(CURRENT_THUMBNAIL_NAME) && file.isFile
     }
 
     suspend fun write(key: String, bytes: ByteArray): String = withContext(ioDispatcher) {
+        writeThumbnail(File(directory, "$key.webp"), bytes)
+    }
+
+    private suspend fun writeThumbnail(target: File, bytes: ByteArray): String {
         val epoch = generation.get()
         if (!directory.isDirectory &&
             !directory.mkdirs()
         ) {
             throw IOException("Cannot create cover cache")
         }
+        val thumbnail = thumbnail(bytes)
+        try {
+            return encodeAndCommit(target, thumbnail, epoch)
+        } finally {
+            thumbnail.recycle()
+        }
+    }
+
+    private fun thumbnail(bytes: ByteArray): Bitmap {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
         var sample = 1
@@ -56,25 +80,34 @@ internal class BookCoverCache(
         options.inSampleSize = sample
         val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
             ?: throw IOException("Invalid cover")
-        val ratio = minOf(1f, 480f / maxOf(decoded.width, decoded.height))
-        val thumbnail = decoded.scale(
-            maxOf(1, (decoded.width * ratio).toInt()),
-            maxOf(1, (decoded.height * ratio).toInt()),
-            filter = true,
-        )
+        try {
+            val ratio = minOf(1f, 480f / maxOf(decoded.width, decoded.height))
+            val result = decoded.scale(
+                maxOf(1, (decoded.width * ratio).toInt()),
+                maxOf(1, (decoded.height * ratio).toInt()),
+                filter = true,
+            )
+            if (result !== decoded) decoded.recycle()
+            return result
+        } catch (error: Exception) {
+            decoded.recycle()
+            throw error
+        }
+    }
+
+    private suspend fun encodeAndCommit(target: File, thumbnail: Bitmap, epoch: Long): String {
         val temporary = File.createTempFile("cover-", ".tmp", directory)
         try {
             temporary.outputStream().use {
                 if (!thumbnail.compress(
-                        Bitmap.CompressFormat.PNG,
-                        100,
+                        compressionFormat(),
+                        THUMBNAIL_QUALITY,
                         it,
                     )
                 ) {
                     throw IOException("Cannot encode cover")
                 }
             }
-            val target = File(directory, "$key.png")
             currentCoroutineContext().ensureActive()
             writes.withLock {
                 if (epoch != generation.get()) throw IOException("Cover cache cleared")
@@ -85,12 +118,18 @@ internal class BookCoverCache(
                     StandardCopyOption.REPLACE_EXISTING,
                 )
             }
-            Uri.fromFile(target).toString()
+            return Uri.fromFile(target).toString()
         } finally {
             temporary.delete()
-            if (thumbnail !== decoded) thumbnail.recycle()
-            decoded.recycle()
         }
+    }
+
+    // WEBP is the encoder available on API 26–29; newer APIs expose the explicit lossy format.
+    @Suppress("DEPRECATION")
+    private fun compressionFormat() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        Bitmap.CompressFormat.WEBP_LOSSY
+    } else {
+        Bitmap.CompressFormat.WEBP
     }
 
     suspend fun sizeBytes(): Long = withContext(ioDispatcher) {
@@ -115,3 +154,7 @@ internal class BookCoverCache(
         }
     }
 }
+
+private const val THUMBNAIL_FORMAT_VERSION = 1
+private const val THUMBNAIL_QUALITY = 85
+private val CURRENT_THUMBNAIL_NAME = Regex("v$THUMBNAIL_FORMAT_VERSION-[0-9a-f]{64}\\.webp")

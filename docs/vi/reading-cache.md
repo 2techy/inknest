@@ -20,7 +20,7 @@ Ghi danh sách mới, con trỏ hiện tại và thứ tự trong một giao d�
 
 Lần đọc đầy đủ đọc lại sidecar: `percent_finished` hữu hạn trong [0, 1] có thể giảm. Trạng thái rõ `reading`, `complete`, `abandoned` được ánh xạ; 100% riêng lẻ không là Đã đọc.
 
-Tên/tác giả sách giữ khi thiếu/không hỗ trợ bìa. [Trích xuất có giới hạn](koreader-integration.md) tạo PNG riêng, cạnh dài tối đa 480px, ghi tạm/đổi tên nguyên tử. Khóa gồm nguồn/phân vùng, đường dẫn chuẩn và size/mtime. Fingerprint đã biết không đổi dùng lại metadata/bìa; chưa biết thì đọc lại, tệp đổi dùng khóa mới. Dọn ảnh không còn tham chiếu sau 24 giờ để ứng viên đồng thời ghi tạm an toàn. Xóa cache/ngắt kết nối xóa bìa. Không giữ bitmap trong ViewModel/saved state; cache giải mã theo [hệ thống thiết kế](design-system.md).
+Tên/tác giả sách giữ khi thiếu/không hỗ trợ bìa. [Trích xuất có giới hạn](koreader-integration.md) tạo WebP màu riêng (lossy quality 85), cạnh dài tối đa 480px, ghi tạm/đổi tên nguyên tử. Khóa gồm phiên bản định dạng thumbnail, nguồn/phân vùng, đường dẫn chuẩn và size/mtime. Cache PNG được trích xuất lại từ sách khi refresh; không có migration định dạng. Fingerprint đã biết không đổi dùng lại metadata/bìa; chưa biết thì đọc lại, tệp đổi dùng khóa mới. Dọn ảnh không còn tham chiếu sau 24 giờ để ứng viên đồng thời ghi tạm an toàn. Xóa cache/ngắt kết nối xóa bìa. Không giữ bitmap trong ViewModel/saved state; cache giải mã theo [hệ thống thiết kế](design-system.md).
 
 ## Vị trí trang đã lưu
 

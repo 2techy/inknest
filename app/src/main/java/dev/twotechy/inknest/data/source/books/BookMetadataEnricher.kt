@@ -12,18 +12,9 @@ import dev.twotechy.inknest.model.ReadingStatus
 import java.util.UUID
 import kotlin.math.roundToInt
 
-internal data class BookMetadata(
-    val fingerprint: String?,
-    val title: String,
-    val author: String?,
-    val coverUri: String?,
-    val description: String? = null,
-)
-internal data class EnrichedReadingItem(val item: ReadingItem, val metadata: BookMetadata?)
-
-internal class BookMetadataReader(
+internal class BookMetadataEnricher(
     private val books: BookProbeDataSource,
-    private val covers: BookCoverCache,
+    private val covers: FileBookCoverStore,
     private val previous: suspend (ReadingSourceConfig, String) -> BookMetadata?,
 ) {
     suspend fun read(
@@ -80,7 +71,10 @@ internal class BookMetadataReader(
         }.result
         checkMetadataSource(result)
         val parsed = (result as? ProbeRead.Success)?.value
-        if (parsed == null && sameFingerprint(old, fingerprint)) return checkNotNull(old)
+        if (parsed == null && sameFingerprint(old, fingerprint)) {
+            val retained = checkNotNull(old)
+            return retained.copy(coverUri = retained.coverUri.takeIf { covers.exists(it) })
+        }
         return BookMetadata(
             fingerprint = fingerprint.takeIf { parsed != null },
             title = parsed?.title ?: item.title,

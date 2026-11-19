@@ -12,9 +12,9 @@ import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.RoomReadingRepository
 import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
 import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
-import dev.twotechy.inknest.data.source.books.BookCoverCache
 import dev.twotechy.inknest.data.source.books.BookMetadata
-import dev.twotechy.inknest.data.source.books.BookMetadataReader
+import dev.twotechy.inknest.data.source.books.BookMetadataEnricher
+import dev.twotechy.inknest.data.source.books.FileBookCoverStore
 import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.books.impl.SafBookCatalogSource
 import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
@@ -22,7 +22,7 @@ import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
 import dev.twotechy.inknest.model.ReadingSourceConfig
-import dev.twotechy.inknest.platform.AndroidBookCoverSource
+import dev.twotechy.inknest.platform.AndroidBookCoverDecoder
 import dev.twotechy.inknest.platform.AppOperationTrace
 import dev.twotechy.inknest.platform.BookCoverLoader
 import dev.twotechy.inknest.platform.ReadingItemDispatcher
@@ -51,9 +51,17 @@ internal class ReadingDataContainer(
     private val database = ReadingDatabase.create(appContext)
     private val cache = ReadingCache(database.readingDao(), defaultDispatcher)
     private val coverDirectory = File(appContext.filesDir, "reading-covers")
-    val coverLoader = BookCoverLoader(AndroidBookCoverSource(coverDirectory))
-    private val covers = BookCoverCache(coverDirectory, coverLoader::clear, ioDispatcher)
-    private val metadata = BookMetadataReader(books, covers, cache::metadata)
+    val coverLoader = BookCoverLoader(
+        AndroidBookCoverDecoder(coverDirectory),
+        ioDispatcher,
+        maxBytes = (Runtime.getRuntime().maxMemory() / 8).coerceIn(
+            1,
+            Int.MAX_VALUE.toLong(),
+        ).toInt(),
+        parentScope = scope,
+    )
+    private val covers = FileBookCoverStore(coverDirectory, coverLoader::clear, ioDispatcher)
+    private val metadata = BookMetadataEnricher(books, covers, cache::metadata)
     private val transition = Mutex()
     val reading = RoomReadingRepository(
         config,
@@ -74,7 +82,7 @@ internal class ReadingDataContainer(
         tracer = AppOperationTrace.tracer,
     )
     private val libraryDao = database.libraryDao()
-    private val libraryMetadata = BookMetadataReader(books, covers, ::cachedMetadata)
+    private val libraryMetadata = BookMetadataEnricher(books, covers, ::cachedMetadata)
     val library = FolderLibraryRepository(
         config,
         RoomLibraryInventoryStore(libraryDao),

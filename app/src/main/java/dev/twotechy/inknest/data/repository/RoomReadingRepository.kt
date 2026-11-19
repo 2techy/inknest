@@ -5,7 +5,7 @@ import dev.twotechy.inknest.data.local.reading.CachedReading
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
-import dev.twotechy.inknest.data.source.books.BookCoverCache
+import dev.twotechy.inknest.data.source.books.FileBookCoverStore
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
@@ -46,7 +46,7 @@ internal class RoomReadingRepository(
     private val cache: ReadingCache,
     private val source: CurrentReadingDataSource,
     private val scope: CoroutineScope,
-    private val covers: BookCoverCache? = null,
+    private val covers: FileBookCoverStore? = null,
     private val transition: Mutex = Mutex(),
     private val now: () -> Long = System::currentTimeMillis,
     private val permissionSnapshot: suspend () -> CoroutineContext = { EmptyCoroutineContext },
