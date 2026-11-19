@@ -2,10 +2,10 @@ package dev.twotechy.inknest.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.twotechy.inknest.data.repository.AppUpdateRepository
-import dev.twotechy.inknest.data.repository.ForegroundRefreshCoordinator
-import dev.twotechy.inknest.data.repository.InstalledAppsRepository
-import dev.twotechy.inknest.data.repository.UserPreferencesRepository
+import dev.twotechy.inknest.data.repository.apps.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.preferences.UserPreferencesRepository
+import dev.twotechy.inknest.data.repository.reading.ForegroundRefreshCoordinator
+import dev.twotechy.inknest.data.repository.updates.AppUpdateRepository
 import dev.twotechy.inknest.model.AppPreferences
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map

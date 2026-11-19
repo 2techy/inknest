@@ -3,16 +3,16 @@ package dev.twotechy.inknest.data.source.koreader.impl
 import dev.twotechy.inknest.data.source.books.BookMetadata
 import dev.twotechy.inknest.data.source.books.BookMetadataReader
 import dev.twotechy.inknest.data.source.books.ResolvedBook
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
-import dev.twotechy.inknest.data.source.capability.ProbeIssue
-import dev.twotechy.inknest.data.source.capability.ProbeRead
-import dev.twotechy.inknest.data.source.capability.readCapability
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.data.source.koreader.lua.HistoryEntryDto
-import dev.twotechy.inknest.data.source.koreader.lua.ReaderLuaDataSource
+import dev.twotechy.inknest.data.source.koreader.lua.KoreaderLuaParser
 import dev.twotechy.inknest.data.source.koreader.lua.TrackedHistoryDto
+import dev.twotechy.inknest.data.source.probe.ProbeIssue
+import dev.twotechy.inknest.data.source.probe.ProbeRead
+import dev.twotechy.inknest.data.source.probe.readCapability
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.data.source.saf.SourceFileReader
@@ -30,8 +30,8 @@ import kotlinx.coroutines.withContext
 
 internal class KoreaderCurrentReadingDataSource(
     private val files: SourceFileReader,
-    private val books: BookProbeDataSource,
-    private val lua: ReaderLuaDataSource = ReaderLuaDataSource(),
+    private val books: SafBookDataSource,
+    private val lua: KoreaderLuaParser = KoreaderLuaParser(),
     private val access: SafSourceAccess? = null,
     private val metadataReader: BookMetadataReader? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,

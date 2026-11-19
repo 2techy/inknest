@@ -18,8 +18,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import dev.twotechy.inknest.model.DisplayMode
-import dev.twotechy.inknest.platform.BookCoverRequest
-import dev.twotechy.inknest.platform.BookCoverSize
+import dev.twotechy.inknest.platform.covers.BookCoverRequest
+import dev.twotechy.inknest.platform.covers.BookCoverSize
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkRadius
 import dev.twotechy.inknest.ui.theme.LocalDisplayMode

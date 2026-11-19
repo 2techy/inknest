@@ -16,12 +16,13 @@ Package paths below are relative to `app/src/main/java/dev/twotechy/inknest/`:
 | `InkNestApplication.kt`, `MainActivity.kt` | Container initialization, Compose entry, HOME intents |
 | `di/` | Shared graph, resources and ViewModel factories |
 | `model/` | Application models and UI-independent request/result types |
-| `data/repository/` | Contracts, observable data, refresh/import and source configuration |
+| `data/repository/<feature>/`, `impl/` | Feature contracts, observable data, refresh/import and source configuration |
 | `data/source/` | SAF, bounded parsers and source capability/error types |
-| `data/local/` | Preferences DataStore and Room reading/library/statistics cache |
-| `platform/` | Android intents, image loaders, package integration and clocks |
+| `data/local/database/`, `data/local/preferences/` | Room reading/library/statistics cache and preferences DataStore |
+| `platform/<service>/` | Android intents, image loaders, package integration, clocks and tracing |
 | `ui/<feature>/` | ViewModel, UI state, Route and Screen |
 | `ui/components/`, `ui/theme/` | Shared controls, gestures and design tokens |
+| `ui/shared/`, `ui/navigation/`, `ui/library/details/` | Shared state holders, navigation and book details |
 
 Other important paths:
 
@@ -102,7 +103,7 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
   `DataStoreUserPreferencesRepository`. Keep feature helpers beside their feature;
   put genuinely shared behavior in `ui/components`.
 - When changing a component, use role suffixes: `Repository`, `DataSource`, `Parser`
-  for format parsing, `Reader` for SAF I/O, `Store` for local persistence and `Decoder`
+  for format parsing, `Reader` for source I/O and book metadata reads, `Store` for local persistence and `Decoder`
   for images. Prefix implementations with their backing technology, such as `Saf`,
   `Room`, `DataStore`, `Android` or `Koreader`. Apply renames within the current task.
 - Keep interfaces and implementations in separate files, with one primary type per

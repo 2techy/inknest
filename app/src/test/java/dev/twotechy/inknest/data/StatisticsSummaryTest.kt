@@ -1,9 +1,9 @@
 package dev.twotechy.inknest.data
 
-import dev.twotechy.inknest.data.repository.StatisticsDashboard
-import dev.twotechy.inknest.data.repository.StatisticsPeriod
-import dev.twotechy.inknest.data.repository.buildStatisticsDashboard
-import dev.twotechy.inknest.data.repository.miniStatistics
+import dev.twotechy.inknest.data.repository.statistics.StatisticsDashboard
+import dev.twotechy.inknest.data.repository.statistics.StatisticsPeriod
+import dev.twotechy.inknest.data.repository.statistics.buildStatisticsDashboard
+import dev.twotechy.inknest.data.repository.statistics.miniStatistics
 import dev.twotechy.inknest.model.ReadingEvent
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit

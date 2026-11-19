@@ -4,12 +4,12 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.local.reading.ReadingDatabase
-import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
-import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
-import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
+import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.statistics.impl.KoreaderStatisticsRepository
+import dev.twotechy.inknest.data.source.statistics.StatisticsEventDataSource
+import dev.twotechy.inknest.data.source.statistics.StatisticsEventReader
 import dev.twotechy.inknest.model.ReadingEvent
 import java.io.File
 import java.io.IOException
@@ -72,7 +72,7 @@ private class StatisticsFixture {
     private val calls = AtomicInteger()
     private var gate = CompletableDeferred<Unit>().apply { complete(Unit) }
     private val transition = Mutex()
-    private val source = object : StatisticsEventSource {
+    private val source = object : StatisticsEventDataSource {
         override suspend fun <T> withEvents(
             tree: String,
             consume: suspend (StatisticsEventReader) -> T,

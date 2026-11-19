@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.ui
 
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.acknowledgements.impl.AssetAcknowledgementsRepository
 import dev.twotechy.inknest.model.ThirdPartyLicense
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

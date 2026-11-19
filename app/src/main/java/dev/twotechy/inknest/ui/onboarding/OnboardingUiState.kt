@@ -1,11 +1,10 @@
 package dev.twotechy.inknest.ui.onboarding
 
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.SourceSettingsState
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.sources.SourceSettingsState
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
-import dev.twotechy.inknest.ui.settings.SourceConnectionActions
 import dev.twotechy.inknest.ui.settings.SourceConnectionUiState
 
 internal data class OnboardingUiState(
@@ -32,12 +31,3 @@ internal data class OnboardingUiState(
             else -> null
         }
 }
-
-internal data class OnboardingActions(
-    val mode: (DisplayMode) -> Unit,
-    val next: () -> Unit,
-    val back: () -> Unit,
-    val finish: () -> Unit,
-    val requestLauncher: () -> Unit,
-    val connection: SourceConnectionActions,
-)

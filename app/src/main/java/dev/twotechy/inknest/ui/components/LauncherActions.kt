@@ -8,7 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.LauncherModeController
+import dev.twotechy.inknest.platform.apps.LauncherModeController
 
 internal data class LauncherActions(val request: () -> Unit, val openSettings: () -> Unit)
 

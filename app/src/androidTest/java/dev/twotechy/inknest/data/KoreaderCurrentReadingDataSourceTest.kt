@@ -1,10 +1,10 @@
 package dev.twotechy.inknest.data
 
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.model.BookAvailability
@@ -45,7 +45,7 @@ class KoreaderCurrentReadingDataSourceTest {
                     val context = InstrumentationRegistry.getInstrumentation().targetContext
                     val source = KoreaderCurrentReadingDataSource(
                         files,
-                        BookProbeDataSource(files, context.cacheDir, dispatcher),
+                        SafBookDataSource(files, context.cacheDir, dispatcher),
                         ioDispatcher = dispatcher,
                     )
                     val reading = async { source.read(config) }
@@ -104,7 +104,7 @@ class KoreaderCurrentReadingDataSourceTest {
 
     private fun source(files: Files): KoreaderCurrentReadingDataSource {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        return KoreaderCurrentReadingDataSource(files, BookProbeDataSource(files, context.cacheDir))
+        return KoreaderCurrentReadingDataSource(files, SafBookDataSource(files, context.cacheDir))
     }
 
     private class Files : SourceDocumentReader {
@@ -113,7 +113,7 @@ class KoreaderCurrentReadingDataSourceTest {
         var history = "return {}"
         var bookMissing = false
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
-            if (bookMissing) throw MissingSourceFile()
+            if (bookMissing) throw MissingSourceFileException()
             return SourceDocument("content://test/book", "application/epub+zip", 1L, 1L)
         }
         override suspend fun <T> read(
@@ -125,7 +125,7 @@ class KoreaderCurrentReadingDataSourceTest {
             val text = if (path.single() ==
                 "settings.reader.lua"
             ) {
-                settings ?: throw MissingSourceFile()
+                settings ?: throw MissingSourceFileException()
             } else {
                 history
             }

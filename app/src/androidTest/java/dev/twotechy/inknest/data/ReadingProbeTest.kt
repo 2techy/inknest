@@ -4,15 +4,15 @@ import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.source.formats.epub.EpubReader
+import dev.twotechy.inknest.data.source.formats.epub.EpubParser
 import dev.twotechy.inknest.data.source.io.cancellableQuery
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
-import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
-import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
-import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
+import dev.twotechy.inknest.data.source.statistics.InvalidStatisticsSnapshotException
+import dev.twotechy.inknest.data.source.statistics.UnsupportedStatisticsSchemaException
+import dev.twotechy.inknest.data.source.statistics.impl.KoreaderStatisticsDataSource
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -67,14 +67,14 @@ class ReadingProbeTest {
         try {
             val file = File(dir, "book.epub")
             archive(file)
-            val result = EpubReader().read(file)
+            val result = EpubParser().read(file)
             assertEquals("Tiếng Việt", result.title)
             assertEquals("Author", result.author)
             assertTrue(result.cover)
             for ((cover, dtd) in listOf("../../outside.jpg" to false, "cover.jpg" to true)) {
                 archive(file, cover, dtd)
                 try {
-                    EpubReader().read(file)
+                    EpubParser().read(file)
                     fail("Unsafe archive should fail")
                 } catch (
                     _: Exception,
@@ -92,7 +92,7 @@ class ReadingProbeTest {
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
             val file = File(root, path.last())
             checkWalMetadata(path)
-            if (!file.exists()) throw MissingSourceFile()
+            if (!file.exists()) throw MissingSourceFileException()
             val modified = if (path.last() == "statistics.sqlite3") {
                 dbMetadataReads++
                 file.lastModified() + if (changeOnce && dbMetadataReads == 2) 1 else 0
@@ -119,7 +119,7 @@ class ReadingProbeTest {
             parse: suspend (InputStream) -> T,
         ): T {
             val file = File(root, path.last())
-            if (!file.exists()) throw MissingSourceFile()
+            if (!file.exists()) throw MissingSourceFileException()
             return file.inputStream().use { parse(it) }
         }
     }
@@ -131,7 +131,7 @@ class ReadingProbeTest {
         val db = statisticsDatabase(source)
         try {
             val documents = Documents(source).apply { changeOnce = true }
-            val result = StatisticsSnapshotProbe(documents, cache).read("tree")
+            val result = KoreaderStatisticsDataSource(documents, cache).read("tree")
             assertEquals(1L, result.books)
             assertEquals(1L, result.pageRows)
             assertTrue(result.walPresent)
@@ -145,7 +145,10 @@ class ReadingProbeTest {
             db.execSQL("INSERT INTO page_stat_data VALUES(1, 1e30, 60, 6)")
             db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, NULL)")
             db.execSQL("INSERT INTO page_stat_data VALUES(1, 1, 60, 'invalid')")
-            val events = StatisticsSnapshotProbe(documents, cache).withEvents("tree") { reader ->
+            val events = KoreaderStatisticsDataSource(
+                documents,
+                cache,
+            ).withEvents("tree") { reader ->
                 buildList { reader.forEachBatch { addAll(it) } }
             }
             assertEquals(4, events.size)
@@ -174,7 +177,7 @@ class ReadingProbeTest {
                 db.endTransaction()
             }
             val sizes = mutableListOf<Int>()
-            StatisticsSnapshotProbe(Documents(source), cache).withEvents("tree") { reader ->
+            KoreaderStatisticsDataSource(Documents(source), cache).withEvents("tree") { reader ->
                 reader.forEachBatch { sizes += it.size }
             }
             assertEquals(listOf(500, 500, 201), sizes)
@@ -204,7 +207,7 @@ class ReadingProbeTest {
         val db = statisticsDatabase(source)
         try {
             val documents = Documents(source).apply { providerFailures = 2 }
-            val result = StatisticsSnapshotProbe(documents, cache).read("tree")
+            val result = KoreaderStatisticsDataSource(documents, cache).read("tree")
             assertEquals(1L, result.books)
             assertEquals(1L, result.pageRows)
             assertTrue(result.walPresent)
@@ -226,15 +229,15 @@ class ReadingProbeTest {
                 val file = File(source, "statistics.sqlite3")
                 val expected = if (corrupt) {
                     file.writeText("not a database")
-                    InvalidStatisticsSnapshot::class.java
+                    InvalidStatisticsSnapshotException::class.java
                 } else {
                     SQLiteDatabase.openOrCreateDatabase(file, null).use {
                         it.execSQL("CREATE TABLE unrelated(id INTEGER)")
                     }
-                    UnsupportedStatisticsSchema::class.java
+                    UnsupportedStatisticsSchemaException::class.java
                 }
                 try {
-                    StatisticsSnapshotProbe(Documents(source), cache).read("tree")
+                    KoreaderStatisticsDataSource(Documents(source), cache).read("tree")
                     fail("Invalid snapshot accepted")
                 } catch (error: java.io.IOException) {
                     assertTrue(

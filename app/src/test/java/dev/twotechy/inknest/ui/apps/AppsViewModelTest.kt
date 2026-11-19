@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.ui.apps
 
 import androidx.lifecycle.SavedStateHandle
-import dev.twotechy.inknest.data.repository.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.apps.InstalledAppsRepository
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import java.io.IOException

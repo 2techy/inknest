@@ -9,10 +9,3 @@ internal data class HomeActions(
     val settings: () -> Unit,
     val searchLibrary: () -> Unit = {},
 )
-
-internal data class HomeNavigation(
-    val apps: () -> Unit,
-    val stats: () -> Unit,
-    val settings: () -> Unit,
-    val searchLibrary: () -> Unit = {},
-)

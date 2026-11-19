@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppIconLoader
 import dev.twotechy.inknest.platform.clock.rememberMinuteClock
+import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.RefreshAction
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
@@ -57,7 +57,7 @@ internal fun HomeScreen(
                 item { HomeReadingSection(loaded.reading, actions) }
                 if (preferences.showHomeHeatmap) {
                     loaded.activity?.let { activity ->
-                        item { HomeActivitySection(activity, actions.openStats) }
+                        item { HomeReadingActivitySection(activity, actions.openStats) }
                     }
                 }
                 if (preferences.showHomePinnedApps) {

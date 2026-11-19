@@ -74,19 +74,11 @@ internal fun ContextMenu(
     }
 }
 
-internal data class ContextMenuEntry(
-    val label: String,
-    val enabled: Boolean = true,
-    val leadingIcon: Int? = null,
-    val trailingIcon: Int? = null,
-    val selected: Boolean? = null,
-)
-
 @Composable
 internal fun ContextMenuItem(
     label: String,
-    enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) = ContextMenuEntryRow(ContextMenuEntry(label, enabled), modifier, onClick)
 

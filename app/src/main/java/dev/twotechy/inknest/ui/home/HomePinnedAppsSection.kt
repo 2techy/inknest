@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.SectionAction
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens

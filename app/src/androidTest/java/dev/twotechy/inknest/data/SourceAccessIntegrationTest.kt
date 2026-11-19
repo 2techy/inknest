@@ -5,8 +5,8 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.InkNestApplication
-import dev.twotechy.inknest.data.repository.ReadingState
-import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.repository.reading.ReadingState
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.SourceAccessState
@@ -66,7 +66,7 @@ class SourceAccessIntegrationTest {
         val prefs = container.userPreferencesRepository.appPreferences.first()
         try {
             container.sourceSettingsRepository.connectTree(
-                dev.twotechy.inknest.data.repository.SourceTreeSelection(
+                dev.twotechy.inknest.data.repository.sources.SourceTreeSelection(
                     SourceFolder.KOReader,
                     checkNotNull(before.booksTreeUris.firstOrNull()),
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or

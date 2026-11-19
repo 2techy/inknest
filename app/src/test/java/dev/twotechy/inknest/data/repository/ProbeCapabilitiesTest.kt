@@ -1,18 +1,18 @@
 package dev.twotechy.inknest.data.repository
 
-import dev.twotechy.inknest.data.source.books.UnresolvedBookPath
-import dev.twotechy.inknest.data.source.capability.ProbeIssue
-import dev.twotechy.inknest.data.source.capability.ProbeRead
-import dev.twotechy.inknest.data.source.capability.readCapability
-import dev.twotechy.inknest.data.source.formats.InvalidBookMetadata
-import dev.twotechy.inknest.data.source.formats.UnsupportedBookFormat
-import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.books.UnresolvedBookPathException
+import dev.twotechy.inknest.data.source.formats.InvalidBookMetadataException
+import dev.twotechy.inknest.data.source.formats.UnsupportedBookFormatException
+import dev.twotechy.inknest.data.source.io.SourceLimitExceededException
 import dev.twotechy.inknest.data.source.koreader.lua.LuaFailure
 import dev.twotechy.inknest.data.source.koreader.lua.LuaSourceException
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
-import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
-import dev.twotechy.inknest.data.source.stats.UnstableStatisticsSnapshot
-import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
+import dev.twotechy.inknest.data.source.probe.ProbeIssue
+import dev.twotechy.inknest.data.source.probe.ProbeRead
+import dev.twotechy.inknest.data.source.probe.readCapability
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
+import dev.twotechy.inknest.data.source.statistics.InvalidStatisticsSnapshotException
+import dev.twotechy.inknest.data.source.statistics.UnstableStatisticsSnapshotException
+import dev.twotechy.inknest.data.source.statistics.UnsupportedStatisticsSchemaException
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -25,15 +25,16 @@ import org.junit.Test
 class ProbeCapabilitiesTest {
     @Test fun `expected source failures retain their capability classification`() = runTest {
         val cases = listOf(
-            MissingSourceFile() to ProbeRead.Unavailable(ProbeIssue.MissingFile),
-            UnresolvedBookPath() to ProbeRead.Unavailable(ProbeIssue.UnresolvedPath),
-            UnsupportedBookFormat() to ProbeRead.Unavailable(ProbeIssue.Unsupported),
-            UnsupportedStatisticsSchema() to ProbeRead.Unavailable(ProbeIssue.UnsupportedSchema),
+            MissingSourceFileException() to ProbeRead.Unavailable(ProbeIssue.MissingFile),
+            UnresolvedBookPathException() to ProbeRead.Unavailable(ProbeIssue.UnresolvedPath),
+            UnsupportedBookFormatException() to ProbeRead.Unavailable(ProbeIssue.Unsupported),
+            UnsupportedStatisticsSchemaException() to
+                ProbeRead.Unavailable(ProbeIssue.UnsupportedSchema),
             SecurityException() to ProbeRead.Failed(ProbeIssue.PermissionLost),
-            SourceLimitExceeded() to ProbeRead.Failed(ProbeIssue.TooLarge),
-            InvalidBookMetadata() to ProbeRead.Failed(ProbeIssue.InvalidMetadata),
-            InvalidStatisticsSnapshot() to ProbeRead.Failed(ProbeIssue.InvalidSnapshot),
-            UnstableStatisticsSnapshot() to ProbeRead.Failed(ProbeIssue.SourceChanged),
+            SourceLimitExceededException() to ProbeRead.Failed(ProbeIssue.TooLarge),
+            InvalidBookMetadataException() to ProbeRead.Failed(ProbeIssue.InvalidMetadata),
+            InvalidStatisticsSnapshotException() to ProbeRead.Failed(ProbeIssue.InvalidSnapshot),
+            UnstableStatisticsSnapshotException() to ProbeRead.Failed(ProbeIssue.SourceChanged),
             IOException() to ProbeRead.Failed(ProbeIssue.ProviderError),
             LuaSourceException(LuaFailure.TooLarge) to ProbeRead.Failed(ProbeIssue.TooLarge),
             LuaSourceException(LuaFailure.InstructionLimit) to

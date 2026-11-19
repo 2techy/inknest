@@ -3,7 +3,6 @@ package dev.twotechy.inknest.ui.settings
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,32 +16,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.platform.AppLanguageController
-import dev.twotechy.inknest.platform.AppUpdateInstaller
 import dev.twotechy.inknest.ui.components.ConfirmationDialog
-import dev.twotechy.inknest.ui.components.LauncherActions
 
 private enum class Confirmation { Disconnect, ClearCache }
-
-internal data class SettingsEnvironment(
-    val launcher: LauncherActions,
-    val language: AppLanguageController,
-    val isDefaultLauncher: Boolean,
-    val updateInstaller: AppUpdateInstaller? = null,
-)
-
-internal data class SettingsNavigation(
-    val page: SettingsPage,
-    val openPage: (SettingsPage) -> Unit,
-    val exit: () -> Unit,
-) {
-    fun back() {
-        if (page == SettingsPage.Overview) exit() else openPage(page.parent)
-    }
-}
 
 @Composable
 internal fun SettingsRoute(
@@ -148,7 +127,7 @@ private fun SettingsConfirmation(
 
 internal fun openWebsite(context: Context, url: String) {
     try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     } catch (_: ActivityNotFoundException) {
         Toast.makeText(context, R.string.website_unavailable, Toast.LENGTH_SHORT).show()
     } catch (_: SecurityException) {

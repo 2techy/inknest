@@ -1,13 +1,13 @@
 package dev.twotechy.inknest.ui.settings
 
 import androidx.lifecycle.SavedStateHandle
-import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.SourceSettingsRepository
-import dev.twotechy.inknest.data.repository.SourceTreeSelection
 import dev.twotechy.inknest.data.repository.TestUserPreferencesRepository
-import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
-import dev.twotechy.inknest.data.repository.UserPreferencesRepository
+import dev.twotechy.inknest.data.repository.acknowledgements.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.preferences.UserPreferencesRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.sources.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.sources.SourceTreeSelection
+import dev.twotechy.inknest.data.repository.sources.impl.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
 import java.io.IOException
@@ -44,6 +44,7 @@ class SettingsViewModelTest {
             prefs,
             UnconnectedSourceSettingsRepository(),
             AcknowledgementsRepository { "" },
+            SavedStateHandle(),
         )
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
         runCurrent()
@@ -66,7 +67,12 @@ class SettingsViewModelTest {
     ) {
         val prefs = TestUserPreferencesRepository()
         val sources = UnconnectedSourceSettingsRepository()
-        val vm = SettingsViewModel(prefs, sources, AcknowledgementsRepository { "notices" })
+        val vm = SettingsViewModel(
+            prefs,
+            sources,
+            AcknowledgementsRepository { "notices" },
+            SavedStateHandle(),
+        )
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
         runCurrent()
         prefs.failure = IOException("disk unavailable")
@@ -104,6 +110,7 @@ class SettingsViewModelTest {
                 AcknowledgementsRepository {
                     ""
                 },
+                SavedStateHandle(),
             )
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
         runCurrent()
@@ -156,7 +163,12 @@ class SettingsViewModelTest {
             override suspend fun connectTree(selection: SourceTreeSelection): Unit =
                 throw IOException("unavailable")
         }
-        val settings = SettingsViewModel(prefs, sources, AcknowledgementsRepository { "" })
+        val settings = SettingsViewModel(
+            prefs,
+            sources,
+            AcknowledgementsRepository { "" },
+            SavedStateHandle(),
+        )
         val onboarding = dev.twotechy.inknest.ui.onboarding.OnboardingViewModel(
             prefs,
             SavedStateHandle(),

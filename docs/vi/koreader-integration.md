@@ -33,6 +33,6 @@ SAF không sao chép nguyên tử khi KOReader ghi. Size/mtime có thể thiếu
 
 ## Lỗi và trách nhiệm
 
-Kết quả capability và phân loại lỗi dự kiến nằm trong `data/source`, không import repository. `ProbeCapabilities` phân loại lỗi/timestamp; truyền tiếp hủy và lỗi lập trình ngoài dự kiến. Phân giải/parsing ở tầng nguồn. Copy SQLite, kiểm tra integrity, schema và truy vấn tách riêng trong cùng mutex/retry/cleanup. Mỗi `BoundedXmlReader` giữ parser/stack/budget riêng cho từng mục XML.
+Kết quả capability và phân loại lỗi dự kiến nằm trong `data/source`, không import repository. `ProbeCapabilities` phân loại lỗi/timestamp; truyền tiếp hủy và lỗi lập trình ngoài dự kiến. Phân giải/parsing ở tầng nguồn. Copy SQLite, kiểm tra integrity, schema và truy vấn tách riêng trong cùng mutex/retry/cleanup. Mỗi `BoundedXmlParser` giữ parser/stack/budget riêng cho từng mục XML.
 
-Query/open provider chuyển `IllegalArgumentException` OEM thành `IOException`, giữ cause. `FileNotFoundException` trực tiếp thành `MissingSourceFile`; xác thực URI, lỗi parser, hủy và quyền giữ cách xử lý riêng. Tệp biến mất không làm sập Trang chủ hoặc xóa cache thành công. Xem [kiểm tra phục hồi](reliability.md).
+Query/open provider chuyển `IllegalArgumentException` OEM thành `IOException`, giữ cause. `FileNotFoundException` trực tiếp thành `MissingSourceFileException`; xác thực URI, lỗi parser, hủy và quyền giữ cách xử lý riêng. Tệp biến mất không làm sập Trang chủ hoặc xóa cache thành công. Xem [kiểm tra phục hồi](reliability.md).

@@ -1,7 +1,5 @@
 package dev.twotechy.inknest.model
 
-enum class DisplayMode { EInk, Standard }
-
 data class AppPreferences(
     val displayMode: DisplayMode = DisplayMode.EInk,
     val showHomeStats: Boolean = true,

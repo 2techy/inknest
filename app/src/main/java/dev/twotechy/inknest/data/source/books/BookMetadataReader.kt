@@ -1,10 +1,10 @@
 package dev.twotechy.inknest.data.source.books
 
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
-import dev.twotechy.inknest.data.source.capability.ProbeIssue
-import dev.twotechy.inknest.data.source.capability.ProbeRead
-import dev.twotechy.inknest.data.source.capability.readCapability
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
 import dev.twotechy.inknest.data.source.formats.BookMetadataProbeResult
+import dev.twotechy.inknest.data.source.probe.ProbeIssue
+import dev.twotechy.inknest.data.source.probe.ProbeRead
+import dev.twotechy.inknest.data.source.probe.readCapability
 import dev.twotechy.inknest.data.source.saf.fingerprint
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -13,7 +13,7 @@ import java.util.UUID
 import kotlin.math.roundToInt
 
 internal class BookMetadataReader(
-    private val books: BookProbeDataSource,
+    private val books: SafBookDataSource,
     private val covers: FileBookCoverStore,
     private val previous: suspend (ReadingSourceConfig, String) -> BookMetadata?,
 ) {

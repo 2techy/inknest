@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
-import dev.twotechy.inknest.data.local.reading.readingCacheKey
+import dev.twotechy.inknest.data.local.database.reading.readingCacheKey
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import java.io.File
 import java.io.IOException

@@ -2,25 +2,25 @@ package dev.twotechy.inknest.di
 
 import android.content.Context
 import dev.twotechy.inknest.BuildConfig
-import dev.twotechy.inknest.data.local.DataStoreAppUpdateStore
-import dev.twotechy.inknest.data.local.userPreferencesDataStore
-import dev.twotechy.inknest.data.repository.AppUpdateRepository
-import dev.twotechy.inknest.data.repository.AssetAcknowledgementsRepository
-import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
-import dev.twotechy.inknest.data.repository.DeviceInstalledAppsRepository
-import dev.twotechy.inknest.data.repository.ForegroundRefreshCoordinator
+import dev.twotechy.inknest.data.local.preferences.DataStoreAppUpdateStore
+import dev.twotechy.inknest.data.local.preferences.userPreferencesDataStore
+import dev.twotechy.inknest.data.repository.acknowledgements.impl.AssetAcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.apps.impl.AndroidInstalledAppsRepository
+import dev.twotechy.inknest.data.repository.preferences.impl.DataStoreUserPreferencesRepository
+import dev.twotechy.inknest.data.repository.reading.ForegroundRefreshCoordinator
+import dev.twotechy.inknest.data.repository.updates.AppUpdateRepository
 import dev.twotechy.inknest.data.source.apps.impl.AndroidInstalledAppsDataSource
-import dev.twotechy.inknest.data.source.updates.impl.GitHubReleaseSource
+import dev.twotechy.inknest.data.source.updates.impl.GitHubReleaseDataSource
 import dev.twotechy.inknest.data.source.updates.impl.HttpsUpdateTransport
-import dev.twotechy.inknest.platform.AndroidAppIconSource
-import dev.twotechy.inknest.platform.AndroidUpdateApkVerifier
-import dev.twotechy.inknest.platform.AppIconLoader
-import dev.twotechy.inknest.platform.AppLauncher
-import dev.twotechy.inknest.platform.AppOperationTrace
-import dev.twotechy.inknest.platform.AppUpdateInstaller
-import dev.twotechy.inknest.platform.LauncherModeController
-import dev.twotechy.inknest.platform.PackageChangeReceiver
-import dev.twotechy.inknest.platform.PrivateAppUpdateFiles
+import dev.twotechy.inknest.platform.apps.AppLauncher
+import dev.twotechy.inknest.platform.apps.LauncherModeController
+import dev.twotechy.inknest.platform.apps.PackageChangeReceiver
+import dev.twotechy.inknest.platform.icons.AndroidAppIconDecoder
+import dev.twotechy.inknest.platform.icons.AppIconLoader
+import dev.twotechy.inknest.platform.tracing.AppOperationTrace
+import dev.twotechy.inknest.platform.updates.AndroidUpdateApkVerifier
+import dev.twotechy.inknest.platform.updates.AppUpdateInstaller
+import dev.twotechy.inknest.platform.updates.PrivateAppUpdateFiles
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,13 +33,13 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val preferences = DataStoreUserPreferencesRepository(appContext.userPreferencesDataStore)
     val apps =
-        DeviceInstalledAppsRepository(
+        AndroidInstalledAppsRepository(
             AndroidInstalledAppsDataSource(appContext),
             preferences,
             scope,
         )
     val readerData = ReadingDataContainer(appContext, scope)
-    val releases = GitHubReleaseSource(HttpsUpdateTransport())
+    val releases = GitHubReleaseDataSource(HttpsUpdateTransport())
     val updates = AppUpdateRepository(
         releases,
         DataStoreAppUpdateStore(appContext.userPreferencesDataStore),
@@ -52,7 +52,7 @@ internal fun createRuntimeContainer(context: Context): AppContainer {
         BuildConfig.VERSION_NAME,
         automaticAllowed = BuildConfig.BUILD_TYPE == "release",
     )
-    val icons = AppIconLoader(AndroidAppIconSource(appContext))
+    val icons = AppIconLoader(AndroidAppIconDecoder(appContext))
     PackageChangeReceiver(apps, scope, icons::clear).register(appContext)
     return AppContainer(
         appUpdateRepository = updates,

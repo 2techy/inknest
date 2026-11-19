@@ -1,0 +1,89 @@
+package dev.twotechy.inknest.ui.library.details
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.twotechy.inknest.data.repository.books.BookDetailsRepository
+import dev.twotechy.inknest.model.BookDetails
+import dev.twotechy.inknest.model.BookStatisticsStatus
+import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.platform.clock.StatisticsClock
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.stateIn
+
+@OptIn(ExperimentalCoroutinesApi::class)
+internal class BookDetailsViewModel(
+    private val repository: BookDetailsRepository,
+    private val savedState: SavedStateHandle,
+    clock: StatisticsClock,
+) : ViewModel() {
+    private val identity = savedState.getStateFlow<ArrayList<String>?>("detailsIdentity", null)
+    init {
+        savedState.remove<Int>("detailsHistoryLimit")
+    }
+    private val page = savedState.getStateFlow("detailsHistoryPage", 0)
+    private val data = combine(identity, page) { parts, count -> parts to count }
+        .flatMapLatest { (parts, count) ->
+            val id = parts?.takeIf { it.size == 2 }?.let { ReadingItemId(it[0], it[1]) }
+            if (id == null) flowOf(BookDetails()) else repository.observe(id, count)
+        }.runningFold(BookDetails()) { previous, current ->
+            if (current.book != null && current.book.id == previous.book?.id &&
+                current.statistics.status == BookStatisticsStatus.Loading &&
+                previous.statistics.status == BookStatisticsStatus.Ready
+            ) {
+                current.copy(
+                    statistics = previous.statistics.copy(
+                        historyLoading = current.statistics.error == null,
+                        error = current.statistics.error,
+                    ),
+                )
+            } else {
+                current
+            }
+        }.onEach { details ->
+            val stats = details.statistics
+            if (stats.canChangeHistoryPage) {
+                savedState["detailsHistoryPage"] = stats.historyPage
+            }
+        }
+    val uiState = combine(
+        combine(data, clock.moments) { data, moment -> data to moment.zone },
+        savedState.getStateFlow("detailsDescription", false),
+        savedState.getStateFlow("detailsHistory", false),
+        savedState.getStateFlow("detailsFile", false),
+    ) { details, description, history, file ->
+        BookDetailsUiState(details.first, details.second, description, history, file)
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BookDetailsUiState())
+
+    fun select(id: ReadingItemId?) {
+        val value = id?.let { arrayListOf(it.sourceId, it.path) }
+        if (savedState.get<ArrayList<String>>("detailsIdentity") == value) return
+        savedState["detailsIdentity"] = value
+        savedState["detailsHistoryPage"] = 0
+        listOf("detailsDescription", "detailsHistory", "detailsFile").forEach {
+            savedState[it] =
+                false
+        }
+    }
+    fun toggleDescription() = toggle("detailsDescription")
+    fun toggleHistory() = toggle("detailsHistory")
+    fun toggleFile() = toggle("detailsFile")
+    private fun toggle(key: String) {
+        savedState[key] = savedState.get<Boolean>(key) != true
+    }
+    fun historyPage(value: Int) {
+        val stats = uiState.value.details.statistics
+        if (!stats.canChangeHistoryPage) {
+            return
+        }
+        savedState["detailsHistoryPage"] = value.coerceIn(0, stats.historyPageCount - 1)
+    }
+    fun retry() = repository.retry()
+}

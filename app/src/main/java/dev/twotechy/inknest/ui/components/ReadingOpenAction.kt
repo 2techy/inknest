@@ -14,10 +14,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.OpenResult
 import dev.twotechy.inknest.model.ReadingOpenState
-import dev.twotechy.inknest.platform.ReadingItemDispatcher
-import dev.twotechy.inknest.ui.reading.ReadingOpenActions
-
-internal data class ReadingOpenErrorActions(val settings: () -> Unit, val refresh: () -> Unit)
+import dev.twotechy.inknest.platform.reading.ReadingItemDispatcher
+import dev.twotechy.inknest.ui.shared.ReadingOpenActions
 
 @Composable
 internal fun ReadingOpenEffect(

@@ -23,7 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.AppIcon
 import dev.twotechy.inknest.ui.components.quietClick
 import dev.twotechy.inknest.ui.theme.InkAppGridTokens

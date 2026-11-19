@@ -4,8 +4,8 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -22,7 +22,7 @@ class BookIdentityProbeTest {
     private class Files : SourceDocumentReader {
         var missing = false
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
-            if (missing) throw MissingSourceFile()
+            if (missing) throw MissingSourceFileException()
             return SourceDocument(
                 "content://test/" + path.joinToString("/"),
                 "application/epub+zip",
@@ -45,7 +45,7 @@ class BookIdentityProbeTest {
     @Test fun sameBasenamesKeepDistinctIdentityAndSidecars() = runBlocking {
         val files = Files()
         val cache = InstrumentationRegistry.getInstrumentation().targetContext.cacheDir
-        val probe = BookProbeDataSource(files, cache)
+        val probe = SafBookDataSource(files, cache)
         val tree = DocumentsContract.buildTreeDocumentUri(
             "com.android.externalstorage.documents",
             "primary:Books",
@@ -68,11 +68,11 @@ class BookIdentityProbeTest {
         ).toString()
         val root = Environment.getExternalStorageDirectory().canonicalPath
         try {
-            BookProbeDataSource(
+            SafBookDataSource(
                 files,
                 cache,
             ).resolve(ReadingSourceConfig(booksTreeUris = setOf(tree)), "$root/Books/A/Title.epub")
             fail("Missing file must not resolve")
-        } catch (_: MissingSourceFile) { }
+        } catch (_: MissingSourceFileException) { }
     }
 }

@@ -32,12 +32,12 @@ import dev.twotechy.inknest.model.BookStatisticsStatus
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingStatus
-import dev.twotechy.inknest.ui.library.BookDetailsActions
-import dev.twotechy.inknest.ui.library.BookDetailsHero
-import dev.twotechy.inknest.ui.library.BookDetailsScreen
-import dev.twotechy.inknest.ui.library.BookDetailsUiState
 import dev.twotechy.inknest.ui.library.LibraryGridBook
 import dev.twotechy.inknest.ui.library.LibraryListBook
+import dev.twotechy.inknest.ui.library.details.BookDetailsActions
+import dev.twotechy.inknest.ui.library.details.BookDetailsHero
+import dev.twotechy.inknest.ui.library.details.BookDetailsScreen
+import dev.twotechy.inknest.ui.library.details.BookDetailsUiState
 import dev.twotechy.inknest.ui.theme.InkNestTheme
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import java.io.File

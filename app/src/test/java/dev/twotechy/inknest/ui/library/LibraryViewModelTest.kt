@@ -2,10 +2,8 @@ package dev.twotechy.inknest.ui.library
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import dev.twotechy.inknest.data.repository.LibraryFolder
-import dev.twotechy.inknest.data.repository.ReadingRepository
-import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.TestReadingOpenRepository
+import dev.twotechy.inknest.data.repository.library.LibraryFolder
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
@@ -147,9 +145,9 @@ class LibraryViewModelTest {
         }
     }
 
-    private class CachedBooks : dev.twotechy.inknest.data.repository.LibraryRepository {
+    private class CachedBooks : dev.twotechy.inknest.data.repository.library.LibraryRepository {
         override val catalog = MutableStateFlow(
-            dev.twotechy.inknest.data.repository.LibraryCatalog(
+            dev.twotechy.inknest.data.repository.library.LibraryCatalog(
                 books = listOf("A", "B").map { path ->
                     ReadingItem(
                         ReadingItemId("source", path),

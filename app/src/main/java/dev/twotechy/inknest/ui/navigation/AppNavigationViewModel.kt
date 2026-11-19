@@ -8,8 +8,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-internal enum class SetupEntry { FirstRun, Review }
-
 internal class AppNavigationViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     val selected = savedState.getStateFlow("selectedDestination", TopLevelDestination.Home.name)
     val settingsPage = savedState.getStateFlow("settingsPage", "Overview")

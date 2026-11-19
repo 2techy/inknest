@@ -4,18 +4,18 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
-import dev.twotechy.inknest.data.local.reading.ReadingDatabase
-import dev.twotechy.inknest.data.local.reading.StatisticsBookEntity
-import dev.twotechy.inknest.data.local.reading.StatisticsEventEntity
-import dev.twotechy.inknest.data.repository.CachedBookDetailsRepository
-import dev.twotechy.inknest.data.repository.LibraryCatalog
-import dev.twotechy.inknest.data.repository.LibraryRepository
-import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.StatisticsRepository
+import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.local.database.library.LibraryBookEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsEventEntity
+import dev.twotechy.inknest.data.repository.books.impl.RoomBookDetailsRepository
+import dev.twotechy.inknest.data.repository.library.LibraryCatalog
+import dev.twotechy.inknest.data.repository.library.LibraryRepository
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.statistics.StatisticsRepository
 import dev.twotechy.inknest.data.source.books.BookChecksum
-import dev.twotechy.inknest.data.source.books.BookChecksumSource
+import dev.twotechy.inknest.data.source.books.BookChecksumDataSource
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.BookStatisticsStatus
 import dev.twotechy.inknest.model.ReadingItem
@@ -82,7 +82,7 @@ class BookDetailsRepositoryTest {
                 seed(database, id)
                 val source = TestBookChecksumSource()
                 val repository =
-                    CachedBookDetailsRepository(
+                    RoomBookDetailsRepository(
                         library,
                         config,
                         database.libraryDao(),
@@ -111,7 +111,7 @@ class BookDetailsRepositoryTest {
                 sourceTree = "reader",
             ),
         )
-        override val stats = flowOf<dev.twotechy.inknest.model.ReadingStats?>(null)
+        override val stats = flowOf<dev.twotechy.inknest.model.ReadingStatistics?>(null)
         override suspend fun refresh() {}
     }
 
@@ -131,7 +131,7 @@ class BookDetailsRepositoryTest {
     }
 
     private suspend fun verifyPages(
-        repository: CachedBookDetailsRepository,
+        repository: RoomBookDetailsRepository,
         id: ReadingItemId,
         database: ReadingDatabase,
     ) {
@@ -168,7 +168,7 @@ class BookDetailsRepositoryTest {
     }
 
     private suspend fun verifyBooks(
-        repository: CachedBookDetailsRepository,
+        repository: RoomBookDetailsRepository,
         id: ReadingItemId,
         config: ReadingSourceConfigRepository,
         source: TestBookChecksumSource,
@@ -206,7 +206,7 @@ class BookDetailsRepositoryTest {
     }
 }
 
-private class TestBookChecksumSource : BookChecksumSource {
+private class TestBookChecksumSource : BookChecksumDataSource {
     var denied = false
     var checksum = "matching"
     var cacheHit = false

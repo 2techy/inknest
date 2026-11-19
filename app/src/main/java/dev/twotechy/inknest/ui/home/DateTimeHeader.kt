@@ -94,12 +94,12 @@ internal fun DateTimeHeader(tick: Long, stats: HomeReadingStats?, showStats: Boo
                         thickness = InkBorder.thin,
                         color = MaterialTheme.colorScheme.outline,
                     )
-                    ReadingStats(today, minutes, streak, streakLabel)
+                    ReadingStatistics(today, minutes, streak, streakLabel)
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
                     ClockAndDate(time, date)
-                    if (showStats) ReadingStats(today, minutes, streak, streakLabel)
+                    if (showStats) ReadingStatistics(today, minutes, streak, streakLabel)
                 }
             }
         }
@@ -125,7 +125,7 @@ private fun DateLabel(date: String) {
 }
 
 @Composable
-private fun ReadingStats(today: String, minutes: String, streak: String, streakLabel: String) {
+private fun ReadingStatistics(today: String, minutes: String, streak: String, streakLabel: String) {
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
         Text(today, style = InkTextStyles.bodyMedium)
         StatLine(R.drawable.ic_nav_library_outline, minutes, InkTextStyles.cardTitle)

@@ -21,7 +21,7 @@ internal data class SourceMetadataFingerprint(val documents: Map<Document, Sourc
         for ((reference, expected) in documents) {
             val actual = try {
                 reader.describe(reference.tree, reference.path)
-            } catch (_: MissingSourceFile) {
+            } catch (_: MissingSourceFileException) {
                 null
             } catch (_: IOException) {
                 return false

@@ -2,9 +2,9 @@ package dev.twotechy.inknest.ui.stats
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import dev.twotechy.inknest.data.repository.StatisticsPeriod
-import dev.twotechy.inknest.data.repository.StatisticsRepository
-import dev.twotechy.inknest.model.ReadingStats
+import dev.twotechy.inknest.data.repository.statistics.StatisticsPeriod
+import dev.twotechy.inknest.data.repository.statistics.StatisticsRepository
+import dev.twotechy.inknest.model.ReadingStatistics
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
@@ -162,7 +162,7 @@ private class FakeStatisticsRepository(today: LocalDate) : StatisticsRepository 
             updatedAt = 1,
         ),
     )
-    override val stats = flowOf<ReadingStats?>(null)
+    override val stats = flowOf<ReadingStatistics?>(null)
     var refreshes = 0
     override suspend fun refresh() {
         refreshes++

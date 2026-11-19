@@ -10,9 +10,12 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.twotechy.inknest.model.ReadingItemId
-import dev.twotechy.inknest.platform.ReadingItemDispatcher
+import dev.twotechy.inknest.platform.reading.ReadingItemDispatcher
 import dev.twotechy.inknest.ui.components.ReadingOpenEffect
 import dev.twotechy.inknest.ui.components.ReadingOpenErrorActions
+import dev.twotechy.inknest.ui.library.details.BookDetailsActions
+import dev.twotechy.inknest.ui.library.details.BookDetailsScreen
+import dev.twotechy.inknest.ui.library.details.BookDetailsViewModel
 
 @Composable
 internal fun LibraryRoute(

@@ -1,32 +1,32 @@
 package dev.twotechy.inknest.di
 
 import android.content.Context
-import dev.twotechy.inknest.data.local.reading.ReadingCache
-import dev.twotechy.inknest.data.local.reading.ReadingDatabase
-import dev.twotechy.inknest.data.local.reading.RoomLibraryInventoryStore
-import dev.twotechy.inknest.data.local.userPreferencesDataStore
-import dev.twotechy.inknest.data.repository.CachedBookDetailsRepository
-import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
-import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
-import dev.twotechy.inknest.data.repository.RoomReadingRepository
-import dev.twotechy.inknest.data.repository.SafLibraryRepository
-import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
-import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
+import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.local.database.library.RoomLibraryInventoryStore
+import dev.twotechy.inknest.data.local.database.reading.ReadingCache
+import dev.twotechy.inknest.data.local.preferences.userPreferencesDataStore
+import dev.twotechy.inknest.data.repository.books.impl.RoomBookDetailsRepository
+import dev.twotechy.inknest.data.repository.library.impl.SafLibraryRepository
+import dev.twotechy.inknest.data.repository.reading.impl.RoomReadingRepository
+import dev.twotechy.inknest.data.repository.reading.impl.SafReadingOpenRepository
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.sources.impl.SafSourceSettingsRepository
+import dev.twotechy.inknest.data.repository.statistics.impl.KoreaderStatisticsRepository
 import dev.twotechy.inknest.data.source.books.BookMetadata
 import dev.twotechy.inknest.data.source.books.BookMetadataReader
 import dev.twotechy.inknest.data.source.books.FileBookCoverStore
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.books.impl.SafBookCatalogDataSource
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
 import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
-import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
+import dev.twotechy.inknest.data.source.statistics.impl.KoreaderStatisticsDataSource
 import dev.twotechy.inknest.model.ReadingSourceConfig
-import dev.twotechy.inknest.platform.AndroidBookCoverDecoder
-import dev.twotechy.inknest.platform.AppOperationTrace
-import dev.twotechy.inknest.platform.BookCoverLoader
-import dev.twotechy.inknest.platform.ReadingItemDispatcher
 import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
+import dev.twotechy.inknest.platform.covers.AndroidBookCoverDecoder
+import dev.twotechy.inknest.platform.covers.BookCoverLoader
+import dev.twotechy.inknest.platform.reading.ReadingItemDispatcher
+import dev.twotechy.inknest.platform.tracing.AppOperationTrace
 import java.io.File
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +47,7 @@ internal class ReadingDataContainer(
     val config = ReadingSourceConfigRepository(appContext.userPreferencesDataStore)
     val access = SafSourceAccess(appContext.contentResolver, ioDispatcher)
     private val files = SafTreeReader(appContext.contentResolver, ioDispatcher)
-    private val books = BookProbeDataSource(files, appContext.cacheDir, ioDispatcher)
+    private val books = SafBookDataSource(files, appContext.cacheDir, ioDispatcher)
     private val database = ReadingDatabase.create(appContext)
     private val cache = ReadingCache(database.readingDao(), defaultDispatcher)
     private val coverDirectory = File(appContext.filesDir, "reading-covers")
@@ -94,7 +94,7 @@ internal class ReadingDataContainer(
         readMetadata = libraryMetadata::readMetadata,
     )
     private val statisticsSnapshot =
-        StatisticsSnapshotProbe(
+        KoreaderStatisticsDataSource(
             files,
             appContext.cacheDir,
             ioDispatcher,
@@ -111,7 +111,7 @@ internal class ReadingDataContainer(
         permissionSnapshot = files::permissionSnapshot,
         tracer = AppOperationTrace.tracer,
     )
-    val bookDetails = CachedBookDetailsRepository(
+    val bookDetails = RoomBookDetailsRepository(
         library,
         config,
         libraryDao,

@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.AppIcon
 import dev.twotechy.inknest.ui.components.ContextMenu
 import dev.twotechy.inknest.ui.components.ContextMenuItem
@@ -95,23 +95,44 @@ internal fun AppItem(
             }
         }
         if (menuExpanded) {
-            ContextMenu(onDismiss = { menuExpanded = false }) {
-                ContextMenuItem(
-                    stringResource(if (app.isPinned) R.string.unpin_app else R.string.pin_app),
-                ) {
-                    menuExpanded = false
-                    onTogglePin()
-                }
-                if (app.isPinned) {
-                    ContextMenuItem(stringResource(R.string.move_earlier), app.canMoveEarlier) {
-                        menuExpanded = false
-                        onMovePin(-1)
-                    }
-                    ContextMenuItem(stringResource(R.string.move_later), app.canMoveLater) {
-                        menuExpanded = false
-                        onMovePin(1)
-                    }
-                }
+            AppItemMenu(
+                app = app,
+                onDismiss = { menuExpanded = false },
+                onTogglePin = onTogglePin,
+                onMovePin = onMovePin,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppItemMenu(
+    app: AppItemUiModel,
+    onDismiss: () -> Unit,
+    onTogglePin: () -> Unit,
+    onMovePin: (Int) -> Unit,
+) {
+    ContextMenu(onDismiss = onDismiss) {
+        ContextMenuItem(
+            stringResource(if (app.isPinned) R.string.unpin_app else R.string.pin_app),
+        ) {
+            onDismiss()
+            onTogglePin()
+        }
+        if (app.isPinned) {
+            ContextMenuItem(
+                stringResource(R.string.move_earlier),
+                enabled = app.canMoveEarlier,
+            ) {
+                onDismiss()
+                onMovePin(-1)
+            }
+            ContextMenuItem(
+                stringResource(R.string.move_later),
+                enabled = app.canMoveLater,
+            ) {
+                onDismiss()
+                onMovePin(1)
             }
         }
     }

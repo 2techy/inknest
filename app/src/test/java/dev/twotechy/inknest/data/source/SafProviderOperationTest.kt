@@ -1,9 +1,9 @@
 package dev.twotechy.inknest.data.source
 
-import dev.twotechy.inknest.data.source.capability.ProbeIssue
-import dev.twotechy.inknest.data.source.capability.ProbeRead
-import dev.twotechy.inknest.data.source.capability.readCapability
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.probe.ProbeIssue
+import dev.twotechy.inknest.data.source.probe.ProbeRead
+import dev.twotechy.inknest.data.source.probe.readCapability
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -32,7 +32,7 @@ class SafProviderOperationTest {
         try {
             safProviderOperation<Unit> { throw original }
             fail("Missing provider files must retain their domain meaning")
-        } catch (normalized: MissingSourceFile) {
+        } catch (normalized: MissingSourceFileException) {
             assertSame(original, normalized.cause)
         }
         val result = readCapability<Unit> { safProviderOperation { throw original } }

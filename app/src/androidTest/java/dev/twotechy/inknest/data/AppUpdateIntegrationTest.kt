@@ -3,21 +3,20 @@ package dev.twotechy.inknest.data
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.local.DataStoreAppUpdateStore
-import dev.twotechy.inknest.data.source.updates.AppReleaseJson
+import dev.twotechy.inknest.data.local.preferences.DataStoreAppUpdateStore
+import dev.twotechy.inknest.data.source.updates.AppReleaseJsonParser
 import dev.twotechy.inknest.data.source.updates.UpdateHttpTransport
-import dev.twotechy.inknest.data.source.updates.impl.GitHubReleaseSource
+import dev.twotechy.inknest.data.source.updates.impl.GitHubReleaseDataSource
 import dev.twotechy.inknest.model.AppRelease
 import dev.twotechy.inknest.model.UpdateSnapshot
-import dev.twotechy.inknest.platform.AndroidUpdateApkVerifier
-import dev.twotechy.inknest.platform.AndroidUpdateInstallPlatform
+import dev.twotechy.inknest.platform.updates.AndroidUpdateApkVerifier
+import dev.twotechy.inknest.platform.updates.AndroidUpdateInstallPlatform
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -37,28 +36,30 @@ class AppUpdateIntegrationTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test fun releaseMetadataRoundTripsAndRejectsUnsafeOrAmbiguousAssets() {
-        assertEquals(RELEASE, AppReleaseJson.decode(AppReleaseJson.encode(RELEASE)))
+        assertEquals(RELEASE, AppReleaseJsonParser.decode(AppReleaseJsonParser.encode(RELEASE)))
         val invalid = listOf(
-            JSONObject(AppReleaseJson.encode(RELEASE)).put("prerelease", true),
-            JSONObject(AppReleaseJson.encode(RELEASE)).put("draft", true),
-            JSONObject(AppReleaseJson.encode(RELEASE)).put("tag_name", "v2026.11.0-beta"),
-            JSONObject(AppReleaseJson.encode(RELEASE)).apply {
+            JSONObject(AppReleaseJsonParser.encode(RELEASE)).put("prerelease", true),
+            JSONObject(AppReleaseJsonParser.encode(RELEASE)).put("draft", true),
+            JSONObject(AppReleaseJsonParser.encode(RELEASE)).put("tag_name", "v2026.11.0-beta"),
+            JSONObject(AppReleaseJsonParser.encode(RELEASE)).apply {
                 getJSONArray("assets").getJSONObject(0)
                     .put("browser_download_url", "https://evil.example/update.apk")
             },
-            JSONObject(AppReleaseJson.encode(RELEASE)).apply {
+            JSONObject(AppReleaseJsonParser.encode(RELEASE)).apply {
                 getJSONArray("assets").put(getJSONArray("assets").getJSONObject(0))
             },
-            JSONObject(AppReleaseJson.encode(RELEASE)).apply {
+            JSONObject(AppReleaseJsonParser.encode(RELEASE)).apply {
                 getJSONArray("assets").getJSONObject(0).put("size", Long.MAX_VALUE)
             },
         )
-        invalid.forEach { metadata -> expectIo { AppReleaseJson.decode(metadata.toString()) } }
+        invalid.forEach { metadata ->
+            expectIo { AppReleaseJsonParser.decode(metadata.toString()) }
+        }
     }
 
     @Test fun checksumMustMatchExactAssetAndAppearOnlyOnce() = runBlocking {
         val transport = TextTransport()
-        val source = GitHubReleaseSource(transport)
+        val source = GitHubReleaseDataSource(transport)
         transport.body = "$HASH  ${RELEASE.apkName}\n${"b".repeat(64)}  other.apk\n"
         assertEquals(HASH, source.checksum(RELEASE))
         transport.body = "$HASH  wrong.apk\n"

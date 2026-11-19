@@ -1,9 +1,10 @@
 package dev.twotechy.inknest.ui.settings
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
 import dev.twotechy.inknest.data.repository.TestUserPreferencesRepository
-import dev.twotechy.inknest.data.repository.UnconnectedSourceSettingsRepository
+import dev.twotechy.inknest.data.repository.acknowledgements.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.sources.impl.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.model.ThirdPartyLicense
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
@@ -50,6 +51,7 @@ class LicenseSettingsTest {
                 }
                 license.name
             },
+            SavedStateHandle(),
         )
         store.put("settings", vm)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }

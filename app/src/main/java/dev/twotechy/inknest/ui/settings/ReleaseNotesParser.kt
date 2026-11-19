@@ -21,20 +21,6 @@ import org.commonmark.node.Paragraph
 import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
 
-internal enum class ReleaseNoteStyle { Body, Heading, Quote, Code, Rule }
-
-internal data class ReleaseNoteBlock(
-    val text: AnnotatedString,
-    val style: ReleaseNoteStyle = ReleaseNoteStyle.Body,
-    val depth: Int = 0,
-    val marker: String? = null,
-)
-
-internal data class ReleaseNotesDocument(
-    val source: String = "",
-    val blocks: List<ReleaseNoteBlock> = emptyList(),
-)
-
 internal class ReleaseNotesParser(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {

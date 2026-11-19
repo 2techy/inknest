@@ -4,10 +4,10 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
-import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.io.SourceLimitExceededException
 import dev.twotechy.inknest.data.source.io.cancellableQuery
 import dev.twotechy.inknest.data.source.saf.DirectSourceDocumentReader
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.data.source.saf.SafPermissionSnapshot
 import dev.twotechy.inknest.data.source.saf.SourceDocument
@@ -98,7 +98,7 @@ internal class SafTreeReader(
             val reference = SourceMetadataFingerprint.Document(tree, path.toList())
             try {
                 describeInTree(tree, path).also { capture.record(reference, it) }
-            } catch (missing: MissingSourceFile) {
+            } catch (missing: MissingSourceFileException) {
                 capture.record(reference, null)
                 throw missing
             } catch (error: Exception) {
@@ -130,7 +130,7 @@ internal class SafTreeReader(
     } catch (error: IOException) {
         // OEM enforceTree may reject a missing ID before queryDocument can return an empty row.
         // Exact child traversal distinguishes absence from a failure to read an existing file.
-        if (error is MissingSourceFile ||
+        if (error is MissingSourceFileException ||
             error.cause is IllegalArgumentException
         ) {
             null
@@ -189,7 +189,7 @@ internal class SafTreeReader(
             }
                 ?: return@cancellableQuery null
             cursor.use {
-                if (!it.moveToFirst()) throw MissingSourceFile()
+                if (!it.moveToFirst()) throw MissingSourceFileException()
                 val size = if (it.isNull(1)) null else it.getLong(1)
                 val modified = if (it.isNull(2)) null else it.getLong(2)
                 SourceDocument(document.toString(), it.getString(0), size, modified)
@@ -214,11 +214,11 @@ internal class SafTreeReader(
                 var count = 0
                 while (it.moveToNext()) {
                     context.ensureActive()
-                    if (++count > 100_000) throw SourceLimitExceeded()
+                    if (++count > 100_000) throw SourceLimitExceededException()
                     if (it.getString(1) == name) return@cancellableQuery it.getString(0)
                 }
             }
-            throw MissingSourceFile()
+            throw MissingSourceFileException()
         }
     }
 }

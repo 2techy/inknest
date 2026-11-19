@@ -9,14 +9,14 @@ import androidx.core.net.toUri
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.local.reading.ReadingCache
-import dev.twotechy.inknest.data.local.reading.ReadingDatabase
-import dev.twotechy.inknest.data.local.reading.readingCacheKey
+import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.local.database.reading.ReadingCache
+import dev.twotechy.inknest.data.local.database.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.books.BookMetadataReader
 import dev.twotechy.inknest.data.source.books.FileBookCoverStore
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
 import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.model.BookAvailability
@@ -24,9 +24,9 @@ import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingStatus
 import dev.twotechy.inknest.model.ReadingSyncIssue
-import dev.twotechy.inknest.platform.AndroidBookCoverDecoder
-import dev.twotechy.inknest.platform.BookCoverRequest
-import dev.twotechy.inknest.platform.BookCoverSize
+import dev.twotechy.inknest.platform.covers.AndroidBookCoverDecoder
+import dev.twotechy.inknest.platform.covers.BookCoverRequest
+import dev.twotechy.inknest.platform.covers.BookCoverSize
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -58,7 +58,7 @@ class ReadingMetadataIntegrationTest {
             val cache = ReadingCache(database.readingDao())
             val covers = FileBookCoverStore(File(directory, "covers"))
             val documents = Documents(epub())
-            val books = BookProbeDataSource(documents, directory)
+            val books = SafBookDataSource(documents, directory)
             val source = KoreaderCurrentReadingDataSource(
                 documents,
                 books,
@@ -157,7 +157,7 @@ class ReadingMetadataIntegrationTest {
             val coverDirectory = File(directory, "covers").apply { mkdirs() }
             val covers = FileBookCoverStore(coverDirectory)
             val documents = Documents(epub())
-            val books = BookProbeDataSource(documents, directory)
+            val books = SafBookDataSource(documents, directory)
             val source = KoreaderCurrentReadingDataSource(
                 documents,
                 books,
@@ -205,7 +205,7 @@ class ReadingMetadataIntegrationTest {
         var modified = 1L
         var missing = false
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
-            if (missing) throw MissingSourceFile()
+            if (missing) throw MissingSourceFileException()
             return SourceDocument(
                 "content://test/" + path.joinToString("/"),
                 "application/epub+zip",

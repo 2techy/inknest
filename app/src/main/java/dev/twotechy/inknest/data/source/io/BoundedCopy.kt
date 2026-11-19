@@ -1,6 +1,5 @@
 package dev.twotechy.inknest.data.source.io
 
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import kotlinx.coroutines.currentCoroutineContext
@@ -14,8 +13,7 @@ internal suspend fun copyBounded(input: InputStream, output: OutputStream, limit
         val count = input.read(buffer)
         if (count < 0) return
         total += count
-        if (total > limit) throw SourceLimitExceeded()
+        if (total > limit) throw SourceLimitExceededException()
         output.write(buffer, 0, count)
     }
 }
-internal class SourceLimitExceeded : IOException()
