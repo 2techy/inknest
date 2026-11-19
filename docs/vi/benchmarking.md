@@ -23,7 +23,7 @@ Chạy một case:
 ./scripts/benchmark.ps1 -Mode Measure -Device emulator-5554 -AllowEmulator -SkipBuild -Label scroll -TestFilter 'dev.twotechy.inknest.perf.StartupBenchmark#libraryGridScroll'
 ```
 
-Script cài APK, chuẩn bị fixture và xuất kết quả vào `benchmark/build/reports/<label>-<mode>/` được Git bỏ qua: log instrumentation, metadata, JSON benchmark, trace và memory checkpoint. Khi test lỗi, script thử xuất kết quả một phần với `runStatus: failed`; xem log trước khi chạy lại case lỗi.
+Script cài APK, chuẩn bị fixture và xuất kết quả vào `benchmark/build/reports/<label>-<timestamp>-<mode>/` được Git bỏ qua: log instrumentation, metadata, JSON benchmark, trace và memory checkpoint. Khi test lỗi, script thử xuất kết quả một phần với `runStatus: failed`; xem log trước khi chạy lại case lỗi.
 
 Trên emulator dùng InkNest làm HOME mặc định, runner tạm chọn Pixel Launcher và khôi phục HOME ban đầu khi kết thúc. Giữ emulator mở và tránh thao tác trong lúc đo.
 

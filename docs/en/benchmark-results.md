@@ -6,6 +6,24 @@ AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font 
 
 Scenario labels use current names; raw reports retain their original identifiers.
 
+## 2026-11-19 — Final benchmark
+
+7/7 scenarios passed × five iterations. Compared with the 2026-11-18 reference; operation/startup values are medians, frames use P95. This is a cumulative comparison, not an isolated refactor or baseline-profile effect.
+
+| Scenario | Metric | Reference | Final | Change |
+| --- | --- | --- | --- | --- |
+| `coldStartup` | Initial display (ms) | 712.29 | 350.24 | −50.83% |
+| `warmStartup` | Initial display (ms) | 424.77 | 133.81 | −68.50% |
+| `homeReturnUnchanged` | Foreground refresh (s) | 140.174 | 2.001 | −98.57% |
+| `homeReturnChanged` | Foreground refresh (s) | 140.393 | 5.813 | −95.86% |
+| `indexLibrary` | Index (s) | 29.693 | 20.261 | −31.76% |
+| `mainTabNavigation` | CPU frame P95 (ms) | 85.61 | 37.14 | −56.61% |
+| `libraryGridScroll` | CPU frame P95 (ms) | 76.00 | 21.35 | −71.90% |
+
+Report: `final-Measure`; base `32fc7ec` + generated profiles; APK `5C75446F…`. Reference reports: `baseline-step1-user-20261118-201053-Measure` and `scroll-grid-selection-fix-20261118-Measure` (scroll). `CompilationMode.None`; regenerated-profile benefit is not measured here.
+
+Regenerated profile installation: passed (`final-profile-clean-20261119-191031-352-VerifyProfile`, APK `E4B9A1C3…`).
+
 ## 2026-11-19 — Library indexing
 
 Each build passed 2/2 scenarios × five iterations, with identical instrumentation. Changes are relative to batch 4; indexing/first metadata/memory use medians, frames use P95.
