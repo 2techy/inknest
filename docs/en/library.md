@@ -2,7 +2,7 @@
 
 [Tiếng Việt](../vi/library.md) · [Documentation](README.md)
 
-Browse recognized books in your selected Books folders, including subfolders and books never opened in KOReader. History enriches reading status/progress; it does not determine library membership.
+Browse recognized books in your selected Books folders, including subfolders and books never opened in KOReader. History supplies reading status/progress; it does not determine library membership.
 
 ## Screen and interactions
 
@@ -42,8 +42,8 @@ Statistics links imported KOReader IDs by compatible partialMD5 within the sourc
 
 Recognition permits listing; opening still needs a compatible KOReader handler. Missing author/progress stays unknown and is omitted from shelf captions.
 
-`SafBookCatalogSource` lists granted primary-storage trees through ContentResolver, checks containment, skips hidden/sidecar directories, prevents repeated traversal and supports cancellation. Limits are depth 64 and 100,000 entries. It never scans outside configured roots or requests broad storage access.
+`SafBookCatalogDataSource` lists granted primary-storage trees through ContentResolver, checks containment, skips hidden/sidecar directories, prevents repeated traversal and supports cancellation. Limits are depth 64 and 100,000 entries. It never scans outside configured roots or requests broad storage access.
 
-`FolderLibraryRepository` shares an application-scoped scan and partitions Room inventory by source/Books tree. Complete discovery replaces membership transactionally; listing failure retains inventory. Enrichment publishes small batches and reuses known fingerprints. Validated URIs still recheck grants/containment before direct reads. Completed inventory survives restart; interrupted work resumes.
+`SafLibraryRepository` shares an application-scoped scan and partitions Room inventory by source/Books tree. Complete discovery replaces membership transactionally; listing failure retains inventory. Book metadata is read with fingerprint reuse and cancellation checks before each book, then saved in batches of 16, including the final partial batch. Validated URIs still recheck grants/containment before direct reads. Completed inventory survives restart; interrupted work resumes.
 
 Initial setup, folder changes and cache reset trigger indexing; manual Refresh discovers added/deleted files. Tab/clock changes do not scan. Source changes cancel obsolete scans; observations/writes check the active folder. Clear reading cache removes inventory/covers and rebuilds active roots. See [cache/storage](reading-cache.md), [parser limits](koreader-integration.md) and [design tokens](design-system.md).

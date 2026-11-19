@@ -2,8 +2,8 @@ package dev.twotechy.inknest.data.repository
 
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
 import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
-import dev.twotechy.inknest.data.source.books.BookCatalogSource
-import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.books.BookCatalogDataSource
+import dev.twotechy.inknest.data.source.books.ReadingMetadataResult
 import dev.twotechy.inknest.data.source.books.ResolvedBook
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSourceConfig
@@ -34,23 +34,23 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class FolderLibraryRepository(
+internal class SafLibraryRepository(
     private val config: ReadingSourceConfigRepository,
     private val inventoryStore: LibraryInventoryStore,
-    private val source: BookCatalogSource,
+    private val source: BookCatalogDataSource,
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
     private val tracer: OperationTracer = OperationTracer(),
     private val now: () -> Long = System::currentTimeMillis,
-    private val enrich: suspend (
+    private val readMetadata: suspend (
         ReadingSourceConfig,
         ResolvedBook,
         ReadingItem,
-    ) -> EnrichedReadingItem,
+    ) -> ReadingMetadataResult,
 ) : LibraryRepository {
-    private data class Worker(val lifetime: Job, val repository: LibraryFolderRepository)
+    private data class Worker(val lifetime: Job, val repository: SafLibraryFolderRepository)
     private val workers = MutableStateFlow<Map<LibraryFolderKey, Worker>>(emptyMap())
-    private val scanGate = Mutex()
+    private val indexGate = Mutex()
     private val requests = Mutex()
     private var refreshJob: Deferred<Unit>? = null
     private val selection =
@@ -96,17 +96,17 @@ internal class FolderLibraryRepository(
             val child = CoroutineScope(scope.coroutineContext + lifetime)
             retained[key] = Worker(
                 lifetime,
-                LibraryFolderRepository(
+                SafLibraryFolderRepository(
                     config,
                     key.tree,
-                    scanGate,
+                    indexGate,
                     inventoryStore,
                     source,
                     child,
                     reading,
                     tracer = tracer,
                     now = now,
-                    enrich = enrich,
+                    readMetadata = readMetadata,
                 ),
             )
         }

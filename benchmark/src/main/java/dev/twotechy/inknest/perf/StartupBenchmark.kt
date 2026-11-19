@@ -71,15 +71,15 @@ class StartupBenchmark {
         }
     }
 
-    @Test fun libraryScanAndEnrich() = libraryScenario(scan = true)
+    @Test fun indexLibrary() = libraryScenario(indexing = true)
 
-    @Test fun libraryGridScroll() = libraryScenario(scan = false)
+    @Test fun libraryGridScroll() = libraryScenario(indexing = false)
 
-    private fun libraryScenario(scan: Boolean) {
+    private fun libraryScenario(indexing: Boolean) {
         val metrics = buildList {
             add(FrameTimingMetric())
-            if (scan) {
-                add(TraceSectionMetric(BenchmarkFixture.SCAN_TRACE, TraceSectionMetric.Mode.Sum))
+            if (indexing) {
+                add(TraceSectionMetric(BenchmarkFixture.INDEX_TRACE, TraceSectionMetric.Mode.Sum))
             }
         }
         benchmark.measureRepeated(
@@ -95,8 +95,8 @@ class StartupBenchmark {
                 journey.tab("Library")
             },
         ) {
-            if (scan) journey.control.clear() else journey.scrollLibrary()
-            saveMemory(if (scan) "library-scan" else "library-scroll")
+            if (indexing) journey.control.clear() else journey.scrollLibrary()
+            saveMemory(if (indexing) "library-index" else "library-scroll")
         }
     }
 

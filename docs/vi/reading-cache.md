@@ -16,7 +16,7 @@ Contract sách hiện tại, lịch sử, làm mới và mở sách của `RoomR
 
 Lịch sử giữ thứ tự mảng; đường dẫn chuẩn trùng giữ mục đầu, cùng tên khác đường dẫn vẫn riêng. Kiểm tra giây nguồn trước khi đổi an toàn sang mili giây epoch. Bỏ từng mục sai kèm cảnh báo/số lượng; tài liệu hỏng giữ danh sách cũ, chọn dự phòng thất bại không phát rỗng giả.
 
-Ghi danh sách mới, con trỏ hiện tại và thứ tự trong một giao dịch Room. Sách không phân giải được vẫn theo dõi với trạng thái truy cập. `ReadingRepository.trackedItems` bổ sung trạng thái; danh sách [Thư viện](library.md) lấy từ danh mục thư mục. Trang chủ không có mục Gần đây.
+Ghi danh sách mới, con trỏ hiện tại và thứ tự trong một giao dịch Room. Sách không phân giải được vẫn theo dõi với trạng thái truy cập. `ReadingRepository.trackedItems` cung cấp trạng thái đọc; danh sách [Thư viện](library.md) lấy từ danh mục thư mục. Trang chủ không có mục Gần đây.
 
 Lần đọc đầy đủ đọc lại sidecar: `percent_finished` hữu hạn trong [0, 1] có thể giảm. Trạng thái rõ `reading`, `complete`, `abandoned` được ánh xạ; 100% riêng lẻ không là Đã đọc.
 

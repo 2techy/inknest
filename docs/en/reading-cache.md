@@ -16,7 +16,7 @@ Current reading, tracked history, refresh and opening contracts for `RoomReading
 
 History preserves array order; canonical-path duplicates keep the first entry, while equal titles at different paths remain distinct. Validate source seconds before overflow-safe conversion to epoch milliseconds. Skip individual malformed entries with warning/count; a broken document retains the previous list, and failed fallback selection never publishes false empty data.
 
-Commit replacement history, current pointer and order in one Room transaction. Unresolved books remain tracked with availability. `ReadingRepository.trackedItems` enriches reading status; [Library](library.md) membership comes from folder inventory. Home has no Recent section.
+Commit replacement history, current pointer and order in one Room transaction. Unresolved books remain tracked with availability. `ReadingRepository.trackedItems` supplies reading status; [Library](library.md) membership comes from folder inventory. Home has no Recent section.
 
 Full reads reread sidecars: finite `percent_finished` in [0, 1] may decrease. Explicit `reading`, `complete`, `abandoned` map to known states; 100% alone is not Finished.
 

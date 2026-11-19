@@ -42,6 +42,6 @@ internal class OperationTracer(
 
     companion object {
         const val FOREGROUND_REFRESH = "InkNest.foregroundRefresh"
-        const val LIBRARY_SCAN = "InkNest.libraryScan"
+        const val LIBRARY_INDEX = "InkNest.library.index"
     }
 }

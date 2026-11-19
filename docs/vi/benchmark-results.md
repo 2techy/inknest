@@ -4,18 +4,41 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1.000 sách, 200 history và 50.000 events. Target `benchmark` tối ưu, `CompilationMode.None`.
 
+Tên scenario dùng thống nhất theo code hiện tại; report thô giữ identifier gốc.
+
+## 2026-11-19 — Lập chỉ mục Thư viện
+
+Mỗi bản pass 2/2 scenario × năm vòng, cùng instrumentation. Phần trăm so với batch 4; index/metadata đầu/bộ nhớ dùng median, frame dùng P95.
+
+| Chỉ số | Batch 4 | Batch 16 | Batch 32 |
+| --- | --- | --- | --- |
+| Index (s) | 28.415 | 24.002 (−15.53%) | 23.525 (−17.21%) |
+| First metadata (s) | 0.728 | 0.943 (+29.52%) | 1.286 (+76.75%) |
+| Metadata batches | 250 | 63 (−74.80%) | 32 (−87.20%) |
+| Index frames | 256 | 68 (−73.44%) | 38 (−85.16%) |
+| Index CPU frame P95 (ms) | 27.044 | 32.011 (+18.37%) | 36.272 (+34.12%) |
+| Scroll CPU frame P95 (ms) | 31.014 | 30.283 (−2.36%) | 32.917 (+6.14%) |
+| Index PSS (MiB) | 62.319 | 60.220 (−3.37%) | 66.036 (+5.96%) |
+| Index RSS (MiB) | 169.531 | 167.230 (−1.36%) | 171.773 (+1.32%) |
+| Scroll PSS (MiB) | 61.375 | 61.217 (−0.26%) | 61.615 (+0.39%) |
+| Scroll RSS (MiB) | 165.832 | 165.414 (−0.25%) | 166.148 (+0.19%) |
+
+Chọn batch 16: batch 32 chỉ giảm thêm 1,99% tổng thời gian nhưng metadata đầu trễ thêm 344 ms và frame P95 xấu hơn. Chưa thêm throttle catalog.
+
+Reports: `library-batch{4,16,32}-step7-20261119-142719-Measure`; APK `F7489923…` / `4468F946…` / `CCF27EDB…`; instrumentation `90009B4E…`. Base `461b484` + catalog changes.
+
 ## 2026-11-19 — Cache bìa và thumbnail WebP
 
 Hai scenario pass, mỗi case năm vòng. So với baseline 2026-11-18; chênh lệch gồm cả thay đổi xen giữa, chưa tách riêng tác động WebP. Scan và bộ nhớ dùng median; frame dùng percentile.
 
 | Scenario | Chỉ số | Baseline | Hiện tại | Thay đổi |
 | --- | --- | --- | --- | --- |
-| `libraryScanAndEnrich` | Scan (s) | 29.693 | 25.541 | −13.98% |
+| `indexLibrary` | Scan (s) | 29.693 | 25.541 | −13.98% |
 | `libraryGridScroll` | CPU frame P50 (ms) | 30.163 | 15.975 | −47.04% |
 | `libraryGridScroll` | CPU frame P95 (ms) | 76.004 | 28.266 | −62.81% |
 | `libraryGridScroll` | CPU frame P99 (ms) | 89.551 | 32.776 | −63.40% |
-| `libraryScanAndEnrich` | PSS (MiB) | 73.749 | 66.737 | −9.51% |
-| `libraryScanAndEnrich` | RSS (MiB) | 166.336 | 174.656 | +5.00% |
+| `indexLibrary` | PSS (MiB) | 73.749 | 66.737 | −9.51% |
+| `indexLibrary` | RSS (MiB) | 166.336 | 174.656 | +5.00% |
 | `libraryGridScroll` | PSS (MiB) | 70.942 | 61.345 | −13.53% |
 | `libraryGridScroll` | RSS (MiB) | 163.492 | 165.496 | +1.23% |
 
@@ -63,7 +86,7 @@ Report: `home-step4-trace-Measure`; tham chiếu: `step3-20261119-001645-Measure
 | `homeReturnChanged` | Foreground refresh (s) | 140.39 | 9.32 |
 | `coldStartup` | Initial display (ms) | 712.29 | — |
 | `warmStartup` | Initial display (ms) | 424.77 | — |
-| `libraryScanAndEnrich` | Scan span (s) | 29.69 | — |
+| `indexLibrary` | Scan span (s) | 29.69 | — |
 | `mainTabNavigation` | CPU frame P50 / P95 / P99 (ms) | 50.75 / 85.61 / 94.95 | — |
 | `libraryGridScroll` | CPU frame P50 / P95 / P99 (ms) | 30.16 / 76.00 / 89.55 | — |
 
@@ -88,7 +111,7 @@ Giá trị dùng ms; startup đo hiển thị đầu. Refresh/scan dùng median 
 | `warmStartup` | Hiển thị đầu, median | 424.77 |
 | `homeReturnUnchanged` | Foreground refresh, median | 140174.27 |
 | `homeReturnChanged` | Foreground refresh, median | 140393.37 |
-| `libraryScanAndEnrich` | Scan/enrich, median | 29693.26 |
+| `indexLibrary` | Index, median | 29693.26 |
 | `mainTabNavigation` | CPU frame P50 / P95 / P99 | 50.75 / 85.61 / 94.95 |
 | `libraryGridScroll` | CPU frame P50 / P95 / P99 | 30.16 / 76.00 / 89.55 |
 

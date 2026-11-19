@@ -5,9 +5,9 @@ import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
 import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
-import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.BookCatalogDataSource
 import dev.twotechy.inknest.data.source.books.CatalogBook
-import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.books.ReadingMetadataResult
 import dev.twotechy.inknest.data.source.books.ResolvedBook
 import dev.twotechy.inknest.model.BookAvailability
 import dev.twotechy.inknest.model.ReadingItem
@@ -39,21 +39,21 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-internal class LibraryFolderRepository(
+internal class SafLibraryFolderRepository(
     private val config: ReadingSourceConfigRepository,
     private val tree: String,
-    private val scanGate: Mutex,
+    private val indexGate: Mutex,
     private val inventoryStore: LibraryInventoryStore,
-    private val source: BookCatalogSource,
+    private val source: BookCatalogDataSource,
     private val scope: CoroutineScope,
     private val reading: ReadingRepository,
     private val tracer: OperationTracer = OperationTracer(),
     private val now: () -> Long = System::currentTimeMillis,
-    private val enrich: suspend (
+    private val readMetadata: suspend (
         ReadingSourceConfig,
         ResolvedBook,
         ReadingItem,
-    ) -> EnrichedReadingItem,
+    ) -> ReadingMetadataResult,
 ) : LibraryRepository {
     private val key = config.config.map { it.key() }.distinctUntilChanged()
     private val running = MutableStateFlow<Pair<LibraryFolderKey, Any>?>(null)
@@ -185,7 +185,7 @@ internal class LibraryFolderRepository(
         val request = requests.withLock {
             job?.takeIf { it.first == active && it.second.isActive }?.second
                 ?: scope.async {
-                    scanGate.withLock { scan(selected, active, onlyIncomplete) }
+                    indexGate.withLock { indexLibrary(selected, active, onlyIncomplete) }
                 }.also {
                     job =
                         active to it
@@ -194,19 +194,21 @@ internal class LibraryFolderRepository(
         request.await()
     }
 
-    private suspend fun scan(
+    private suspend fun indexLibrary(
         selected: ReadingSourceConfig,
         active: LibraryFolderKey,
         onlyIncomplete: Boolean,
-    ): Unit = tracer.begin(OperationTracer.LIBRARY_SCAN).use {
+    ): Unit = tracer.begin(OperationTracer.LIBRARY_INDEX).use {
         val token = Any()
         running.value = active to token
         try {
             // A queued resume may outlive the scan that completed this folder.
-            if (!scanRequired(active, onlyIncomplete)) return
-            val found = source.scan(active.tree)
-            replaceInventory(active, found)
-            enrichBooks(selected, active, found)
+            if (!indexRequired(active, onlyIncomplete)) return
+            tracer.begin(FIRST_METADATA_TRACE).use { firstMetadata ->
+                val found = source.scanBooks(active.tree)
+                replaceInventory(active, found)
+                readAndSaveMetadata(selected, active, found, firstMetadata)
+            }
             commit(active) {
                 inventoryStore.putFolder(
                     LibraryFolderEntity(
@@ -228,7 +230,7 @@ internal class LibraryFolderRepository(
         }
     }
 
-    private suspend fun scanRequired(active: LibraryFolderKey, onlyIncomplete: Boolean): Boolean =
+    private suspend fun indexRequired(active: LibraryFolderKey, onlyIncomplete: Boolean): Boolean =
         !onlyIncomplete || inventoryStore.observeFolder(active).first()?.complete != true
 
     private suspend fun replaceInventory(active: LibraryFolderKey, found: List<CatalogBook>) {
@@ -249,33 +251,47 @@ internal class LibraryFolderRepository(
         }
     }
 
-    private suspend fun enrichBooks(
+    private suspend fun readAndSaveMetadata(
         selected: ReadingSourceConfig,
         active: LibraryFolderKey,
         found: List<CatalogBook>,
+        firstMetadata: AutoCloseable,
     ) {
-        for (batch in found.chunked(4)) {
-            val rows = batch.map { file ->
-                val item = ReadingItem(
-                    ReadingItemId(active.source, file.path),
-                    file.relative.last().substringBeforeLast('.'),
-                    null,
-                    null,
-                )
-                val book = enrich(
-                    selected,
-                    ResolvedBook(file.path, active.tree, file.relative, file.document),
-                    item,
-                )
-                LibraryBookEntity(
-                    active.source, active.tree, file.path,
-                    book.item.title, book.item.author, book.item.coverUri,
-                    book.metadata?.fingerprint, book.item.progress, book.item.status.name,
-                    description = book.metadata?.description,
-                )
+        for ((index, batch) in found.chunked(LIBRARY_METADATA_BATCH_SIZE).withIndex()) {
+            tracer.begin(METADATA_BATCH_TRACE).use {
+                val rows = batch.map { file -> readMetadata(selected, active, file) }
+                saveMetadataBatch(active, rows)
             }
-            commit(active) { inventoryStore.putBooks(rows) }
+            if (index == 0) firstMetadata.close()
         }
+    }
+
+    private suspend fun saveMetadataBatch(active: LibraryFolderKey, rows: List<LibraryBookEntity>) =
+        commit(active) { inventoryStore.putBooks(rows) }
+
+    private suspend fun readMetadata(
+        selected: ReadingSourceConfig,
+        active: LibraryFolderKey,
+        file: CatalogBook,
+    ): LibraryBookEntity {
+        currentCoroutineContext().ensureActive()
+        val item = ReadingItem(
+            ReadingItemId(active.source, file.path),
+            file.relative.last().substringBeforeLast('.'),
+            null,
+            null,
+        )
+        val book = readMetadata(
+            selected,
+            ResolvedBook(file.path, active.tree, file.relative, file.document),
+            item,
+        )
+        return LibraryBookEntity(
+            active.source, active.tree, file.path,
+            book.item.title, book.item.author, book.item.coverUri,
+            book.metadata?.fingerprint, book.item.progress, book.item.status.name,
+            description = book.metadata?.description,
+        )
     }
 
     private suspend fun commit(active: LibraryFolderKey, action: suspend () -> Unit) =
@@ -294,6 +310,10 @@ internal class LibraryFolderRepository(
         return LibraryFolderKey(source, tree)
     }
 }
+
+private const val LIBRARY_METADATA_BATCH_SIZE = 16
+private const val FIRST_METADATA_TRACE = "InkNest.library.firstMetadata"
+private const val METADATA_BATCH_TRACE = "InkNest.library.metadataBatch"
 
 private fun Exception.libraryIssue(): ReadingSyncIssue? = when (this) {
     is SecurityException -> ReadingSyncIssue.PermissionLost

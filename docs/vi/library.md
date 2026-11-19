@@ -42,8 +42,8 @@ Thống kê ghép ID KOReader đã nhập bằng partialMD5 tương thích trong
 
 Nhận diện cho phép liệt kê; mở vẫn cần trình xử lý KOReader tương thích. Thiếu tác giả/tiến độ giữ chưa xác định và không hiện trên kệ.
 
-`SafBookCatalogSource` liệt kê cây bộ nhớ chính đã cấp quyền qua ContentResolver, kiểm tra phạm vi, bỏ thư mục ẩn/sidecar, tránh duyệt lặp và hỗ trợ hủy. Giới hạn độ sâu 64 và 100.000 mục. Không quét ngoài nguồn hoặc yêu cầu quyền bộ nhớ diện rộng.
+`SafBookCatalogDataSource` liệt kê cây bộ nhớ chính đã cấp quyền qua ContentResolver, kiểm tra phạm vi, bỏ thư mục ẩn/sidecar, tránh duyệt lặp và hỗ trợ hủy. Giới hạn độ sâu 64 và 100.000 mục. Không quét ngoài nguồn hoặc yêu cầu quyền bộ nhớ diện rộng.
 
-`FolderLibraryRepository` dùng tác vụ quét cấp ứng dụng, phân vùng Room theo nguồn/cây sách. Liệt kê đầy đủ thay danh sách trong giao dịch; lỗi giữ danh mục cũ. Bổ sung metadata theo lô nhỏ, dùng lại fingerprint đã biết. URI đã xác thực vẫn kiểm tra quyền/phạm vi trước khi đọc trực tiếp. Danh mục hoàn tất giữ qua khởi động; tác vụ gián đoạn tiếp tục.
+`SafLibraryRepository` dùng tác vụ quét cấp ứng dụng, phân vùng Room theo nguồn/cây sách. Liệt kê đầy đủ thay danh sách trong giao dịch; lỗi giữ danh mục cũ. Metadata sách dùng lại fingerprint đã biết, kiểm tra hủy trước từng sách và được ghi theo lô 16 sách, gồm cả lô cuối chưa đầy. URI đã xác thực vẫn kiểm tra quyền/phạm vi trước khi đọc trực tiếp. Danh mục hoàn tất giữ qua khởi động; tác vụ gián đoạn tiếp tục.
 
 Thiết lập đầu, đổi thư mục và xóa cache kích hoạt lập danh mục; làm mới thủ công phát hiện tệp thêm/xóa. Đổi tab/đồng hồ không quét. Đổi nguồn hủy tác vụ cũ; theo dõi/ghi kiểm tra thư mục hiện hành. Xóa cache đọc xóa danh mục/bìa và tạo lại nguồn đang dùng. Xem [cache/lưu trữ](reading-cache.md), [giới hạn parser](koreader-integration.md) và [token thiết kế](design-system.md).
