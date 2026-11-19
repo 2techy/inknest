@@ -12,19 +12,19 @@ import dev.twotechy.inknest.model.ReadingStatus
 import java.util.UUID
 import kotlin.math.roundToInt
 
-internal class BookMetadataEnricher(
+internal class BookMetadataReader(
     private val books: BookProbeDataSource,
     private val covers: FileBookCoverStore,
     private val previous: suspend (ReadingSourceConfig, String) -> BookMetadata?,
 ) {
-    suspend fun read(
+    suspend fun readReadingMetadata(
         config: ReadingSourceConfig,
         book: ResolvedBook,
         item: ReadingItem,
-    ): EnrichedReadingItem {
+    ): ReadingMetadataResult {
         val sidecar = (readCapability { books.sidecar(book) }.result as? ProbeRead.Success)?.value
-        val metadata = metadata(config, book, item)
-        return EnrichedReadingItem(
+        val metadata = readBookMetadata(config, book, item)
+        return ReadingMetadataResult(
             item.copy(
                 title = metadata.title,
                 description = metadata.description,
@@ -39,13 +39,13 @@ internal class BookMetadataEnricher(
         )
     }
 
-    suspend fun readBook(
+    suspend fun readMetadata(
         config: ReadingSourceConfig,
         book: ResolvedBook,
         item: ReadingItem,
-    ): EnrichedReadingItem {
-        val metadata = metadata(config, book, item)
-        return EnrichedReadingItem(
+    ): ReadingMetadataResult {
+        val metadata = readBookMetadata(config, book, item)
+        return ReadingMetadataResult(
             item.copy(
                 title = metadata.title,
                 description = metadata.description,
@@ -56,7 +56,7 @@ internal class BookMetadataEnricher(
         )
     }
 
-    private suspend fun metadata(
+    private suspend fun readBookMetadata(
         config: ReadingSourceConfig,
         book: ResolvedBook,
         item: ReadingItem,

@@ -10,16 +10,16 @@ import dev.twotechy.inknest.InkNestApplication
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.RoomLibraryInventoryStore
-import dev.twotechy.inknest.data.repository.FolderLibraryRepository
 import dev.twotechy.inknest.data.repository.ReadingRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.RoomReadingRepository
+import dev.twotechy.inknest.data.repository.SafLibraryRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.BookCatalogDataSource
 import dev.twotechy.inknest.data.source.books.BookMetadata
 import dev.twotechy.inknest.data.source.books.CatalogBook
-import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.books.ReadingMetadataResult
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
 import dev.twotechy.inknest.data.source.saf.SourceDocument
@@ -86,7 +86,7 @@ class FolderLibraryIntegrationTest {
         private val config = ReadingSourceConfigRepository(store)
         private val source = FilesSource()
         private val history = History()
-        private lateinit var repository: FolderLibraryRepository
+        private lateinit var repository: SafLibraryRepository
 
         suspend fun prepare() {
             val before = config.config.first()
@@ -189,14 +189,14 @@ class FolderLibraryIntegrationTest {
             File(directory, "library.db").path,
         ).setDriver(AndroidSQLiteDriver()).build()
 
-        private fun createRepository() = FolderLibraryRepository(
+        private fun createRepository() = SafLibraryRepository(
             config,
             RoomLibraryInventoryStore(database.libraryDao()),
             source,
             scope,
             history,
-            enrich = { _, _, item ->
-                EnrichedReadingItem(
+            readMetadata = { _, _, item ->
+                ReadingMetadataResult(
                     item.copy(title = "Same title", author = "File author"),
                     BookMetadata("fingerprint", "Same title", "File author", null),
                 )
@@ -233,7 +233,7 @@ class FolderLibraryIntegrationTest {
         override val trackedItems = MutableStateFlow<List<ReadingItem>>(emptyList())
         override suspend fun refresh() = Unit
     }
-    private class FilesSource : BookCatalogSource {
+    private class FilesSource : BookCatalogDataSource {
         var fail = false
         var reads = 0
         var entries = listOf("A.epub", "nested/B.epub").map {
@@ -243,7 +243,7 @@ class FolderLibraryIntegrationTest {
                 SourceDocument("content://test/$it", null, 1, 1),
             )
         }
-        override suspend fun scan(tree: String): List<CatalogBook> {
+        override suspend fun scanBooks(tree: String): List<CatalogBook> {
             reads++
             if (fail) throw SecurityException("Permission lost")
             return entries

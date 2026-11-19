@@ -31,11 +31,11 @@ class BenchmarkControlProvider : ContentProvider() {
 
     private fun snapshot(): Bundle {
         val refresh = AppOperationTrace.tracer.snapshot(BenchmarkFixture.REFRESH_TRACE)
-        val scan = AppOperationTrace.tracer.snapshot(BenchmarkFixture.SCAN_TRACE)
+        val index = AppOperationTrace.tracer.snapshot(BenchmarkFixture.INDEX_TRACE)
         return Bundle().apply {
             putInt("refreshes", refresh.started)
-            putInt("scans", scan.started)
-            putInt("active", refresh.active + scan.active)
+            putInt("indexes", index.started)
+            putInt("active", refresh.active + index.active)
             putInt(
                 "readingSkips",
                 AppOperationTrace.tracer.snapshot("InkNest.reading.skip").started,
@@ -109,11 +109,11 @@ class BenchmarkControlProvider : ContentProvider() {
 
     private suspend fun clear(container: AppContainer) {
         phase = "clear-cache"
-        val previous = AppOperationTrace.tracer.snapshot(BenchmarkFixture.SCAN_TRACE)
+        val previous = AppOperationTrace.tracer.snapshot(BenchmarkFixture.INDEX_TRACE)
         container.sourceSettingsRepository.clearCache()
         while (true) {
-            val scan = AppOperationTrace.tracer.snapshot(BenchmarkFixture.SCAN_TRACE)
-            if (scan.started > previous.started && scan.active == 0) return
+            val index = AppOperationTrace.tracer.snapshot(BenchmarkFixture.INDEX_TRACE)
+            if (index.started > previous.started && index.active == 0) return
             delay(100)
         }
     }

@@ -97,7 +97,7 @@ function Invoke-PerformanceInstrumentation {
 
 function Get-MeasureScenarios {
     if ($TestFilter) { return $TestFilter.Split(',') | ForEach-Object { $_.Split('#')[-1] } }
-    return @('coldStartup', 'warmStartup', 'mainTabNavigation', 'homeReturnUnchanged', 'homeReturnChanged', 'libraryScanAndEnrich', 'libraryGridScroll')
+    return @('coldStartup', 'warmStartup', 'mainTabNavigation', 'homeReturnUnchanged', 'homeReturnChanged', 'indexLibrary', 'libraryGridScroll')
 }
 
 function Get-MeasureIterations {

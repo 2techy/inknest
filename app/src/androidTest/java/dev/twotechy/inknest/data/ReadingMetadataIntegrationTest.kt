@@ -12,7 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
-import dev.twotechy.inknest.data.source.books.BookMetadataEnricher
+import dev.twotechy.inknest.data.source.books.BookMetadataReader
 import dev.twotechy.inknest.data.source.books.FileBookCoverStore
 import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
@@ -62,7 +62,7 @@ class ReadingMetadataIntegrationTest {
             val source = KoreaderCurrentReadingDataSource(
                 documents,
                 books,
-                metadataReader = BookMetadataEnricher(books, covers, cache::metadata),
+                metadataReader = BookMetadataReader(books, covers, cache::metadata),
             )
             val key = checkNotNull(config.readingCacheKey())
             for ((percent, expectedPage) in listOf(0.7 to 700, 0.3 to 300)) {
@@ -161,7 +161,7 @@ class ReadingMetadataIntegrationTest {
             val source = KoreaderCurrentReadingDataSource(
                 documents,
                 books,
-                metadataReader = BookMetadataEnricher(books, covers, cache::metadata),
+                metadataReader = BookMetadataReader(books, covers, cache::metadata),
             )
             val key = checkNotNull(config.readingCacheKey())
             val original = source.read(config)

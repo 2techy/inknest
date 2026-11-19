@@ -47,12 +47,12 @@ For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `Refre
 | Main tabs | Home → Library → Apps → Stats → Home; CPU frame percentiles. |
 | Unchanged HOME return | Let fixture files settle for six seconds, prime reading outside measurement, then return from system Settings through an explicit HOME intent; foreground refresh span. |
 | Changed HOME return | Update history/current sidecar and add a 77-second statistics event before returning; foreground refresh span. |
-| Library scan/enrich | Clear target cache while Library is visible; scan span and CPU frames. |
+| Library indexing (`indexLibrary`) | Clear target cache while Library is visible; index span and CPU frames. |
 | Library grid scroll | Six gestures down and six up within the grid; require visible book titles to change; CPU frames. |
 
-The harness validates completed refreshes, imported progress, 200 tracked items, statistics totals and the full catalog. `TraceSectionMetric` reports summed `InkNest.foregroundRefresh` / `InkNest.libraryScan` spans and their counts. Each completed iteration saves a `dumpsys meminfo` checkpoint; report sampled PSS/RSS separately.
+The harness validates completed refreshes, imported progress, 200 tracked items, statistics totals and the full catalog. `TraceSectionMetric` reports summed `InkNest.foregroundRefresh` / `InkNest.library.index` spans and their counts. Each completed iteration saves a `dumpsys meminfo` checkpoint; report sampled PSS/RSS separately.
 
-Each scenario also saves a Perfetto trace. Within foreground refresh, `InkNest.reading.refresh` and `InkNest.statistics.refresh` run concurrently; do not add their durations. Statistics detail spans are `InkNest.statistics.fingerprint`, `InkNest.statistics.snapshot.copy`, `InkNest.statistics.import.rows`, `InkNest.statistics.summarize` and `InkNest.statistics.publish`. The rows span includes SQLite event reading and Room batch writes. `InkNest.statistics.skip` marks reuse of an unchanged import. Trace names contain no source paths or document IDs.
+Each scenario also saves a Perfetto trace. Within foreground refresh, `InkNest.reading.refresh` and `InkNest.statistics.refresh` run concurrently; do not add their durations. Statistics detail spans are `InkNest.statistics.fingerprint`, `InkNest.statistics.snapshot.copy`, `InkNest.statistics.import.rows`, `InkNest.statistics.summarize` and `InkNest.statistics.publish`. The rows span includes SQLite event reading and Room batch writes. `InkNest.statistics.skip` marks reuse of an unchanged import. During successful nonempty Library indexing, `InkNest.library.firstMetadata` ends after the first metadata batch is committed; `InkNest.library.metadataBatch` covers each metadata read/batch-write operation. These are nested in the index span, so do not add them to the index total. Trace names contain no source paths or document IDs.
 
 Reading uses `InkNest.reading.read` for a full source read, `InkNest.reading.fingerprint` for metadata checks and `InkNest.reading.skip` for successful reuse. Compare control builds with the same quiet-period/priming setup.
 

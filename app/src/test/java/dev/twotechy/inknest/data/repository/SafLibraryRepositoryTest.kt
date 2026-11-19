@@ -4,10 +4,11 @@ import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.reading.LibraryFolderKey
 import dev.twotechy.inknest.data.local.reading.LibraryInventoryStore
-import dev.twotechy.inknest.data.source.books.BookCatalogSource
+import dev.twotechy.inknest.data.source.books.BookCatalogDataSource
 import dev.twotechy.inknest.data.source.books.CatalogBook
-import dev.twotechy.inknest.data.source.books.EnrichedReadingItem
+import dev.twotechy.inknest.data.source.books.ReadingMetadataResult
 import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.File
 import java.io.IOException
@@ -20,7 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -40,15 +43,19 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class FolderLibraryRepositoryTest {
+class SafLibraryRepositoryTest {
     @get:Rule val folder = TemporaryFolder()
 
-    @Test fun scanTimestampUsesSharedClockAndFailedScanRetainsPreviousTime() = runBlocking {
-        withTimeout(10_000) {
-            withHarness { h ->
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun scanTimestampUsesSharedClockAndFailedScanRetainsPreviousTime() =
+        runTest(timeout = 10.seconds) {
+            withHarness(StandardTestDispatcher(testScheduler)) { h ->
                 h.time = 100L
                 h.add("A")
                 h.loaded(1)
+                // A published idle state can precede completion of the shared scan job.
+                runCurrent()
                 val key = LibraryFolderKey(checkNotNull(h.config.config.first().sourceId), "A")
                 assertEquals(100L, h.inventory.observeFolder(key).first()?.updatedAt)
                 h.time = 200L
@@ -57,10 +64,14 @@ class FolderLibraryRepositoryTest {
                 h.time = 300L
                 h.responses["A"] = { throw SecurityException("grant lost") }
                 h.repository.refresh()
+                val failed = h.repository.catalog.first {
+                    it.sync.error ==
+                        ReadingSyncIssue.PermissionLost
+                }
+                assertTrue(failed.sync.stale)
                 assertEquals(200L, h.inventory.observeFolder(key).first()?.updatedAt)
             }
         }
-    }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     @Test
@@ -87,18 +98,18 @@ class FolderLibraryRepositoryTest {
                 override val reading = flowOf(ReadingState.Empty)
                 override suspend fun refresh() = Unit
             }
-            val repository = LibraryFolderRepository(
+            val repository = SafLibraryFolderRepository(
                 config,
                 "A",
                 gate,
                 inventory,
-                BookCatalogSource {
+                BookCatalogDataSource {
                     scans++
                     listOf(catalogBook("A"))
                 },
                 scope,
                 reading,
-            ) { _, _, item -> EnrichedReadingItem(item, null) }
+            ) { _, _, item -> ReadingMetadataResult(item, null) }
             resumeQueued.await()
             inventory.replace(
                 LibraryFolderEntity(key.source, key.tree, 1, true),
@@ -193,6 +204,34 @@ class FolderLibraryRepositoryTest {
         }
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun cancellationStopsBeforeTheNextBookInTheBatch() = runTest(timeout = 10.seconds) {
+        withHarness(StandardTestDispatcher(testScheduler)) { h ->
+            h.responses["A"] = {
+                List(2) { index ->
+                    catalogBook("A").copy(
+                        path = "primary:A/Book$index.epub",
+                        relative = listOf("Book$index.epub"),
+                    )
+                }
+            }
+            val metadataReads = mutableListOf<String>()
+            h.readMetadata = { item ->
+                metadataReads += item.id.path
+                currentCoroutineContext().cancel()
+                ReadingMetadataResult(item, null)
+            }
+            h.add("A")
+            runCurrent()
+            assertTrue(metadataReads.isNotEmpty())
+            assertTrue(metadataReads.all { it == "primary:A/Book0.epub" })
+            val key = LibraryFolderKey(checkNotNull(h.config.config.first().sourceId), "A")
+            assertEquals(2, h.inventory.books(key).size)
+            assertEquals(false, h.inventory.observeFolder(key).first()?.complete)
+        }
+    }
+
     private suspend fun withHarness(
         dispatcher: CoroutineDispatcher = Dispatchers.Default,
         block: suspend (Harness) -> Unit,
@@ -214,21 +253,24 @@ class FolderLibraryRepositoryTest {
         val inventory = MemoryLibraryInventoryStore()
         val reads = ConcurrentHashMap<String, Int>()
         val responses = ConcurrentHashMap<String, suspend () -> List<CatalogBook>>()
+        var readMetadata: suspend (ReadingItem) -> ReadingMetadataResult = {
+            ReadingMetadataResult(it, null)
+        }
         private val reading = object : ReadingRepository {
             override val reading = flowOf(ReadingState.Empty)
             override suspend fun refresh() = Unit
         }
-        val repository = FolderLibraryRepository(
+        val repository = SafLibraryRepository(
             config,
             inventory,
-            BookCatalogSource { tree ->
+            BookCatalogDataSource { tree ->
                 reads.merge(tree, 1, Int::plus)
                 responses[tree]?.invoke() ?: listOf(catalogBook(tree))
             },
             scope,
             reading,
             now = { time },
-        ) { _, _, item -> EnrichedReadingItem(item, null) }
+        ) { _, _, item -> readMetadata(item) }
 
         suspend fun add(tree: String) {
             val before = config.config.first()

@@ -6,8 +6,6 @@ import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.benchmarkfixture.BenchmarkFixture
 
-internal data class BenchmarkOperations(val refreshes: Int, val scans: Int, val active: Int)
-
 internal class BenchmarkControl {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val uri = Uri.parse("content://$TARGET.benchmark.control/status")
@@ -23,7 +21,7 @@ internal class BenchmarkControl {
         )
         BenchmarkOperations(
             state.getInt("refreshes"),
-            state.getInt("scans"),
+            state.getInt("indexes"),
             state.getInt("active"),
         )
     }

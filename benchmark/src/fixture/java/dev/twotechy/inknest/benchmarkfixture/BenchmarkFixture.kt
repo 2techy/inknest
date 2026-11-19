@@ -7,6 +7,6 @@ internal object BenchmarkFixture {
     const val VERSION = "2:$BOOKS:$HISTORY:$EVENTS:2026-11-01"
     const val CURRENT_TITLE = "Benchmark Book 0001"
     const val REFRESH_TRACE = "InkNest.foregroundRefresh"
-    const val SCAN_TRACE = "InkNest.libraryScan"
+    const val INDEX_TRACE = "InkNest.library.index"
     const val TIMEOUT_MILLIS = 600_000L
 }
