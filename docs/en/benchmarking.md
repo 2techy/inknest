@@ -23,7 +23,7 @@ Run one scenario:
 ./scripts/benchmark.ps1 -Mode Measure -Device emulator-5554 -AllowEmulator -SkipBuild -Label scroll -TestFilter 'dev.twotechy.inknest.perf.StartupBenchmark#libraryGridScroll'
 ```
 
-The script installs APKs, prepares the fixture and exports results to ignored `benchmark/build/reports/<label>-<mode>/`: instrumentation log, metadata, benchmark JSON, traces and memory checkpoints. On test failure it attempts to export partial results with `runStatus: failed`; inspect the log before retrying the failed scenario.
+The script installs APKs, prepares the fixture and exports results to ignored `benchmark/build/reports/<label>-<timestamp>-<mode>/`: instrumentation log, metadata, benchmark JSON, traces and memory checkpoints. On test failure it attempts to export partial results with `runStatus: failed`; inspect the log before retrying the failed scenario.
 
 On emulators where InkNest is the default HOME, the runner temporarily selects Pixel Launcher and restores the original HOME when it exits. Keep the emulator open and avoid interacting during measurement.
 

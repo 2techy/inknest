@@ -162,8 +162,9 @@ function Invoke-PerformanceRun {
     $capitalVariant = (Get-Culture).TextInfo.ToTitleCase($variant)
     $targetPackage = 'dev.twotechy.inknest.benchmark'
     $testPackage = 'dev.twotechy.inknest.perf'
-    $remoteOutput = "/sdcard/Android/media/$testPackage/benchmarks/$Label-$Mode"
-    $reportPath = Join-Path $workspace "benchmark/build/reports/$Label-$Mode"
+    $runName = "$Label-$(Get-Date -Format 'yyyyMMdd-HHmmss-fff')-$Mode"
+    $remoteOutput = "/sdcard/Android/media/$testPackage/benchmarks/$runName"
+    $reportPath = Join-Path $workspace "benchmark/build/reports/$runName"
     New-Item -ItemType Directory -Force -Path $reportPath | Out-Null
 
     $originalHome = $null

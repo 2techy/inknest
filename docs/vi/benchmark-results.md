@@ -6,6 +6,24 @@ AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font 
 
 Tên scenario dùng thống nhất theo code hiện tại; report thô giữ identifier gốc.
 
+## 2026-11-19 — Benchmark cuối
+
+Pass 7/7 scenario × năm vòng. So với mốc 2026-11-18; operation/startup dùng median, frame dùng P95. Đây là so sánh tích lũy, không tách riêng tác động của refactor hoặc baseline profile.
+
+| Scenario | Chỉ số | Tham chiếu | Cuối | Thay đổi |
+| --- | --- | --- | --- | --- |
+| `coldStartup` | Hiển thị đầu (ms) | 712.29 | 350.24 | −50.83% |
+| `warmStartup` | Hiển thị đầu (ms) | 424.77 | 133.81 | −68.50% |
+| `homeReturnUnchanged` | Foreground refresh (s) | 140.174 | 2.001 | −98.57% |
+| `homeReturnChanged` | Foreground refresh (s) | 140.393 | 5.813 | −95.86% |
+| `indexLibrary` | Index (s) | 29.693 | 20.261 | −31.76% |
+| `mainTabNavigation` | CPU frame P95 (ms) | 85.61 | 37.14 | −56.61% |
+| `libraryGridScroll` | CPU frame P95 (ms) | 76.00 | 21.35 | −71.90% |
+
+Report: `final-Measure`; base `32fc7ec` + profile sinh mới; APK `5C75446F…`. Report tham chiếu: `baseline-step1-user-20261118-201053-Measure` và `scroll-grid-selection-fix-20261118-Measure` (scroll). `CompilationMode.None`; lượt này không đo lợi ích của profile sinh lại.
+
+Xác minh cài đặt profile sinh lại: pass (`final-profile-clean-20261119-191031-352-VerifyProfile`, APK `E4B9A1C3…`).
+
 ## 2026-11-19 — Lập chỉ mục Thư viện
 
 Mỗi bản pass 2/2 scenario × năm vòng, cùng instrumentation. Phần trăm so với batch 4; index/metadata đầu/bộ nhớ dùng median, frame dùng P95.
