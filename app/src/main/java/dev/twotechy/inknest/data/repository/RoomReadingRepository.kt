@@ -1,15 +1,18 @@
 package dev.twotechy.inknest.data.repository
 
 import android.database.sqlite.SQLiteException
+import dev.twotechy.inknest.data.local.reading.CachedReading
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.books.BookCoverCache
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
-import dev.twotechy.inknest.data.source.koreader.CurrentReadingSource
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
+import dev.twotechy.inknest.data.source.saf.SourceMetadataFingerprint
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
+import dev.twotechy.inknest.platform.OperationTracer
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -38,16 +41,18 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class CachedReadingRepository(
+internal class RoomReadingRepository(
     private val config: ReadingSourceConfigRepository,
     private val cache: ReadingCache,
-    private val source: CurrentReadingSource,
+    private val source: CurrentReadingDataSource,
     private val scope: CoroutineScope,
     private val covers: BookCoverCache? = null,
     private val transition: Mutex = Mutex(),
     private val now: () -> Long = System::currentTimeMillis,
     private val permissionSnapshot: suspend () -> CoroutineContext = { EmptyCoroutineContext },
+    private val tracer: OperationTracer = OperationTracer(),
 ) : ReadingRepository {
+    private var lastRefresh: SuccessfulRefresh? = null
     private val requests = Mutex()
     private val jobs = mutableMapOf<ReadingCacheKey, Deferred<Unit>>()
     private val running = MutableStateFlow<Map<ReadingCacheKey, Any>>(emptyMap())
@@ -152,21 +157,91 @@ internal class CachedReadingRepository(
             withActiveSource(active) {
                 cache.attempt(active, attempt)
             }
-            val result = withContext(permissionSnapshot()) { source.read(selected) }
-            withActiveSource(active) {
-                cache.save(active, result, attempt)
-                writeErrors.update { it - active }
-                covers?.prune(cache.coverUris())
-            }
+            val result = readOrSkip(selected, active) ?: return
+            saveSnapshot(active, result, attempt)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
             if (error !is IOException && error !is SQLiteException) throw error
             recordRefreshFailure(active, error)
         } finally {
-            running.update { if (it[active] === token) it - active else it }
+            finishRefresh(active, token)
         }
     }
+
+    private fun finishRefresh(active: ReadingCacheKey, token: Any) {
+        running.update { if (it[active] === token) it - active else it }
+    }
+
+    private suspend fun saveSnapshot(
+        active: ReadingCacheKey,
+        snapshot: CurrentReadingSnapshot,
+        attempt: Long,
+    ) = withActiveSource(active) {
+        cache.save(active, snapshot, attempt)
+        writeErrors.update { it - active }
+        covers?.prune(cache.coverUris())
+        remember(active, snapshot)
+    }
+
+    private suspend fun readOrSkip(selected: ReadingSourceConfig, active: ReadingCacheKey) =
+        withContext(permissionSnapshot()) {
+            if (canSkip(selected, active)) {
+                tracer.begin("InkNest.reading.skip").close()
+                null
+            } else {
+                tracer.begin("InkNest.reading.read").use { source.read(selected) }
+            }
+        }
+
+    private suspend fun canSkip(selected: ReadingSourceConfig, active: ReadingCacheKey): Boolean {
+        val previous = withActiveSource(active) {
+            lastRefresh?.takeIf { it.key == active && healthy(it) }
+        } ?: return false
+        val unchanged = tracer.begin("InkNest.reading.fingerprint").use {
+            source.unchanged(selected, previous.fingerprint)
+        }
+        if (!unchanged) return false
+        return withActiveSource(active) {
+            if (lastRefresh !== previous || !healthy(previous)) return@withActiveSource false
+            for (uri in previous.coverUris) {
+                if (covers?.exists(uri) == false) return@withActiveSource false
+            }
+            true
+        }
+    }
+
+    private suspend fun healthy(previous: SuccessfulRefresh): Boolean {
+        if (previous.key in writeErrors.value) return false
+        if (readErrors.value.any { it.first == previous.key }) return false
+        if (!previous.fingerprint.reusableAt(now())) return false
+        return cache.current(previous.key)?.identity() == previous.cached
+    }
+
+    private suspend fun remember(active: ReadingCacheKey, snapshot: CurrentReadingSnapshot) {
+        lastRefresh = null
+        val fingerprint = snapshot.fingerprint ?: return
+        if (snapshot.warning != null || snapshot.history == null) return
+        if (snapshot.skippedHistoryEntries > 0) return
+        if (snapshot.metadata.values.any { it.fingerprint == null }) return
+        val cached = cache.current(active) ?: return
+        if (cached.source.lastSuccessAt == null) return
+        lastRefresh = SuccessfulRefresh(
+            active,
+            cached.identity(),
+            fingerprint,
+            snapshot.metadata.values.mapNotNull { it.coverUri }.toSet(),
+        )
+    }
+
+    private fun CachedReading.identity() = copy(source = source.copy(lastAttemptAt = null))
+
+    private data class SuccessfulRefresh(
+        val key: ReadingCacheKey,
+        val cached: CachedReading,
+        val fingerprint: SourceMetadataFingerprint,
+        val coverUris: Set<String>,
+    )
 
     private suspend fun recordRefreshFailure(active: ReadingCacheKey, error: Exception): Nothing {
         val issue = (error as? ReadingRefreshException)?.issue ?: ReadingSyncIssue.Cache
@@ -206,6 +281,7 @@ internal class CachedReadingRepository(
         val staged = stageCandidate(before, candidate)
         transition.withLock {
             if (config.config.first() != before) throw IOException("Source selection changed")
+            lastRefresh = null
             saveCandidate(before, staged)
             config.activateTree(before, candidate)
             staged.key?.let { next -> writeErrors.update { it - next } }
@@ -240,6 +316,7 @@ internal class CachedReadingRepository(
     }
 
     suspend fun disconnect() = transition.withLock {
+        lastRefresh = null
         requests.withLock { jobs.values.forEach { it.cancel() } }
         config.disconnect()
         writeErrors.value = emptyMap()
@@ -251,6 +328,7 @@ internal class CachedReadingRepository(
         transition.withLock {
             val selected = config.config.first()
             if (selected.koreaderTreeUri == null && selected.booksTreeUris.isEmpty()) return
+            lastRefresh = null
             requests.withLock { jobs.values.forEach { it.cancel() } }
             cache.clearAll()
             covers?.clear()

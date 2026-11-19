@@ -6,10 +6,10 @@ import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.RoomLibraryInventoryStore
 import dev.twotechy.inknest.data.local.userPreferencesDataStore
 import dev.twotechy.inknest.data.repository.CachedBookDetailsRepository
-import dev.twotechy.inknest.data.repository.CachedReadingRepository
 import dev.twotechy.inknest.data.repository.FolderLibraryRepository
 import dev.twotechy.inknest.data.repository.KoreaderStatisticsRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.RoomReadingRepository
 import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
 import dev.twotechy.inknest.data.repository.SafSourceSettingsRepository
 import dev.twotechy.inknest.data.source.books.BookCoverCache
@@ -17,7 +17,7 @@ import dev.twotechy.inknest.data.source.books.BookMetadata
 import dev.twotechy.inknest.data.source.books.BookMetadataReader
 import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.books.impl.SafBookCatalogSource
-import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentSource
+import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
@@ -55,21 +55,23 @@ internal class ReadingDataContainer(
     private val covers = BookCoverCache(coverDirectory, coverLoader::clear, ioDispatcher)
     private val metadata = BookMetadataReader(books, covers, cache::metadata)
     private val transition = Mutex()
-    val reading = CachedReadingRepository(
+    val reading = RoomReadingRepository(
         config,
         cache,
-        KoreaderCurrentSource(
+        KoreaderCurrentReadingDataSource(
             files,
             books,
             access = access,
             metadataReader = metadata,
             ioDispatcher = ioDispatcher,
+            now = now,
         ),
         scope,
         covers,
         transition,
         now = now,
         permissionSnapshot = files::permissionSnapshot,
+        tracer = AppOperationTrace.tracer,
     )
     private val libraryDao = database.libraryDao()
     private val libraryMetadata = BookMetadataReader(books, covers, ::cachedMetadata)

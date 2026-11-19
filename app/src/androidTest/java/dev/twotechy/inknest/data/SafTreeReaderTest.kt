@@ -6,11 +6,17 @@ import android.content.pm.ProviderInfo
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.SafPermissionSnapshot
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.SourceMetadataCapture
+import dev.twotechy.inknest.data.source.saf.SourceMetadataFingerprint
 import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotFiles
+import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.File
 import java.io.IOException
@@ -24,6 +30,103 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SafTreeReaderTest {
+    @Test fun metadataCaptureRejectsReadFailuresAfterSuccessfulMetadataLookup() = runBlocking {
+        for (direct in listOf(false, true)) {
+            val h = Harness()
+            h.provider.add("primary:Books/Book.epub")
+            val capture = SourceMetadataCapture(10_000)
+            var parsed = false
+            withContext(capture) {
+                val document = h.reader.describe(h.tree, listOf("Book.epub"))
+                checkNotNull(capture.fingerprint())
+                val parse: suspend (java.io.InputStream) -> Unit = {
+                    parsed = true
+                    throw IOException("Injected read failure")
+                }
+                try {
+                    if (direct) {
+                        h.reader.readDocument(document, parse)
+                    } else {
+                        h.reader.read(h.tree, listOf("Book.epub"), parse)
+                    }
+                    error("Read must fail")
+                } catch (_: IOException) { }
+            }
+            assertTrue(parsed)
+            assertEquals(null, capture.fingerprint())
+        }
+    }
+
+    @Test fun readingFingerprintRequiresUnusedBooksTreeGrantAndProviderAccess() = runBlocking {
+        val h = Harness()
+        val other = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Reader").toString()
+        for (id in listOf("primary:Books", "primary:Reader")) {
+            h.provider.entries[id] = SafTestDocumentsProvider.Entry(
+                id,
+                null,
+                id,
+                DocumentsContract.Document.MIME_TYPE_DIR,
+            )
+        }
+        h.provider.add("primary:Books/Book.epub")
+        val fingerprint = SourceMetadataFingerprint(
+            mapOf(
+                SourceMetadataFingerprint.Document(h.tree, listOf("Book.epub")) to
+                    h.reader.describe(h.tree, listOf("Book.epub")),
+            ),
+        )
+        val source = KoreaderCurrentReadingDataSource(
+            h.reader,
+            BookProbeDataSource(
+                h.reader,
+                InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            ),
+            access = SafSourceAccess(ContentResolver.wrap(h.provider)),
+            now = { 10_000 },
+        )
+        val config = ReadingSourceConfig("source", h.tree, setOf(other))
+        withContext(SafPermissionSnapshot(setOf(h.tree, other))) {
+            assertTrue(source.unchanged(config, fingerprint))
+        }
+        withContext(SafPermissionSnapshot(setOf(h.tree))) {
+            assertFalse(source.unchanged(config, fingerprint))
+        }
+        h.provider.granted = false
+        withContext(SafPermissionSnapshot(setOf(h.tree, other))) {
+            assertFalse(source.unchanged(config, fingerprint))
+        }
+    }
+
+    @Test fun metadataCaptureIncludesReadsAndAbsenceButRejectsRevokedAccess() = runBlocking {
+        val h = Harness()
+        h.provider.add("primary:Books/Book.epub")
+        val capture = SourceMetadataCapture(10_000)
+        withContext(capture) {
+            assertEquals(
+                "book",
+                h.reader.read(h.tree, listOf("Book.epub")) {
+                    it.bufferedReader().readText()
+                },
+            )
+            try {
+                h.reader.describe(h.tree, listOf("missing.sdr", "metadata.epub.lua"))
+                error("Missing sidecar must fail")
+            } catch (_: MissingSourceFile) { }
+        }
+        val fingerprint = checkNotNull(capture.fingerprint())
+        assertEquals(2, fingerprint.documents.size)
+        assertTrue(fingerprint.documents.values.any { it == null })
+        val revoked = SourceMetadataCapture(10_000)
+        h.readable = false
+        withContext(revoked) {
+            try {
+                h.reader.describe(h.tree, listOf("Book.epub"))
+                error("Revoked access must fail")
+            } catch (_: SecurityException) { }
+        }
+        assertEquals(null, revoked.fingerprint())
+    }
+
     @Test fun existingDeepPathsUseOneMetadataQueryAndNoListings() = runBlocking {
         val h = Harness()
         val path = listOf("a", "b", "c", "Café #100% & 你好.epub")

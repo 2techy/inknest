@@ -11,6 +11,8 @@ import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.data.source.saf.SafPermissionSnapshot
 import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.SourceMetadataCapture
+import dev.twotechy.inknest.data.source.saf.SourceMetadataFingerprint
 import dev.twotechy.inknest.data.source.saf.hasPersistedReadGrant
 import dev.twotechy.inknest.data.source.saf.readableTreeUris
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
@@ -60,7 +62,14 @@ internal class SafTreeReader(
         readUri(uri, parse)
     }
 
-    private suspend fun <T> readUri(document: Uri, parse: suspend (InputStream) -> T): T {
+    private suspend fun <T> readUri(document: Uri, parse: suspend (InputStream) -> T): T = try {
+        readStream(document, parse)
+    } catch (error: Exception) {
+        currentCoroutineContext()[SourceMetadataCapture]?.fail()
+        throw error
+    }
+
+    private suspend fun <T> readStream(document: Uri, parse: suspend (InputStream) -> T): T {
         val input =
             safProviderOperation { resolver.openInputStream(document) }
                 ?: throw IOException("Provider returned no stream")
@@ -84,7 +93,18 @@ internal class SafTreeReader(
 
     override suspend fun describe(tree: String, path: List<String>): SourceDocument =
         withContext(ioDispatcher) {
-            describeInTree(tree, path)
+            val capture = currentCoroutineContext()[SourceMetadataCapture]
+                ?: return@withContext describeInTree(tree, path)
+            val reference = SourceMetadataFingerprint.Document(tree, path.toList())
+            try {
+                describeInTree(tree, path).also { capture.record(reference, it) }
+            } catch (missing: MissingSourceFile) {
+                capture.record(reference, null)
+                throw missing
+            } catch (error: Exception) {
+                capture.fail()
+                throw error
+            }
         }
 
     private suspend fun describeInTree(tree: String, path: List<String>): SourceDocument {

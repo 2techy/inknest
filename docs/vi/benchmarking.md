@@ -45,7 +45,7 @@ Picker cấp quyền truy cập fixture này. Phép đo dùng SAF, parser, Room,
 | --- | --- |
 | Cold / warm startup | `StartupMode.COLD` / `WARM`; thời gian hiển thị đầu. |
 | Các tab chính | Home → Library → Apps → Stats → Home; phân vị CPU frame. |
-| HOME return nguồn không đổi | Mở Settings hệ thống, quay lại bằng HOME intent tường minh; span foreground refresh. |
+| HOME return nguồn không đổi | Chờ tệp fixture ổn định sáu giây, prime reading ngoài vùng đo, rồi quay về từ Settings hệ thống bằng HOME intent tường minh; span foreground refresh. |
 | HOME return nguồn thay đổi | Sửa history/sidecar hiện tại và thêm event statistics 77 giây trước khi quay lại; span foreground refresh. |
 | Quét/enrich Thư viện | Xóa cache target khi Thư viện hiển thị; span scan và CPU frame. |
 | Cuộn lưới Thư viện | Sáu cử chỉ xuống và sáu lên trong lưới; yêu cầu tên sách hiển thị thay đổi; CPU frame. |
@@ -53,6 +53,8 @@ Picker cấp quyền truy cập fixture này. Phép đo dùng SAF, parser, Room,
 Harness kiểm tra refresh hoàn tất, tiến độ đã import, 200 mục tracked, tổng statistics và catalog đầy đủ. `TraceSectionMetric` báo tổng span `InkNest.foregroundRefresh` / `InkNest.libraryScan` cùng số lần chạy. Mỗi vòng hoàn tất lưu một checkpoint `dumpsys meminfo`; báo PSS/RSS lấy mẫu riêng biệt.
 
 Mỗi scenario cũng lưu trace Perfetto. Trong foreground refresh, `InkNest.reading.refresh` và `InkNest.statistics.refresh` chạy đồng thời; không cộng thời lượng hai nhánh. Các span chi tiết statistics gồm `InkNest.statistics.fingerprint`, `InkNest.statistics.snapshot.copy`, `InkNest.statistics.import.rows`, `InkNest.statistics.summarize` và `InkNest.statistics.publish`. Span rows gồm đọc event SQLite và ghi lô vào Room. `InkNest.statistics.skip` đánh dấu dùng lại bản import không đổi. Tên trace không chứa đường dẫn nguồn hoặc document ID.
+
+Reading dùng `InkNest.reading.read` cho lần đọc nguồn đầy đủ, `InkNest.reading.fingerprint` để kiểm tra metadata và `InkNest.reading.skip` khi dùng lại thành công. Đo bản đối chứng với cùng thời gian ổn định/prime này.
 
 So sánh cùng fixture, harness, chế độ biên dịch, cấu hình hiển thị và điều kiện thiết bị/host. Lưu bản tóm tắt có ngày trong [kết quả](benchmark-results.md), kèm định danh build và lượt nguồn; giữ artifact gốc ngoài Git. File memory dùng vùng lưu chung trên thiết bị nên cần chọn checkpoint đúng case và lượt đo.
 

@@ -37,6 +37,7 @@ internal class ReadingCache(
         issue: ReadingSyncIssue,
     ) = dao.carryForward(previous, next, issue.name)
     fun observe(key: ReadingCacheKey) = dao.observe(key.sourceId, key.snapshotKey)
+    suspend fun current(key: ReadingCacheKey) = dao.get(key.sourceId, key.snapshotKey)
     suspend fun attempt(key: ReadingCacheKey, time: Long) =
         dao.attempt(key.sourceId, key.snapshotKey, time)
     suspend fun fail(key: ReadingCacheKey, issue: ReadingSyncIssue) =

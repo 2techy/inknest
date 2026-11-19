@@ -36,6 +36,14 @@ class BenchmarkControlProvider : ContentProvider() {
             putInt("refreshes", refresh.started)
             putInt("scans", scan.started)
             putInt("active", refresh.active + scan.active)
+            putInt(
+                "readingSkips",
+                AppOperationTrace.tracer.snapshot("InkNest.reading.skip").started,
+            )
+            putInt(
+                "readingReads",
+                AppOperationTrace.tracer.snapshot("InkNest.reading.read").started,
+            )
             putString("phase", phase)
         }
     }
@@ -71,6 +79,7 @@ class BenchmarkControlProvider : ContentProvider() {
             "clear" -> clear(container)
             "prepare" -> prepare(container)
             "refresh-library" -> container.libraryRepository.refresh()
+            "refresh-reading" -> container.readingRepository.refresh()
             "refresh-statistics" -> refreshStatistics(container)
             "validate" -> Unit
             else -> error("Unknown benchmark operation")
