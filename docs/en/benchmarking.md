@@ -39,7 +39,7 @@ Setup entry points and broad file permission exist only in benchmark/profile var
 
 `StartupBenchmark` uses `CompilationMode.None` and five iterations per scenario. Fixture preparation and validation precede each test.
 
-For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `RefreshBenchmark#statisticsRefresh` or `RefreshBenchmark#clearCacheAndRefresh` with the full package prefix `dev.twotechy.inknest.perf.`. Each runs one iteration and includes data-readiness validation; statistics refresh requires a newly published import.
+For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `RefreshBenchmark#statisticsRefresh` or `RefreshBenchmark#clearCacheAndRefresh` with the full package prefix `dev.twotechy.inknest.perf.`. Each runs one iteration and includes data-readiness validation; statistics refresh waits for a new successful refresh attempt, which may reuse an unchanged snapshot.
 
 | Scenario | Procedure / metric |
 | --- | --- |
@@ -51,6 +51,8 @@ For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `Refre
 | Library grid scroll | Six gestures down and six up within the grid; require visible book titles to change; CPU frames. |
 
 The harness validates completed refreshes, imported progress, 200 tracked items, statistics totals and the full catalog. `TraceSectionMetric` reports summed `InkNest.foregroundRefresh` / `InkNest.libraryScan` spans and their counts. Each completed iteration saves a `dumpsys meminfo` checkpoint; report sampled PSS/RSS separately.
+
+Each scenario also saves a Perfetto trace. Within foreground refresh, `InkNest.reading.refresh` and `InkNest.statistics.refresh` run concurrently; do not add their durations. Statistics detail spans are `InkNest.statistics.fingerprint`, `InkNest.statistics.snapshot.copy`, `InkNest.statistics.import.rows`, `InkNest.statistics.summarize` and `InkNest.statistics.publish`. The rows span includes SQLite event reading and Room batch writes. `InkNest.statistics.skip` marks reuse of an unchanged import. Trace names contain no source paths or document IDs.
 
 Compare the same fixture, harness, compilation mode, display settings and device/host conditions. Keep dated summaries in [results](benchmark-results.md), including build identity and source run; retain raw artifacts outside Git. Memory files use shared device storage, so select checkpoints belonging to the measured scenarios and run.
 

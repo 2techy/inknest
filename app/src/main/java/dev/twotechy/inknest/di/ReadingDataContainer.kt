@@ -84,7 +84,12 @@ internal class ReadingDataContainer(
         enrich = libraryMetadata::readBook,
     )
     private val statisticsSnapshot =
-        StatisticsSnapshotProbe(files, appContext.cacheDir, ioDispatcher)
+        StatisticsSnapshotProbe(
+            files,
+            appContext.cacheDir,
+            ioDispatcher,
+            tracer = AppOperationTrace.tracer,
+        )
     val statistics = KoreaderStatisticsRepository(
         config,
         database.statisticsDao(),
@@ -94,6 +99,7 @@ internal class ReadingDataContainer(
         statisticsClock,
         defaultDispatcher,
         permissionSnapshot = files::permissionSnapshot,
+        tracer = AppOperationTrace.tracer,
     )
     val bookDetails = CachedBookDetailsRepository(
         library,

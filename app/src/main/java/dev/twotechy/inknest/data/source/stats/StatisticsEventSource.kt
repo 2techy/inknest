@@ -3,6 +3,8 @@ package dev.twotechy.inknest.data.source.stats
 import dev.twotechy.inknest.model.ReadingEvent
 
 internal fun interface StatisticsEventReader {
+    val fingerprint: SnapshotFingerprint? get() = null
+
     suspend fun forEachBatch(consume: suspend (List<ReadingEvent>) -> Unit)
 
     suspend fun forEachBookBatch(consume: suspend (List<StatisticsBookIdentity>) -> Unit) {}
@@ -15,6 +17,8 @@ internal fun interface StatisticsEventReader {
 internal data class StatisticsBookIdentity(val bookId: Long, val checksum: String)
 
 internal interface StatisticsEventSource {
+    suspend fun fingerprint(tree: String): SnapshotFingerprint? = null
+
     // Snapshot retries may invoke consume again; each invocation is an independent attempt.
     suspend fun <T> withEvents(tree: String, consume: suspend (StatisticsEventReader) -> T): T
 }

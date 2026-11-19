@@ -39,7 +39,7 @@ Picker cấp quyền truy cập fixture này. Phép đo dùng SAF, parser, Room,
 
 `StartupBenchmark` dùng `CompilationMode.None`, năm vòng mỗi case. Chuẩn bị và kiểm tra fixture diễn ra trước mỗi test.
 
-Để đo tổng thời gian refresh/rebuild, chọn `RefreshBenchmark#libraryRefresh`, `RefreshBenchmark#statisticsRefresh` hoặc `RefreshBenchmark#clearCacheAndRefresh` với tiền tố package đầy đủ `dev.twotechy.inknest.perf.`. Mỗi case chạy một vòng, gồm kiểm tra dữ liệu sẵn sàng; refresh statistics yêu cầu lần import mới đã publish.
+Để đo tổng thời gian refresh/rebuild, chọn `RefreshBenchmark#libraryRefresh`, `RefreshBenchmark#statisticsRefresh` hoặc `RefreshBenchmark#clearCacheAndRefresh` với tiền tố package đầy đủ `dev.twotechy.inknest.perf.`. Mỗi case chạy một vòng, gồm kiểm tra dữ liệu sẵn sàng; refresh statistics chờ một lần làm mới mới hoàn tất thành công, có thể dùng lại bản chụp không đổi.
 
 | Case | Thao tác / chỉ số |
 | --- | --- |
@@ -51,6 +51,8 @@ Picker cấp quyền truy cập fixture này. Phép đo dùng SAF, parser, Room,
 | Cuộn lưới Thư viện | Sáu cử chỉ xuống và sáu lên trong lưới; yêu cầu tên sách hiển thị thay đổi; CPU frame. |
 
 Harness kiểm tra refresh hoàn tất, tiến độ đã import, 200 mục tracked, tổng statistics và catalog đầy đủ. `TraceSectionMetric` báo tổng span `InkNest.foregroundRefresh` / `InkNest.libraryScan` cùng số lần chạy. Mỗi vòng hoàn tất lưu một checkpoint `dumpsys meminfo`; báo PSS/RSS lấy mẫu riêng biệt.
+
+Mỗi scenario cũng lưu trace Perfetto. Trong foreground refresh, `InkNest.reading.refresh` và `InkNest.statistics.refresh` chạy đồng thời; không cộng thời lượng hai nhánh. Các span chi tiết statistics gồm `InkNest.statistics.fingerprint`, `InkNest.statistics.snapshot.copy`, `InkNest.statistics.import.rows`, `InkNest.statistics.summarize` và `InkNest.statistics.publish`. Span rows gồm đọc event SQLite và ghi lô vào Room. `InkNest.statistics.skip` đánh dấu dùng lại bản import không đổi. Tên trace không chứa đường dẫn nguồn hoặc document ID.
 
 So sánh cùng fixture, harness, chế độ biên dịch, cấu hình hiển thị và điều kiện thiết bị/host. Lưu bản tóm tắt có ngày trong [kết quả](benchmark-results.md), kèm định danh build và lượt nguồn; giữ artifact gốc ngoài Git. File memory dùng vùng lưu chung trên thiết bị nên cần chọn checkpoint đúng case và lượt đo.
 

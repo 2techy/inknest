@@ -4,6 +4,17 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1.000 sách, 200 history và 50.000 events. Target `benchmark` tối ưu, `CompilationMode.None`.
 
+## 2026-11-19 — Tối ưu import thống kê
+
+Median foreground refresh (s), năm vòng mỗi scenario; pass 2/2.
+
+| Scenario | Trước | Sau | Thay đổi |
+| --- | --- | --- | --- |
+| `homeReturnUnchanged` | 9.375 | 5.494 | −41.40% |
+| `homeReturnChanged` | 9.323 | 6.066 | −34.93% |
+
+Report: `home-step4-trace-Measure`; tham chiếu: `step3-20261119-001645-Measure`. APK `8FC9FD14…`, code gốc `a116650` + thay đổi local. Các lượt đo riêng; AVD đã khởi động lại trước lượt mới nhất.
+
 ## 2026-11-19 — SAF direct lookup
 
 **Operations** — tổng tác vụ và kiểm tra dữ liệu sẵn sàng, dùng giây. Một vòng mỗi bản; cả hai đạt 3/3. Tham chiếu: master `e8453e5`, cùng instrumentation cho hai bản.

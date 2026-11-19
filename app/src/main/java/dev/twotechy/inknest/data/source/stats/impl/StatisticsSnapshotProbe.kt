@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteException
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.data.source.stats.InvalidStatisticsSnapshot
+import dev.twotechy.inknest.data.source.stats.SnapshotFingerprint
 import dev.twotechy.inknest.data.source.stats.StatisticsBookIdentity
 import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
 import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
@@ -13,6 +14,7 @@ import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
 import dev.twotechy.inknest.data.source.stats.UnstableStatisticsSnapshot
 import dev.twotechy.inknest.data.source.stats.UnsupportedStatisticsSchema
 import dev.twotechy.inknest.model.ReadingEvent
+import dev.twotechy.inknest.platform.OperationTracer
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -29,18 +31,26 @@ internal class StatisticsSnapshotProbe(
     private val files: SourceDocumentReader,
     private val cache: File,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val tracer: OperationTracer = OperationTracer(),
 ) : StatisticsEventSource {
     private val mutex = Mutex()
     suspend fun read(tree: String): StatisticsProbeResult =
-        readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, wal ->
-            probeStatisticsDatabase(db, wal)
+        readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, fingerprint ->
+            probeStatisticsDatabase(db, fingerprint.hasWal)
+        }
+
+    override suspend fun fingerprint(tree: String): SnapshotFingerprint =
+        withContext(ioDispatcher) {
+            StatisticsSnapshotFiles(files, tree).fingerprint()
         }
 
     override suspend fun <T> withEvents(
         tree: String,
         consume: suspend (StatisticsEventReader) -> T,
-    ): T = readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, _ ->
+    ): T = readSnapshotData(StatisticsSnapshotFiles(files, tree)) { db, snapshot ->
         consume(object : StatisticsEventReader {
+            override val fingerprint = snapshot
+
             override suspend fun forEachBatch(consume: suspend (List<ReadingEvent>) -> Unit) =
                 readStatisticsEvents(db, consume)
             override suspend fun forEachBookBatch(
@@ -51,7 +61,7 @@ internal class StatisticsSnapshotProbe(
 
     private suspend fun <T> readSnapshotData(
         source: StatisticsSnapshotFiles,
-        read: suspend (SQLiteDatabase, Boolean) -> T,
+        read: suspend (SQLiteDatabase, SnapshotFingerprint) -> T,
     ): T = withContext(ioDispatcher) {
         mutex.withLock {
             var last: Exception? = null
@@ -60,10 +70,12 @@ internal class StatisticsSnapshotProbe(
                 currentCoroutineContext().ensureActive()
                 val dir = Files.createTempDirectory(cache.toPath(), "reader-stats-").toFile()
                 try {
-                    val wal = source.copyTo(dir)
+                    val fingerprint = tracer.begin("InkNest.statistics.snapshot.copy").use {
+                        source.copyTo(dir)
+                    }
                     return@withLock readStatisticsDatabase(
                         File(dir, StatisticsSnapshotFiles.DATABASE_NAME),
-                    ) { db -> read(db, wal) }
+                    ) { db -> read(db, fingerprint) }
                 } catch (error: SQLiteException) {
                     last = error
                 } catch (error: StatisticsSnapshotChanged) {

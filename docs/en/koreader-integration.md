@@ -27,6 +27,8 @@ Each reading refresh and statistics import captures persisted read grants once f
 
 Statistics retries transient transport/SQLite/change failures up to three times with fresh directories and cancellable 100/200ms backoff. Unsupported schemas are a distinct outcome. Streams, cursors, databases and temporary directories are closed/removed on success, failure or cancellation. Metadata/thumbnail storage is described in [reading cache](reading-cache.md); folder traversal bounds are in [library](library.md).
 
+Statistics fingerprints track DB, WAL and SHM separately as `Present(size, mtime)`, `Absent` or `Unknown`. Missing/negative size and missing/nonpositive mtime are unknown and disable import skipping. Only the fingerprint from a stable copy that successfully activates can be reused. Every present file must already be at least five seconds old when that import starts and at the next refresh; future timestamps also disable skipping. A fingerprint observed while recent is never remembered for later reuse.
+
 SAF cannot copy atomically while KOReader writes. Size/mtime may be missing or unchanged despite writes, and KOReader may not have flushed its current session. A validated snapshot is an observation, not a transactionally current reading total.
 
 ## Error and ownership boundaries

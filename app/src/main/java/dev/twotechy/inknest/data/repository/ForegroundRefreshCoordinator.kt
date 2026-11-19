@@ -31,18 +31,19 @@ internal class ForegroundRefreshCoordinator(
     private suspend fun refreshSources() = tracer.begin(OperationTracer.FOREGROUND_REFRESH).use {
         supervisorScope {
             listOf(
-                async { refreshSource(reading::refresh) },
-                async { refreshSource(statistics::refresh) },
+                async { refreshSource("InkNest.reading.refresh", reading::refresh) },
+                async { refreshSource("InkNest.statistics.refresh", statistics::refresh) },
             ).awaitAll()
         }
         Unit
     }
 
-    private suspend fun refreshSource(action: suspend () -> Unit) {
-        try {
-            action()
-        } catch (_: IOException) {
-            // Each repository preserves content and exposes the corresponding sync failure.
+    private suspend fun refreshSource(name: String, action: suspend () -> Unit) =
+        tracer.begin(name).use {
+            try {
+                action()
+            } catch (_: IOException) {
+                // Each repository preserves content and exposes the corresponding sync failure.
+            }
         }
-    }
 }

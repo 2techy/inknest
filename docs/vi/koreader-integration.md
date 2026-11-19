@@ -27,6 +27,8 @@ Mỗi lần refresh reading và import statistics lấy snapshot quyền đọc 
 
 Thống kê thử tối đa ba lần khi lỗi truyền tải/SQLite/thay đổi tạm thời, dùng thư mục mới và backoff 100/200ms có thể hủy. Schema chưa hỗ trợ có kết quả riêng. Đóng/xóa stream, cursor, database, thư mục tạm khi thành công, lỗi hoặc hủy. [Cache đọc](reading-cache.md) quy định metadata/thumbnail; [Thư viện](library.md) quy định giới hạn duyệt.
 
+Fingerprint statistics theo dõi riêng DB, WAL và SHM bằng `Present(size, mtime)`, `Absent` hoặc `Unknown`. Size thiếu/âm và mtime thiếu/không dương được coi là unknown, không cho bỏ qua import. Chỉ dùng lại fingerprint từ bản sao ổn định đã kích hoạt thành công. Mỗi tệp hiện diện phải cũ ít nhất năm giây khi bắt đầu lần import đó và khi làm mới tiếp theo; timestamp tương lai cũng không cho bỏ qua. Fingerprint quan sát lúc còn mới không được ghi nhớ để dùng lại về sau.
+
 SAF không sao chép nguyên tử khi KOReader ghi. Size/mtime có thể thiếu/không đổi dù đã ghi; phiên hiện tại có thể chưa flush. Bản chụp hợp lệ chỉ là quan sát, không bảo đảm tổng hiện thời nhất quán theo giao dịch.
 
 ## Lỗi và trách nhiệm

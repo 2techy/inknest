@@ -10,6 +10,7 @@ import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
+import dev.twotechy.inknest.platform.OperationTracer
 import dev.twotechy.inknest.platform.clock.StatisticsClock
 import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
 import java.io.IOException
@@ -55,9 +56,10 @@ internal class KoreaderStatisticsRepository(
     private val clock: StatisticsClock = SystemStatisticsClock(scope),
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     permissionSnapshot: suspend () -> CoroutineContext = { EmptyCoroutineContext },
+    tracer: OperationTracer = OperationTracer(),
 ) : StatisticsRepository {
     private val importer =
-        StatisticsImporter(config, dao, source, transition, permissionSnapshot) {
+        StatisticsImporter(config, dao, source, transition, permissionSnapshot, tracer = tracer) {
             clock.moments.value.zone
         }
     private val requests = Mutex()
