@@ -1,6 +1,7 @@
 package dev.twotechy.inknest.data.source.books
 
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
+
 internal class BookPathResolver(private val primaryAliases: Set<String>) {
     fun relative(path: String, grantedDocumentId: String): List<String>? {
         val root = PrimaryTreePath.parse(grantedDocumentId) ?: return null

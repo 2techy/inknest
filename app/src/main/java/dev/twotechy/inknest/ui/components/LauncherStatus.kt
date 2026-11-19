@@ -5,7 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import dev.twotechy.inknest.platform.LauncherModeController
+import dev.twotechy.inknest.platform.apps.LauncherModeController
 
 @Composable
 internal fun rememberDefaultLauncher(controller: LauncherModeController): State<Boolean> {

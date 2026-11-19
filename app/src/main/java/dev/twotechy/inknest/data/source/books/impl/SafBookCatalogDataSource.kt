@@ -7,7 +7,7 @@ import androidx.core.net.toUri
 import dev.twotechy.inknest.data.source.books.BookCatalogDataSource
 import dev.twotechy.inknest.data.source.books.CatalogBook
 import dev.twotechy.inknest.data.source.formats.BookFileExtensions
-import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.io.SourceLimitExceededException
 import dev.twotechy.inknest.data.source.io.cancellableQuery
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.data.source.saf.SourceDocument
@@ -45,10 +45,10 @@ internal class SafBookCatalogDataSource(
             val parent = queue.removeFirst()
             if (!seen.add(parent)) continue
             for ((id, name, document) in children(uri, parent)) {
-                if (++count > 100_000) throw SourceLimitExceeded()
+                if (++count > 100_000) throw SourceLimitExceededException()
                 val relative = PrimaryTreePath.parse(id)?.relativeTo(root)
                     ?: throw IOException("Document escaped Books folder")
-                if (relative.size > 64) throw SourceLimitExceeded()
+                if (relative.size > 64) throw SourceLimitExceededException()
                 if (name.startsWith('.') || name.endsWith(".sdr", true)) continue
                 if (document.mime == DocumentsContract.Document.MIME_TYPE_DIR) {
                     queue.add(id)
@@ -78,7 +78,7 @@ internal class SafBookCatalogDataSource(
                 val children = mutableListOf<Child>()
                 while (it.moveToNext()) {
                     context.ensureActive()
-                    if (children.size >= 100_000) throw SourceLimitExceeded()
+                    if (children.size >= 100_000) throw SourceLimitExceededException()
                     val id = it.getString(0)
                     children.add(
                         Child(

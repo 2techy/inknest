@@ -14,7 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppIconLoader
+import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.SectionHeading
 import dev.twotechy.inknest.ui.theme.InkAppGridTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing

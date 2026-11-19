@@ -14,8 +14,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.AppUpdateState
-import dev.twotechy.inknest.platform.AppUpdateInstaller
-import dev.twotechy.inknest.platform.UpdateInstallResult
+import dev.twotechy.inknest.platform.updates.AppUpdateInstaller
+import dev.twotechy.inknest.platform.updates.UpdateInstallResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 

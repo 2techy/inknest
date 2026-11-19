@@ -1,14 +1,12 @@
 package dev.twotechy.inknest.ui.settings
 
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.SourceSettingsState
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.sources.SourceSettingsState
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.AppLanguage
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.AppUpdateState
 import dev.twotechy.inknest.model.ThirdPartyLicense
-
-internal enum class SettingsError { Read, Save, Source, FolderConflict }
 
 internal data class SettingsUiState(
     val preferences: AppPreferences? = null,
@@ -22,10 +20,3 @@ internal data class SettingsUiState(
     val appUpdate: AppUpdateState = AppUpdateState(),
     val releaseNotes: ReleaseNotesDocument = ReleaseNotesDocument(),
 )
-
-internal sealed interface AcknowledgementsUiState {
-    data object NotLoaded : AcknowledgementsUiState
-    data object Loading : AcknowledgementsUiState
-    data class Content(val text: String) : AcknowledgementsUiState
-    data object Failed : AcknowledgementsUiState
-}

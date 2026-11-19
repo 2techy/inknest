@@ -23,8 +23,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.BookFolderState
-import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.repository.sources.BookFolderState
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.ui.components.ConfirmationDialog
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing

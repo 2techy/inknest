@@ -36,14 +36,6 @@ import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkGestureTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
-internal data class RefreshAction(
-    val enabled: Boolean,
-    val running: Boolean,
-    val refresh: () -> Unit,
-) {
-    fun canRefresh(): Boolean = enabled && !running
-}
-
 @Composable
 internal fun PullRefresh(action: RefreshAction?, content: @Composable BoxScope.() -> Unit) {
     if (action == null) {

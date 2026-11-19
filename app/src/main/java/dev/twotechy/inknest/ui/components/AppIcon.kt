@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.LocalConfiguration
 import dev.twotechy.inknest.model.DisplayMode
-import dev.twotechy.inknest.platform.AppIconLoader
-import dev.twotechy.inknest.platform.AppIconRequest
+import dev.twotechy.inknest.platform.icons.AppIconLoader
+import dev.twotechy.inknest.platform.icons.AppIconRequest
 import dev.twotechy.inknest.ui.theme.LocalDisplayMode
 
 @Composable

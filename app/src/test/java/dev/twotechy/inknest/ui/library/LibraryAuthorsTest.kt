@@ -1,7 +1,8 @@
 package dev.twotechy.inknest.ui.library
 
-import dev.twotechy.inknest.data.repository.LibraryCatalog
-import dev.twotechy.inknest.data.repository.LibraryFolder
+import dev.twotechy.inknest.data.repository.library.LibraryCatalog
+import dev.twotechy.inknest.data.repository.library.LibraryFolder
+import dev.twotechy.inknest.data.repository.library.LibraryRepository
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingStatus
@@ -28,7 +29,7 @@ class LibraryAuthorsTest {
             kotlinx.coroutines.Dispatchers.setMain(dispatcher)
             val store = androidx.lifecycle.ViewModelStore()
             try {
-                val repository = object : dev.twotechy.inknest.data.repository.LibraryRepository {
+                val repository = object : LibraryRepository {
                     override val catalog = kotlinx.coroutines.flow.MutableStateFlow(
                         LibraryCatalog(listOf(book("1", "Writer")), configured = true),
                     )

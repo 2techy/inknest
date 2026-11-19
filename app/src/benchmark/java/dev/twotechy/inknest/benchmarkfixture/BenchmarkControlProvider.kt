@@ -7,9 +7,9 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import dev.twotechy.inknest.InkNestApplication
-import dev.twotechy.inknest.data.repository.ReadingState
+import dev.twotechy.inknest.data.repository.reading.ReadingState
 import dev.twotechy.inknest.di.AppContainer
-import dev.twotechy.inknest.platform.AppOperationTrace
+import dev.twotechy.inknest.platform.tracing.AppOperationTrace
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first

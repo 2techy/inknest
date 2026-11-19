@@ -12,8 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.StatisticsPeriod
-import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.components.ReadingHeatmap
 import dev.twotechy.inknest.ui.components.ReadingSyncNotice
@@ -22,13 +20,6 @@ import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.StatePanel
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
-
-internal data class StatsActions(
-    val period: (StatisticsPeriod) -> Unit,
-    val unit: (StatisticsUnit) -> Unit,
-    val refresh: () -> Unit,
-    val settings: () -> Unit,
-)
 
 @Composable
 internal fun StatsScreen(

@@ -1,0 +1,60 @@
+package dev.twotechy.inknest.data.repository.reading.impl
+
+import dev.twotechy.inknest.data.repository.reading.ReadingOpenRepository
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.source.books.UnresolvedBookPathException
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
+import dev.twotechy.inknest.data.source.formats.BookMimeTypes
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
+import dev.twotechy.inknest.model.OpenResult
+import dev.twotechy.inknest.model.PreparedReadingOpen
+import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.ReadingOpenPreparation
+import dev.twotechy.inknest.model.ReadingSourceConfig
+import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+
+internal class SafReadingOpenRepository(
+    private val config: ReadingSourceConfigRepository,
+    private val books: SafBookDataSource,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : ReadingOpenRepository {
+    override suspend fun prepare(item: ReadingItemId): ReadingOpenPreparation {
+        val selected = config.config.first()
+        if (selected.sourceId != item.sourceId) return failed(OpenResult.SourceChanged)
+        if (selected.sourcePackage == null) return failed(OpenResult.MissingApp)
+        return try {
+            val prepared = resolve(selected, item)
+            if (isCurrent(
+                    prepared,
+                )
+            ) {
+                ReadingOpenPreparation.Ready(prepared)
+            } else {
+                failed(OpenResult.SourceChanged)
+            }
+        } catch (_: MissingSourceFileException) {
+            failed(OpenResult.MissingFile)
+        } catch (_: UnresolvedBookPathException) {
+            failed(OpenResult.PermissionLost)
+        } catch (_: SecurityException) {
+            failed(OpenResult.PermissionLost)
+        } catch (_: IOException) {
+            failed(OpenResult.Unavailable)
+        }
+    }
+    private suspend fun resolve(selected: ReadingSourceConfig, item: ReadingItemId) =
+        withContext(ioDispatcher) {
+            val book = books.resolveIdentity(selected, item.path)
+            val mime = BookMimeTypes.forFile(book.relative.last(), book.document.mime)
+            PreparedReadingOpen(selected, book.document.uri, mime)
+        }
+
+    override suspend fun isCurrent(prepared: PreparedReadingOpen): Boolean =
+        config.config.first() == prepared.source
+
+    private fun failed(error: OpenResult) = ReadingOpenPreparation.Failed(error)
+}

@@ -11,10 +11,10 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
-import dev.twotechy.inknest.data.local.userPreferencesDataStore
-import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
-import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.local.preferences.userPreferencesDataStore
+import dev.twotechy.inknest.data.repository.preferences.impl.DataStoreUserPreferencesRepository
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.data.source.apps.impl.AndroidInstalledAppsDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

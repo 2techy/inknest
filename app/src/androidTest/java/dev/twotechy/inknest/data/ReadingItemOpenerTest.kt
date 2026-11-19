@@ -6,19 +6,19 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
-import dev.twotechy.inknest.data.repository.SafReadingOpenRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.repository.reading.impl.SafReadingOpenRepository
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.model.OpenResult
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingOpenPreparation
-import dev.twotechy.inknest.platform.BookIntentLauncher
-import dev.twotechy.inknest.platform.ReadingItemDispatcher
-import dev.twotechy.inknest.platform.koreaderDocumentIntent
+import dev.twotechy.inknest.platform.reading.BookIntentLauncher
+import dev.twotechy.inknest.platform.reading.ReadingItemDispatcher
+import dev.twotechy.inknest.platform.reading.koreaderDocumentIntent
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
@@ -190,7 +190,7 @@ class ReadingItemOpenerTest {
         }
         val config = ReadingSourceConfigRepository(store)
         val documents = Documents()
-        private val books = BookProbeDataSource(documents, directory)
+        private val books = SafBookDataSource(documents, directory)
         val repository = SafReadingOpenRepository(config, books)
         val realOpener = TestBookOpener(repository, ReadingItemDispatcher(context, repository))
         suspend fun configure() {
@@ -237,7 +237,7 @@ class ReadingItemOpenerTest {
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
             resolving()
             if (denied) throw SecurityException()
-            if (missing) throw MissingSourceFile()
+            if (missing) throw MissingSourceFileException()
             val id = "primary:Download/" + path.joinToString("/")
             val uri = DocumentsContract.buildDocumentUriUsingTree(Uri.parse(tree), id)
             return SourceDocument(uri.toString(), mime, 1L, 1L)

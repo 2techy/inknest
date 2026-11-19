@@ -6,8 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.twotechy.inknest.platform.AppIconLoader
-import dev.twotechy.inknest.platform.AppLauncher
+import dev.twotechy.inknest.platform.apps.AppLauncher
+import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.rememberAppLaunchAction
 
 @Composable

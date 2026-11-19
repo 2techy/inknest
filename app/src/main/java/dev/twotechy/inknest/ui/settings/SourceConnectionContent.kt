@@ -1,6 +1,5 @@
 package dev.twotechy.inknest.ui.settings
 
-import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -9,25 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.SourceSettingsState
-import dev.twotechy.inknest.model.AppInfo
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.model.SourceAccessState
 import dev.twotechy.inknest.ui.theme.InkSpacing
-
-internal data class SourceConnectionUiState(
-    val source: SourceSettingsState,
-    val sourceApps: List<AppInfo>,
-    val saving: Boolean,
-)
-
-internal data class SourceConnectionActions(
-    val selectApp: (String) -> Unit,
-    val selectFolder: (SourceFolder) -> Unit,
-    val replaceBookFolder: (String) -> Unit,
-    val removeBookFolder: (String) -> Unit,
-)
 
 @Composable
 internal fun SourceConnectionContent(
@@ -68,7 +53,7 @@ internal fun sourceFolderLabel(path: String): String = try {
             "content://",
         )
     ) {
-        DocumentsContract.getTreeDocumentId(Uri.parse(path)).substringAfter(':').ifEmpty {
+        DocumentsContract.getTreeDocumentId(path.toUri()).substringAfter(':').ifEmpty {
             "/"
         }
     } else {

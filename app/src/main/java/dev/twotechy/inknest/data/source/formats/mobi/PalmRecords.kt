@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.source.formats.mobi
 
-import dev.twotechy.inknest.data.source.formats.InvalidBookMetadata
-import dev.twotechy.inknest.data.source.io.SourceLimitExceeded
+import dev.twotechy.inknest.data.source.formats.InvalidBookMetadataException
+import dev.twotechy.inknest.data.source.io.SourceLimitExceededException
 import java.io.RandomAccessFile
 
 internal class PalmRecords(private val input: RandomAccessFile) {
@@ -15,7 +15,7 @@ internal class PalmRecords(private val input: RandomAccessFile) {
 
     fun read(index: Int, limit: Int): ByteArray {
         val length = offsets[index + 1] - offsets[index]
-        if (length > limit) throw SourceLimitExceeded()
+        if (length > limit) throw SourceLimitExceededException()
         input.seek(offsets[index])
         return ByteArray(length.toInt()).also(input::readFully)
     }
@@ -26,18 +26,18 @@ internal class PalmRecords(private val input: RandomAccessFile) {
             input.skipBytes(4)
             offset
         } + input.length()
-        if (offsets.first() < 78L + count * 8L) throw InvalidBookMetadata()
-        if (offsets.zipWithNext().any { (a, b) -> a >= b }) throw InvalidBookMetadata()
+        if (offsets.first() < 78L + count * 8L) throw InvalidBookMetadataException()
+        if (offsets.zipWithNext().any { (a, b) -> a >= b }) throw InvalidBookMetadataException()
         return offsets
     }
     private fun recordCount(): Int {
-        if (input.length() < 78) throw InvalidBookMetadata()
+        if (input.length() < 78) throw InvalidBookMetadataException()
         input.seek(60)
         val signature = ByteArray(8).also(input::readFully).toString(Charsets.US_ASCII)
-        if (signature != "BOOKMOBI") throw InvalidBookMetadata()
+        if (signature != "BOOKMOBI") throw InvalidBookMetadataException()
         input.seek(76)
         val count = input.readUnsignedShort()
-        if (count.toLong() !in 1..((input.length() - 78) / 8)) throw InvalidBookMetadata()
+        if (count.toLong() !in 1..((input.length() - 78) / 8)) throw InvalidBookMetadataException()
         return count
     }
 }

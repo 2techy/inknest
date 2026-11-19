@@ -3,19 +3,19 @@ package dev.twotechy.inknest.ui.settings
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.twotechy.inknest.data.repository.AcknowledgementsRepository
-import dev.twotechy.inknest.data.repository.AppUpdateRepository
-import dev.twotechy.inknest.data.repository.InstalledAppsRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.SourceSettingsRepository
-import dev.twotechy.inknest.data.repository.UnconnectedInstalledAppsRepository
-import dev.twotechy.inknest.data.repository.UserPreferencesRepository
+import dev.twotechy.inknest.data.repository.acknowledgements.AcknowledgementsRepository
+import dev.twotechy.inknest.data.repository.apps.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.apps.impl.UnconnectedInstalledAppsRepository
+import dev.twotechy.inknest.data.repository.preferences.UserPreferencesRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.sources.SourceSettingsRepository
+import dev.twotechy.inknest.data.repository.updates.AppUpdateRepository
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.AppUpdateState
 import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.model.ThirdPartyLicense
-import dev.twotechy.inknest.ui.source.SourceSetupError
-import dev.twotechy.inknest.ui.source.SourceSetupStateHolder
+import dev.twotechy.inknest.ui.shared.SourceSetupError
+import dev.twotechy.inknest.ui.shared.SourceSetupStateHolder
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +35,7 @@ internal class SettingsViewModel(
     private val preferences: UserPreferencesRepository,
     sources: SourceSettingsRepository,
     private val acknowledgementsRepository: AcknowledgementsRepository,
-    savedState: SavedStateHandle = SavedStateHandle(),
+    savedState: SavedStateHandle,
     installedApps: InstalledAppsRepository = UnconnectedInstalledAppsRepository(),
     private val updates: AppUpdateRepository? = null,
     notesParser: ReleaseNotesParser = ReleaseNotesParser(),

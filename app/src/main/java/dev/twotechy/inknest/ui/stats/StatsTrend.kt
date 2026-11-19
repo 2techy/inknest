@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.StatisticsPeriod
+import dev.twotechy.inknest.data.repository.statistics.StatisticsPeriod
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import java.time.format.DateTimeFormatter

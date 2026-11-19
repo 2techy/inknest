@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.ui.library
 
-import dev.twotechy.inknest.data.repository.LibraryCatalog
+import dev.twotechy.inknest.data.repository.library.LibraryCatalog
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingStatus
 import java.util.Locale

@@ -1,33 +1,7 @@
 package dev.twotechy.inknest.ui.home
 
-import dev.twotechy.inknest.model.BookAvailability
-import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingOpenState
-import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
-
-data class BookUiModel(
-    val id: ReadingItemId,
-    val title: String,
-    val author: String?,
-    val progress: Int?,
-    val coverUri: String? = null,
-    val availability: BookAvailability = BookAvailability.Available,
-    val currentPage: Int? = null,
-    val totalPages: Int? = null,
-)
-
-data class HomePinUiModel(val componentId: String, val label: String, val iconVersion: Long = 0)
-
-sealed interface ReadingSectionState {
-    data object Loading : ReadingSectionState
-    data object Empty : ReadingSectionState
-    data object NotConfigured : ReadingSectionState
-    data class Error(val issue: ReadingSyncIssue) : ReadingSectionState
-    data class Content(val current: BookUiModel) : ReadingSectionState
-}
-
-data class HomeReadingStats(val todayMinutes: Int?, val streakDays: Int?)
 
 sealed interface HomeUiState {
     data object Loading : HomeUiState
@@ -39,7 +13,7 @@ sealed interface HomeUiState {
         val sync: ReadingSyncStatus = ReadingSyncStatus(),
         val isRefreshing: Boolean = false,
         val appsRefreshFailed: Boolean = false,
-        val activity: HomeActivity? = null,
+        val activity: HomeReadingActivity? = null,
         val opening: ReadingOpenState = ReadingOpenState.Idle,
     ) : HomeUiState
 }

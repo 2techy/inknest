@@ -3,11 +3,11 @@ package dev.twotechy.inknest.data
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.local.reading.LibraryBookEntity
-import dev.twotechy.inknest.data.local.reading.ReadingDatabase
-import dev.twotechy.inknest.data.local.reading.StatisticsBookEntity
-import dev.twotechy.inknest.data.local.reading.StatisticsEventEntity
-import dev.twotechy.inknest.data.local.reading.StatisticsImportEntity
+import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.local.database.library.LibraryBookEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsEventEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsImportEntity
 import dev.twotechy.inknest.data.source.formats.epub.epubDescription
 import dev.twotechy.inknest.data.source.formats.xml.readBoundedXml
 import java.nio.file.Files

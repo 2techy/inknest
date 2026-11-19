@@ -8,12 +8,3 @@ data class ReadingSourceConfig(
 ) {
     val grantedTrees: Set<String> get() = booksTreeUris + listOfNotNull(koreaderTreeUri)
 }
-
-enum class SourceAccessState {
-    NotSelected,
-    Granted,
-    PermissionLost,
-    InvalidFolder,
-    Unsupported,
-    ProviderError,
-}

@@ -7,8 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.platform.AppLauncher
-import dev.twotechy.inknest.platform.LaunchResult
+import dev.twotechy.inknest.platform.apps.AppLauncher
+import dev.twotechy.inknest.platform.apps.LaunchResult
 
 @Composable
 internal fun rememberAppLaunchAction(

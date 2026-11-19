@@ -47,8 +47,6 @@ import dev.twotechy.inknest.ui.theme.InkNavigationTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkTextStyles
 
-internal enum class TopLevelDestination { Library, Stats, Home, Apps, Settings }
-
 internal val MainDestinations = listOf(
     TopLevelDestination.Home,
     TopLevelDestination.Library,

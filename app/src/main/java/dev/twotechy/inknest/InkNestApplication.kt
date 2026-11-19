@@ -1,6 +1,7 @@
 package dev.twotechy.inknest
 
 import android.app.Application
+import dev.twotechy.inknest.configureRuntimeDiagnostics
 import dev.twotechy.inknest.di.createAppContainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

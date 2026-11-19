@@ -3,10 +3,10 @@ package dev.twotechy.inknest.ui.library
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.twotechy.inknest.data.repository.LibraryRepository
-import dev.twotechy.inknest.data.repository.ReadingOpenRepository
+import dev.twotechy.inknest.data.repository.library.LibraryRepository
+import dev.twotechy.inknest.data.repository.reading.ReadingOpenRepository
 import dev.twotechy.inknest.model.ReadingItem
-import dev.twotechy.inknest.ui.reading.ReadingOpenStateHolder
+import dev.twotechy.inknest.ui.shared.ReadingOpenStateHolder
 import java.io.IOException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

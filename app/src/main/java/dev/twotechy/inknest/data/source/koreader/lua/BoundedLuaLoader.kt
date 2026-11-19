@@ -1,7 +1,6 @@
 package dev.twotechy.inknest.data.source.koreader.lua
 
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.io.InputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -15,9 +14,6 @@ import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
 import org.luaj.vm2.compiler.LuaC
 import org.luaj.vm2.lib.DebugLib
-
-internal enum class LuaFailure { TooLarge, InstructionLimit, InvalidData }
-internal class LuaSourceException(val reason: LuaFailure) : IOException(reason.name)
 
 internal class BoundedLuaLoader(private val instructionLimit: Int = 5_000_000) {
     // Parser objects stay inside the data layer; each call owns a fresh VM and budget.

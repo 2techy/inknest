@@ -4,14 +4,14 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.local.reading.ReadingDatabase
-import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
-import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.repository.StatisticsImporter
-import dev.twotechy.inknest.data.source.stats.SnapshotFileMetadata
-import dev.twotechy.inknest.data.source.stats.SnapshotFingerprint
-import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
-import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
+import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.repository.statistics.impl.StatisticsImporter
+import dev.twotechy.inknest.data.source.statistics.SnapshotFileMetadata
+import dev.twotechy.inknest.data.source.statistics.SnapshotFingerprint
+import dev.twotechy.inknest.data.source.statistics.StatisticsEventDataSource
+import dev.twotechy.inknest.data.source.statistics.StatisticsEventReader
 import dev.twotechy.inknest.model.ReadingEvent
 import java.io.File
 import java.io.IOException
@@ -119,7 +119,7 @@ private class ImportFixture {
     private var retry = false
     private var entered: CompletableDeferred<Unit>? = null
     private var gate: CompletableDeferred<Unit>? = null
-    private val source = object : StatisticsEventSource {
+    private val source = object : StatisticsEventDataSource {
         override suspend fun fingerprint(tree: String): SnapshotFingerprint? {
             assertEquals(
                 "statistics-permissions-$permissionSnapshots",

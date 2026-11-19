@@ -2,15 +2,14 @@ package dev.twotechy.inknest.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.twotechy.inknest.data.repository.InstalledAppsRepository
-import dev.twotechy.inknest.data.repository.ReadingOpenRepository
-import dev.twotechy.inknest.data.repository.ReadingRepository
-import dev.twotechy.inknest.data.repository.ReadingState
-import dev.twotechy.inknest.data.repository.ReadingStatsRepository
-import dev.twotechy.inknest.data.repository.StatisticsRepository
-import dev.twotechy.inknest.model.ReadingSyncIssue
+import dev.twotechy.inknest.data.repository.apps.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.reading.ReadingOpenRepository
+import dev.twotechy.inknest.data.repository.reading.ReadingRepository
+import dev.twotechy.inknest.data.repository.reading.ReadingState
+import dev.twotechy.inknest.data.repository.reading.ReadingStatsRepository
+import dev.twotechy.inknest.data.repository.statistics.StatisticsRepository
 import dev.twotechy.inknest.platform.clock.StatisticsClock
-import dev.twotechy.inknest.ui.reading.ReadingOpenStateHolder
+import dev.twotechy.inknest.ui.shared.ReadingOpenStateHolder
 import java.io.IOException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +44,7 @@ internal class HomeViewModel(
     ) { running, loading, error -> RefreshState(running || loading, error != null) }
 
     private val activity = combine(statisticsRepository.data, clock.moments) { data, moment ->
-        homeActivity(data, moment.today)
+        homeReadingActivity(data, moment.today)
     }.flowOn(defaultDispatcher)
 
     val uiState: StateFlow<HomeUiState> = combine(

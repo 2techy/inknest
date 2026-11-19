@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.data.repository
 
+import dev.twotechy.inknest.data.repository.preferences.UserPreferencesRepository
 import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
 import kotlinx.coroutines.flow.MutableStateFlow

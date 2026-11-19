@@ -10,9 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.AppLanguage
-import dev.twotechy.inknest.platform.AppLanguageController
-
-internal data class LanguageSelection(val current: AppLanguage, val open: () -> Unit)
+import dev.twotechy.inknest.platform.language.AppLanguageController
 
 @Composable
 internal fun rememberLanguageSelection(

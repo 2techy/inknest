@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.SourceStatus
+import dev.twotechy.inknest.data.repository.sources.SourceStatus
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import java.text.DateFormat
 import java.util.Date

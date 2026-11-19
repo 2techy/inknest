@@ -1,17 +1,17 @@
 package dev.twotechy.inknest.ui.home
 
 import androidx.lifecycle.ViewModelStore
-import dev.twotechy.inknest.data.repository.InstalledAppsRepository
-import dev.twotechy.inknest.data.repository.ReadingRepository
-import dev.twotechy.inknest.data.repository.ReadingState
-import dev.twotechy.inknest.data.repository.ReadingStatsRepository
-import dev.twotechy.inknest.data.repository.StatisticsRepository
 import dev.twotechy.inknest.data.repository.TestReadingOpenRepository
+import dev.twotechy.inknest.data.repository.apps.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.reading.ReadingRepository
+import dev.twotechy.inknest.data.repository.reading.ReadingState
+import dev.twotechy.inknest.data.repository.reading.ReadingStatsRepository
+import dev.twotechy.inknest.data.repository.statistics.StatisticsRepository
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
-import dev.twotechy.inknest.model.ReadingStats
+import dev.twotechy.inknest.model.ReadingStatistics
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
@@ -20,7 +20,6 @@ import dev.twotechy.inknest.platform.clock.StatisticsClock
 import dev.twotechy.inknest.platform.clock.StatisticsMoment
 import java.time.LocalDate
 import java.time.ZoneId
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,7 +48,7 @@ class HomeViewModelTest {
     private val book = ReadingItem(ReadingItemId("test", "first.epub"), "First", null, null)
     private val reading = TestReadingRepository()
     private val pins = MutableStateFlow<List<PinnedApp>>(emptyList())
-    private val stats = MutableStateFlow<ReadingStats?>(null)
+    private val stats = MutableStateFlow<ReadingStatistics?>(null)
     private val today = LocalDate.parse("2027-01-03")
     private val clock = object : StatisticsClock {
         override val moments = MutableStateFlow(StatisticsMoment(today, ZoneId.of("UTC")))

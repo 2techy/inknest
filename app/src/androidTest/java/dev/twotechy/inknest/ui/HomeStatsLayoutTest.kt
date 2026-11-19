@@ -38,11 +38,11 @@ import dev.twotechy.inknest.ui.components.HeaderIconPlacement
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.SearchField
 import dev.twotechy.inknest.ui.home.HomeActions
-import dev.twotechy.inknest.ui.home.HomeActivity
-import dev.twotechy.inknest.ui.home.HomeActivitySection
 import dev.twotechy.inknest.ui.home.HomeHeader
 import dev.twotechy.inknest.ui.home.HomePinUiModel
 import dev.twotechy.inknest.ui.home.HomePinnedApps
+import dev.twotechy.inknest.ui.home.HomeReadingActivity
+import dev.twotechy.inknest.ui.home.HomeReadingActivitySection
 import dev.twotechy.inknest.ui.home.HomeReadingStats
 import dev.twotechy.inknest.ui.home.HomeScreen
 import dev.twotechy.inknest.ui.home.HomeUiState
@@ -69,7 +69,7 @@ class HomeStatsLayoutTest {
     private val today = LocalDate.of(2026, 11, 9)
     private val pins = (1..20).map { HomePinUiModel("test/$it", "Pin $it") }
     private val reading =
-        HomeActivity(mapOf(today to StatisticsAmount(120, null)), today, ReadingSyncStatus())
+        HomeReadingActivity(mapOf(today to StatisticsAmount(120, null)), today, ReadingSyncStatus())
 
     @Before fun launch() {
         runBlocking { (context.applicationContext as InkNestApplication).awaitContainer() }
@@ -117,7 +117,7 @@ class HomeStatsLayoutTest {
             if (opened.value) {
                 StatsHighlights(overview, StatisticsUnit.Pages)
             } else {
-                HomeActivitySection(reading) { opened.value = true }
+                HomeReadingActivitySection(reading) { opened.value = true }
             }
         }
         click(context.getString(R.string.home_heatmap_title))

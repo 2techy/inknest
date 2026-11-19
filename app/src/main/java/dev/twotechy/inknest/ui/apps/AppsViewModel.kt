@@ -3,7 +3,7 @@ package dev.twotechy.inknest.ui.apps
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.twotechy.inknest.data.repository.InstalledAppsRepository
+import dev.twotechy.inknest.data.repository.apps.InstalledAppsRepository
 import dev.twotechy.inknest.model.AppInfo
 import dev.twotechy.inknest.model.PinnedApp
 import kotlinx.coroutines.CancellationException
@@ -14,31 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-enum class AppsViewMode { Grid, List }
-
-enum class AppsError { Catalog, SavePins }
-
-data class AppItemUiModel(
-    val componentId: String,
-    val label: String,
-    val isPinned: Boolean,
-    val iconVersion: Long = 0,
-    val canMoveEarlier: Boolean = false,
-    val canMoveLater: Boolean = false,
-)
-
-data class AppsUiState(
-    val searchQuery: String = "",
-    val isSearchActive: Boolean = false,
-    val viewMode: AppsViewMode = AppsViewMode.Grid,
-    val pinnedApps: List<AppItemUiModel> = emptyList(),
-    val allApps: List<AppItemUiModel> = emptyList(),
-    val isLoading: Boolean = true,
-    val isRefreshing: Boolean = false,
-    val error: AppsError? = null,
-    val canDismissError: Boolean = false,
-)
 
 internal class AppsViewModel(
     private val installedAppsRepository: InstalledAppsRepository,

@@ -6,16 +6,16 @@ import android.content.pm.ProviderInfo
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
+import dev.twotechy.inknest.data.source.books.impl.SafBookDataSource
 import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
-import dev.twotechy.inknest.data.source.saf.MissingSourceFile
+import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.SafPermissionSnapshot
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceMetadataCapture
 import dev.twotechy.inknest.data.source.saf.SourceMetadataFingerprint
 import dev.twotechy.inknest.data.source.saf.impl.SafTreeReader
-import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotFiles
+import dev.twotechy.inknest.data.source.statistics.impl.StatisticsSnapshotFiles
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.File
@@ -77,7 +77,7 @@ class SafTreeReaderTest {
         )
         val source = KoreaderCurrentReadingDataSource(
             h.reader,
-            BookProbeDataSource(
+            SafBookDataSource(
                 h.reader,
                 InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
             ),
@@ -111,7 +111,7 @@ class SafTreeReaderTest {
             try {
                 h.reader.describe(h.tree, listOf("missing.sdr", "metadata.epub.lua"))
                 error("Missing sidecar must fail")
-            } catch (_: MissingSourceFile) { }
+            } catch (_: MissingSourceFileException) { }
         }
         val fingerprint = checkNotNull(capture.fingerprint())
         assertEquals(2, fingerprint.documents.size)
@@ -178,7 +178,7 @@ class SafTreeReaderTest {
         val h = Harness()
         h.provider.add("primary:Books/Book.epub", "primary:Books", "Book.epub")
         for (name in listOf("missing.epub", "book.epub")) {
-            assertThrows(MissingSourceFile::class.java) {
+            assertThrows(MissingSourceFileException::class.java) {
                 runBlocking { h.reader.describe(h.tree, listOf(name)) }
             }
         }
@@ -195,7 +195,7 @@ class SafTreeReaderTest {
             "primary:Books/provider-book",
             DocumentsContract.getDocumentId(found.uri.toUri()),
         )
-        assertThrows(MissingSourceFile::class.java) {
+        assertThrows(MissingSourceFileException::class.java) {
             runBlocking { h.reader.describe(h.tree, listOf("missing.epub")) }
         }
         assertEquals(listOf("primary:Books", "primary:Books"), h.provider.childQueries)
@@ -332,7 +332,7 @@ class SafTreeReaderTest {
         val metadataError = assertThrows(IOException::class.java) {
             runBlocking { h.reader.describe(h.tree, listOf("Book.epub")) }
         }
-        assertTrue(metadataError !is MissingSourceFile)
+        assertTrue(metadataError !is MissingSourceFileException)
         assertEquals(listOf("primary:Books", "primary:Books"), h.provider.childQueries)
     }
 

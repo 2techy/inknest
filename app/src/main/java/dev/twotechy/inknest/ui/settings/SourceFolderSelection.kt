@@ -3,7 +3,7 @@ package dev.twotechy.inknest.ui.settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
 
 // Keep platform picker lifetime rules identical in Settings and onboarding.
 @Composable

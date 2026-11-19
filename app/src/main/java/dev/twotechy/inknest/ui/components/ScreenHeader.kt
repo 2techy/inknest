@@ -58,8 +58,6 @@ internal fun ScreenHeader(
     }
 }
 
-internal enum class HeaderIconPlacement { Trailing, Centered, LeadingBack }
-
 @Composable
 internal fun HeaderIconButton(
     icon: Int,

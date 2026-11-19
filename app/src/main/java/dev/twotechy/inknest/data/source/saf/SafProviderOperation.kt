@@ -7,7 +7,7 @@ import java.io.IOException
 internal fun <T> safProviderOperation(read: () -> T): T = try {
     read()
 } catch (missing: FileNotFoundException) {
-    throw MissingSourceFile(missing)
+    throw MissingSourceFileException(missing)
 } catch (failure: IllegalArgumentException) {
     // Some ExternalStorageProvider versions wrap a disappearing document in this exception.
     throw IOException("Storage provider could not access the document", failure)
