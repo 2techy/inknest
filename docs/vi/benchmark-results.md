@@ -4,6 +4,19 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1.000 sách, 200 history và 50.000 events. Target `benchmark` tối ưu, `CompilationMode.None`.
 
+## 2026-11-19 — Tối ưu làm mới dữ liệu đọc
+
+Median foreground refresh (s), năm vòng mỗi scenario; cả hai bản pass 2/2. Cùng instrumentation và setup chờ ổn định sáu giây/prime qua HOME.
+
+| Scenario | Trước | Sau | Thay đổi |
+| --- | --- | --- | --- |
+| `homeReturnUnchanged` | 6.039 | 2.398 | −60.30% |
+| `homeReturnChanged` | 6.668 | 6.761 | +1.41% |
+
+Nguồn không đổi: reading skip 5/5; nguồn đổi: đọc đầy đủ 5/5.
+
+Report: `reading-control-step5-20261119-112754-Measure` / `reading-step5-20261119-112754-Measure`. APK `A290C83F…` → `9481CE10…`; instrumentation `90009B4E…`. Code gốc `1d8bc47`, candidate thêm reading skip.
+
 ## 2026-11-19 — Tối ưu import thống kê
 
 Median foreground refresh (s), năm vòng mỗi scenario; pass 2/2.

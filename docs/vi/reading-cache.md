@@ -2,11 +2,11 @@
 
 [English](../en/reading-cache.md) · [Mục lục](README.md)
 
-Contract sách hiện tại, lịch sử, làm mới và mở sách của `CachedReadingRepository`, dùng chung debug/release. Trang chủ theo dõi Room và `ReadingSyncStatus` độc lập; ghim, đồng hồ và thống kê tách riêng. Metadata thiếu giữ chưa xác định; mở sách không tạo tiến độ/thời điểm đọc giả.
+Contract sách hiện tại, lịch sử, làm mới và mở sách của `RoomReadingRepository`, dùng chung debug/release. Trang chủ theo dõi Room và `ReadingSyncStatus` độc lập; ghim, đồng hồ và thống kê tách riêng. Metadata thiếu giữ chưa xác định; mở sách không tạo tiến độ/thời điểm đọc giả.
 
 ## Ranh giới dữ liệu và nguồn
 
-- `KoreaderCurrentSource` ưu tiên `lastfile` hợp lệ, dự phòng bằng đường dẫn hợp lệ đầu tiên theo thứ tự lịch sử. Nguồn thiếu/hỏng khác dữ liệu rỗng thành công. Sách hiện tại mất/ngoài quyền giữ định danh/tên tệp, kèm cảnh báo truy cập. Không suy sách hiện tại từ thống kê hoặc tên sách/tên tệp.
+- `KoreaderCurrentReadingDataSource` ưu tiên `lastfile` hợp lệ, dự phòng bằng đường dẫn hợp lệ đầu tiên theo thứ tự lịch sử. Nguồn thiếu/hỏng khác dữ liệu rỗng thành công. Sách hiện tại mất/ngoài quyền giữ định danh/tên tệp, kèm cảnh báo truy cập. Không suy sách hiện tại từ thống kê hoặc tên sách/tên tệp.
 - Room schema 8 xuất tại `app/schemas`; giai đoạn phát triển cho xóa/tạo lại cache, chưa bảo đảm nâng cấp ổn định. DataStore giữ riêng tùy chọn, ghim và cấu hình SAF. Làm mới foreground dựng lại cache.
 - `reading_items` lưu định danh nguồn/đường dẫn, truy cập, metadata, tiến độ/trạng thái, thời điểm đọc từ nguồn và thứ tự lịch sử nullable. `reading_sources` lưu con trỏ hiện tại, mốc thử/thành công, lỗi và số mục lịch sử bỏ qua.
 - Định danh miền giữ qua bí danh bộ nhớ chính. Hàng cache phân vùng thêm bằng fingerprint cây KOReader/các cây sách đã sắp xếp. Đọc/kiểm tra/ghi cache cấu hình ứng viên trước khi kích hoạt DataStore; lỗi giữ cấu hình/cache hiện hành. Phân vùng ứng viên ẩn bị xóa khi xóa cache/ngắt kết nối.
@@ -18,7 +18,7 @@ Lịch sử giữ thứ tự mảng; đường dẫn chuẩn trùng giữ mục 
 
 Ghi danh sách mới, con trỏ hiện tại và thứ tự trong một giao dịch Room. Sách không phân giải được vẫn theo dõi với trạng thái truy cập. `ReadingRepository.trackedItems` bổ sung trạng thái; danh sách [Thư viện](library.md) lấy từ danh mục thư mục. Trang chủ không có mục Gần đây.
 
-Sidecar đọc lại khi làm mới: `percent_finished` hữu hạn trong [0, 1] có thể giảm. Trạng thái rõ `reading`, `complete`, `abandoned` được ánh xạ; 100% riêng lẻ không là Đã đọc.
+Lần đọc đầy đủ đọc lại sidecar: `percent_finished` hữu hạn trong [0, 1] có thể giảm. Trạng thái rõ `reading`, `complete`, `abandoned` được ánh xạ; 100% riêng lẻ không là Đã đọc.
 
 Tên/tác giả sách giữ khi thiếu/không hỗ trợ bìa. [Trích xuất có giới hạn](koreader-integration.md) tạo PNG riêng, cạnh dài tối đa 480px, ghi tạm/đổi tên nguyên tử. Khóa gồm nguồn/phân vùng, đường dẫn chuẩn và size/mtime. Fingerprint đã biết không đổi dùng lại metadata/bìa; chưa biết thì đọc lại, tệp đổi dùng khóa mới. Dọn ảnh không còn tham chiếu sau 24 giờ để ứng viên đồng thời ghi tạm an toàn. Xóa cache/ngắt kết nối xóa bìa. Không giữ bitmap trong ViewModel/saved state; cache giải mã theo [hệ thống thiết kế](design-system.md).
 
@@ -43,6 +43,8 @@ Từ chối ID sai/thoát thư mục và volume khác. Kiểm thử gồm tên m
 ## Làm mới và lỗi
 
 Trách nhiệm foreground theo [kiến trúc](architecture.md). Trang chủ/Cài đặt dùng chung tác vụ repository cấp ứng dụng; bên gọi đồng thời chờ cùng job, hủy một bên không hủy bên khác. Đổi nguồn hủy job cũ; kiểm tra khóa hiện hành/tín hiệu hủy trước ghi. Dọn muộn không xóa trạng thái chạy của job khác.
+
+Sau lần ghi cache thành công, làm mới có thể dùng fingerprint trong bộ nhớ của settings/history, mọi sách hiện tại/history, sidecar và các tệp đã biết không tồn tại. Kiểm tra lại quyền mọi cây cấu hình, metadata, định danh cache đã lưu và sự tồn tại của bìa trước khi skip. Metadata thiếu, thay đổi trong lúc đọc hoặc chưa đủ năm giây khi bắt đầu đọc đầy đủ không được dùng lại; tương tự với lỗi đọc nguồn, cảnh báo, mục bị bỏ qua, lỗi theo dõi/ghi cache và giới hạn thu thập metadata. Skip cập nhật thời điểm thử, giữ thời điểm thành công và nội dung cache. Xóa cache, ngắt kết nối, thay nguồn hoặc khởi động lại tiến trình cần đọc đầy đủ. Giới hạn size/mtime trong [tích hợp nguồn](koreader-integration.md) vẫn áp dụng.
 
 - Lỗi nguồn cập nhật metadata đồng bộ, không xóa con trỏ thành công gần nhất. Trang chủ giữ cache, kèm báo cũ/lỗi. Kiểm tra định danh cùng observation để dữ liệu/trạng thái nguồn cũ không hiện dưới cấu hình mới.
 - Báo lỗi ghi cache dự kiến kể cả khi ghi bản lỗi cũng thất bại.

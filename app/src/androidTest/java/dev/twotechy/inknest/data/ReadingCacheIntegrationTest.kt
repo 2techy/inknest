@@ -7,20 +7,25 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.reading.ReadingCache
 import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.local.reading.readingCacheKey
-import dev.twotechy.inknest.data.repository.CachedReadingRepository
 import dev.twotechy.inknest.data.repository.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingState
+import dev.twotechy.inknest.data.repository.RoomReadingRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
+import dev.twotechy.inknest.data.source.books.BookCoverCache
+import dev.twotechy.inknest.data.source.books.BookMetadata
+import dev.twotechy.inknest.data.source.koreader.CurrentReadingDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
-import dev.twotechy.inknest.data.source.koreader.CurrentReadingSource
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
+import dev.twotechy.inknest.data.source.saf.SourceDocument
+import dev.twotechy.inknest.data.source.saf.SourceMetadataFingerprint
 import dev.twotechy.inknest.model.ReadingItem
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.File
 import java.nio.file.Files
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +47,136 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReadingCacheIntegrationTest {
+    @Test fun stableReadingSkipsButMetadataChangesAndRestartRequireRead() = runBlocking {
+        withHarness { h ->
+            h.enableSkip()
+            h.repository.refresh()
+            val success = h.repository.sync.first { it.lastSuccessAt != null }.lastSuccessAt
+            h.time += 10
+            h.repository.refresh()
+            assertEquals(1, h.reads)
+            assertEquals(2, h.permissionSnapshots)
+            assertEquals(
+                success,
+                h.repository.sync.first {
+                    it.lastAttemptAt == h.time
+                }.lastSuccessAt,
+            )
+            h.fingerprint = fingerprint(2)
+            h.repository.refresh()
+            assertEquals(2, h.reads)
+            h.reopen()
+            h.repository.refresh()
+            assertEquals(3, h.reads)
+        }
+    }
+
+    @Test fun lostPermissionAndWarningsRecoverWithoutReusingStaleReading() = runBlocking {
+        withHarness { h ->
+            h.enableSkip()
+            h.repository.refresh()
+            h.permitted = false
+            try {
+                h.repository.refresh()
+                error("Revoked access must not skip")
+            } catch (_: ReadingRefreshException) { }
+            h.repository.sync.first { it.error == ReadingSyncIssue.PermissionLost }
+            h.permitted = true
+            h.repository.refresh()
+            assertEquals(3, h.reads)
+            h.fingerprint = fingerprint(2)
+            h.load = { config ->
+                snapshot(config, "A.epub").copy(
+                    history = emptyList(),
+                    warning = ReadingSyncIssue.InvalidData,
+                )
+            }
+            repeat(2) { h.repository.refresh() }
+            assertEquals(5, h.reads)
+        }
+    }
+
+    @Test fun clearedRowsAndChangedBooksSourceInvalidateRememberedReading() = runBlocking {
+        withHarness { h ->
+            h.enableSkip()
+            h.repository.refresh()
+            h.database.readingDao().clearAll()
+            h.repository.refresh()
+            assertEquals(2, h.reads)
+            h.repository.clearCache()
+            assertEquals(3, h.reads)
+            val before = h.config.config.first()
+            h.repository.replaceSource(
+                before,
+                h.config.treeCandidate(before, SourceFolder.Books, "content://test/new-books"),
+            )
+            h.repository.refresh()
+            assertEquals(5, h.reads)
+            h.repository.disconnect()
+            assertEquals(
+                null,
+                h.database.readingDao().get(
+                    checkNotNull(before.sourceId),
+                    checkNotNull(before.readingCacheKey()).snapshotKey,
+                ),
+            )
+        }
+    }
+
+    @Test fun cacheClearWhileFingerprintWaitsCancelsOldSkipDecision() = runBlocking {
+        withHarness { h ->
+            h.enableSkip()
+            h.repository.refresh()
+            val entered = CompletableDeferred<Unit>()
+            val gate = CompletableDeferred<Unit>()
+            h.checkFingerprint = {
+                entered.complete(Unit)
+                gate.await()
+                true
+            }
+            val pending = async { h.repository.refresh() }
+            entered.await()
+            h.repository.clearCache()
+            try {
+                pending.await()
+                error("Cleared caller must be cancelled")
+            } catch (_: CancellationException) { }
+            assertEquals(2, h.reads)
+            assertCurrent(h.repository, "A.epub")
+        }
+    }
+
+    @Test fun failedSaveNeverRemembersFingerprintAndMissingCoverForcesRead() = runBlocking {
+        withHarness { h ->
+            h.enableSkip()
+            h.executeSql(
+                "CREATE TRIGGER fail_reading_save BEFORE INSERT ON reading_items " +
+                    "BEGIN SELECT RAISE(ABORT, 'test write failure'); END",
+            )
+            try {
+                h.repository.refresh()
+                error("Cache write must fail")
+            } catch (_: ReadingRefreshException) { }
+            h.executeSql("DROP TRIGGER fail_reading_save")
+            val cover = h.createCover()
+            h.load = { config ->
+                val value = snapshot(config, "A.epub")
+                value.copy(
+                    history = listOf(checkNotNull(value.current)),
+                    metadata = mapOf(
+                        "A.epub" to BookMetadata("known", "A", null, cover.toURI().toString()),
+                    ),
+                )
+            }
+            h.repository.refresh()
+            h.repository.refresh()
+            assertEquals(2, h.reads)
+            check(cover.delete())
+            h.repository.refresh()
+            assertEquals(3, h.reads)
+        }
+    }
+
     @Test fun refreshCapturesAttemptTimeBeforeReadAndCandidateUsesCurrentClock() = runBlocking {
         withHarness { h ->
             h.time = 100L
@@ -200,7 +335,7 @@ class ReadingCacheIntegrationTest {
         }
     }
 
-    private suspend fun assertCurrent(repository: CachedReadingRepository, path: String) {
+    private suspend fun assertCurrent(repository: RoomReadingRepository, path: String) {
         repository.reading.first { it is ReadingState.Content && it.current.id.path == path }
     }
 
@@ -239,22 +374,64 @@ class ReadingCacheIntegrationTest {
         var database = openDatabase()
         var reads = 0
         var permissionSnapshots = 0
+        var fingerprint: SourceMetadataFingerprint? = null
+        var permitted = true
+        var checkFingerprint: suspend (SourceMetadataFingerprint) -> Boolean = {
+            permitted && fingerprint == it
+        }
         var time = 1L
         var load: suspend (
             ReadingSourceConfig,
         ) -> CurrentReadingSnapshot = { snapshot(it, "A.epub") }
+        private val covers = BookCoverCache(File(directory, "covers"))
         var repository = createRepository()
+
+        fun enableSkip() {
+            time = 100_000
+            fingerprint = fingerprint(1)
+            load = { config ->
+                val value = snapshot(config, "A.epub")
+                value.copy(history = listOf(checkNotNull(value.current)))
+            }
+        }
+
+        fun createCover(): File = File(directory, "covers/fixture.png").apply {
+            checkNotNull(parentFile).apply { check(mkdirs() || isDirectory) }
+            writeText("fixture")
+        }
+
+        suspend fun executeSql(sql: String) = withContext(Dispatchers.IO) {
+            database.readingDao().get("fixture", "fixture")
+            AndroidSQLiteDriver().open(File(directory, "reading.db").path).use { connection ->
+                connection.prepare(sql).use { it.step() }
+            }
+        }
         private fun openDatabase() =
             Room.databaseBuilder<ReadingDatabase>(context, File(directory, "reading.db").path)
                 .setDriver(AndroidSQLiteDriver()).build()
-        private fun createRepository() = CachedReadingRepository(
+        private fun createRepository() = RoomReadingRepository(
             config,
             ReadingCache(database.readingDao()),
-            CurrentReadingSource {
-                reads++
-                load(it)
+            object : CurrentReadingDataSource {
+                override suspend fun read(config: ReadingSourceConfig): CurrentReadingSnapshot {
+                    reads++
+                    if (!permitted) throw ReadingRefreshException(ReadingSyncIssue.PermissionLost)
+                    return load(config).copy(fingerprint = fingerprint)
+                }
+
+                override suspend fun unchanged(
+                    config: ReadingSourceConfig,
+                    fingerprint: SourceMetadataFingerprint,
+                ): Boolean {
+                    assertEquals(
+                        "reading-permissions-$permissionSnapshots",
+                        currentCoroutineContext()[CoroutineName]?.name,
+                    )
+                    return checkFingerprint(fingerprint)
+                }
             },
             scope,
+            covers = covers,
             now = { time },
             permissionSnapshot = { CoroutineName("reading-permissions-${++permissionSnapshots}") },
         )
@@ -275,4 +452,11 @@ class ReadingCacheIntegrationTest {
             }
         }
     }
+
+    private fun fingerprint(modified: Long) = SourceMetadataFingerprint(
+        mapOf(
+            SourceMetadataFingerprint.Document("content://test/reader", listOf("history.lua")) to
+                SourceDocument("content://test/history", null, 1, modified),
+        ),
+    )
 }

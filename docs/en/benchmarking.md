@@ -45,7 +45,7 @@ For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `Refre
 | --- | --- |
 | Cold / warm startup | `StartupMode.COLD` / `WARM`; initial display time. |
 | Main tabs | Home → Library → Apps → Stats → Home; CPU frame percentiles. |
-| Unchanged HOME return | Open system Settings, return through an explicit HOME intent; foreground refresh span. |
+| Unchanged HOME return | Let fixture files settle for six seconds, prime reading outside measurement, then return from system Settings through an explicit HOME intent; foreground refresh span. |
 | Changed HOME return | Update history/current sidecar and add a 77-second statistics event before returning; foreground refresh span. |
 | Library scan/enrich | Clear target cache while Library is visible; scan span and CPU frames. |
 | Library grid scroll | Six gestures down and six up within the grid; require visible book titles to change; CPU frames. |
@@ -53,6 +53,8 @@ For total refresh/rebuild time, select `RefreshBenchmark#libraryRefresh`, `Refre
 The harness validates completed refreshes, imported progress, 200 tracked items, statistics totals and the full catalog. `TraceSectionMetric` reports summed `InkNest.foregroundRefresh` / `InkNest.libraryScan` spans and their counts. Each completed iteration saves a `dumpsys meminfo` checkpoint; report sampled PSS/RSS separately.
 
 Each scenario also saves a Perfetto trace. Within foreground refresh, `InkNest.reading.refresh` and `InkNest.statistics.refresh` run concurrently; do not add their durations. Statistics detail spans are `InkNest.statistics.fingerprint`, `InkNest.statistics.snapshot.copy`, `InkNest.statistics.import.rows`, `InkNest.statistics.summarize` and `InkNest.statistics.publish`. The rows span includes SQLite event reading and Room batch writes. `InkNest.statistics.skip` marks reuse of an unchanged import. Trace names contain no source paths or document IDs.
+
+Reading uses `InkNest.reading.read` for a full source read, `InkNest.reading.fingerprint` for metadata checks and `InkNest.reading.skip` for successful reuse. Compare control builds with the same quiet-period/priming setup.
 
 Compare the same fixture, harness, compilation mode, display settings and device/host conditions. Keep dated summaries in [results](benchmark-results.md), including build identity and source run; retain raw artifacts outside Git. Memory files use shared device storage, so select checkpoints belonging to the measured scenarios and run.
 

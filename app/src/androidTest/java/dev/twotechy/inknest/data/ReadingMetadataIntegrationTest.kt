@@ -12,7 +12,7 @@ import dev.twotechy.inknest.data.local.reading.readingCacheKey
 import dev.twotechy.inknest.data.source.books.BookCoverCache
 import dev.twotechy.inknest.data.source.books.BookMetadataReader
 import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
-import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentSource
+import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
@@ -53,7 +53,7 @@ class ReadingMetadataIntegrationTest {
             val covers = BookCoverCache(File(directory, "covers"))
             val documents = Documents(epub())
             val books = BookProbeDataSource(documents, directory)
-            val source = KoreaderCurrentSource(
+            val source = KoreaderCurrentReadingDataSource(
                 documents,
                 books,
                 metadataReader = BookMetadataReader(books, covers, cache::metadata),

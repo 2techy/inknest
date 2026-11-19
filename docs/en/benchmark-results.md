@@ -4,6 +4,19 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1,000 books, 200 history entries and 50,000 events. Optimized `benchmark`, `CompilationMode.None`.
 
+## 2026-11-19 — Reading refresh optimization
+
+Foreground refresh median (s), five iterations per scenario; both builds passed 2/2. Same instrumentation and six-second quiet-period/HOME priming setup.
+
+| Scenario | Before | After | Change |
+| --- | --- | --- | --- |
+| `homeReturnUnchanged` | 6.039 | 2.398 | −60.30% |
+| `homeReturnChanged` | 6.668 | 6.761 | +1.41% |
+
+Unchanged: reading skipped 5/5; changed: full read 5/5.
+
+Reports: `reading-control-step5-20261119-112754-Measure` / `reading-step5-20261119-112754-Measure`. APK `A290C83F…` → `9481CE10…`; instrumentation `90009B4E…`. Base `1d8bc47`, with reading-skip changes in the candidate.
+
 ## 2026-11-19 — Statistics import optimization
 
 Foreground refresh median (s), five iterations per scenario; 2/2 passed.

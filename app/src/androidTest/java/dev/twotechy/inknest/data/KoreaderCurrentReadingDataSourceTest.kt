@@ -3,7 +3,7 @@ package dev.twotechy.inknest.data
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
-import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentSource
+import dev.twotechy.inknest.data.source.koreader.impl.KoreaderCurrentReadingDataSource
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
@@ -12,6 +12,7 @@ import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.io.InputStream
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
@@ -24,9 +25,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.fail
 import org.junit.Test
 
-class KoreaderCurrentSourceTest {
+class KoreaderCurrentReadingDataSourceTest {
     @Test fun injectedIoDispatcherPreservesReadCancellation() = runBlocking {
-        withTimeout(10_000) {
+        withTimeout(10_000.milliseconds) {
             Executors.newSingleThreadExecutor { Thread(it, "reading-source-test") }
                 .asCoroutineDispatcher().use { dispatcher ->
                     val started = CompletableDeferred<String>()
@@ -42,7 +43,7 @@ class KoreaderCurrentSourceTest {
                         }
                     }
                     val context = InstrumentationRegistry.getInstrumentation().targetContext
-                    val source = KoreaderCurrentSource(
+                    val source = KoreaderCurrentReadingDataSource(
                         files,
                         BookProbeDataSource(files, context.cacheDir, dispatcher),
                         ioDispatcher = dispatcher,
@@ -101,9 +102,9 @@ class KoreaderCurrentSourceTest {
         }
     }
 
-    private fun source(files: Files): KoreaderCurrentSource {
+    private fun source(files: Files): KoreaderCurrentReadingDataSource {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        return KoreaderCurrentSource(files, BookProbeDataSource(files, context.cacheDir))
+        return KoreaderCurrentReadingDataSource(files, BookProbeDataSource(files, context.cacheDir))
     }
 
     private class Files : SourceDocumentReader {

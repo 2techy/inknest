@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.repository
 
-import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.core.net.toUri
 import dev.twotechy.inknest.data.source.books.BookCoverCache
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 internal class SafSourceSettingsRepository(
     private val config: ReadingSourceConfigRepository,
     private val access: SafSourceAccess,
-    private val reading: CachedReadingRepository,
+    private val reading: RoomReadingRepository,
     private val cacheFile: File,
     private val files: SourceDocumentReader,
     scope: CoroutineScope,
@@ -116,7 +116,7 @@ internal class SafSourceSettingsRepository(
         val before = config.config.first()
         if (folder == SourceFolder.Books) validateBookTree(before.booksTreeUris, selection)
         try {
-            access.persist(Uri.parse(uri), flags)
+            access.persist(uri.toUri(), flags)
             if (folder == SourceFolder.KOReader) validateReaderTree(uri)
             reading.replaceSource(before, config.treeCandidate(before, folder, uri, replacedTree))
         } finally {
@@ -145,10 +145,10 @@ internal class SafSourceSettingsRepository(
         val uri = selection.uri
         val previous = selection.replacedTree
         if (previous != null) require(previous in trees)
-        val candidate = PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(Uri.parse(uri)))
+        val candidate = PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(uri.toUri()))
             ?: throw IOException("Unsupported books folder")
         val existing = (trees - listOfNotNull(previous).toSet()).map {
-            PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(Uri.parse(it)))
+            PrimaryTreePath.parse(DocumentsContract.getTreeDocumentId(it.toUri()))
                 ?: throw IOException("Unsupported saved folder")
         }
         if (existing.any { candidate.overlaps(it) }) throw BookFolderConflict()

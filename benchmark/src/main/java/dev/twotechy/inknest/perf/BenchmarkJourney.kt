@@ -124,6 +124,23 @@ internal class BenchmarkJourney(private val device: UiDevice) {
         control.awaitIdle()
         launchFixture("reset")
         awaitFixtureReady()
+        val resetAt = SystemClock.uptimeMillis()
+        refreshHome()
+        if (!changed) {
+            // Prime the unchanged snapshot after the coarse-mtime safety window, outside measurement.
+            SystemClock.sleep(maxOf(0, resetAt + 6_000 - SystemClock.uptimeMillis()))
+            openSettings()
+            refreshHome()
+        }
+        if (changed) {
+            launchFixture("mutate")
+            awaitFixtureReady()
+        }
+        openSettings()
+        return control.snapshot().refreshes
+    }
+
+    private fun refreshHome() {
         val previous = control.snapshot().refreshes
         device.executeShellCommand(
             "am start -W -n $TARGET/dev.twotechy.inknest.MainActivity -a android.intent.action.MAIN -c android.intent.category.HOME",
@@ -131,12 +148,6 @@ internal class BenchmarkJourney(private val device: UiDevice) {
         awaitHome()
         control.awaitIdle(refreshAfter = previous)
         control.validate()
-        if (changed) {
-            launchFixture("mutate")
-            awaitFixtureReady()
-        }
-        openSettings()
-        return control.snapshot().refreshes
     }
 
     private fun openSettings() {
