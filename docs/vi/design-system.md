@@ -35,7 +35,7 @@ Chuyển trạng thái, menu và dialog giữ tĩnh: không animation trang trí
 | Cache ảnh | Contract |
 | --- | --- |
 | Icon ứng dụng | RAM cache chung, 100 icon ở 128px; khóa gồm component/version và locale/density. Cache miss tải trên IO, dự phòng bằng chữ cái đầu. |
-| Bìa đã giải mã | LRU chung 4 MiB bộ nhớ giữ lại; URI bất biến và nhóm kích thước 64px, tối đa 480px. Tham chiếu UI/buffer tạm ngoài ngân sách. Giải mã tuần tự, yêu cầu trùng dùng lại kết quả. |
+| Bìa đã giải mã | LRU chung giới hạn một phần tám heap app; khóa gồm URI bất biến, chế độ hiển thị và nhóm kích thước 64px, tối đa 480px. Tham chiếu UI/buffer tạm ngoài ngân sách. Tối đa hai khóa khác nhau giải mã đồng thời; yêu cầu trùng chia sẻ tác vụ độc lập với hủy caller. E-Ink ưu tiên RGB565, Standard dùng ARGB8888; ảnh trong suốt có thể cần ARGB8888. Grayscale áp lúc render. |
 
 Trang chủ/Thư viện dùng chung bìa mặc định tĩnh và giải mã IO. Xóa cache/ngắt kết nối vô hiệu bìa đã giải mã, chặn tác vụ cũ nạp lại. Không lưu bitmap trong ViewModel hoặc saved state. Ảnh thu nhỏ trên đĩa theo [contract cache đọc](reading-cache.md).
 

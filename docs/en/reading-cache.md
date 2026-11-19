@@ -20,7 +20,7 @@ Commit replacement history, current pointer and order in one Room transaction. U
 
 Full reads reread sidecars: finite `percent_finished` in [0, 1] may decrease. Explicit `reading`, `complete`, `abandoned` map to known states; 100% alone is not Finished.
 
-Book title/author survive missing/unsupported artwork. [Bounded extraction](koreader-integration.md) produces private PNG thumbnails, longest edge at most 480px, through temporary write/atomic rename. Keys include source/partition, canonical path and size/mtime. Known unchanged fingerprints reuse metadata/covers; unknown ones reread and changed files use new keys. Prune unreferenced thumbnails after 24 hours to allow concurrent candidate staging. Clear/disconnect removes covers. No bitmap belongs in ViewModels/saved state; decoded-cache rules are in [design system](design-system.md).
+Book title/author survive missing/unsupported artwork. [Bounded extraction](koreader-integration.md) produces private color WebP thumbnails (lossy quality 85), longest edge at most 480px, through temporary write/atomic rename. Keys include the thumbnail format version, source/partition, canonical path and size/mtime. PNG cache entries are re-extracted from the book on refresh; there is no format migration. Known unchanged fingerprints reuse metadata/covers; unknown ones reread and changed files use new keys. Prune unreferenced thumbnails after 24 hours to allow concurrent candidate staging. Clear/disconnect removes covers. No bitmap belongs in ViewModels/saved state; decoded-cache rules are in [design system](design-system.md).
 
 ## Saved page position
 

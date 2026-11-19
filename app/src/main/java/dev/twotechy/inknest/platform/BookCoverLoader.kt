@@ -3,27 +3,34 @@ package dev.twotechy.inknest.platform
 import androidx.collection.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-
-internal data class DecodedBookCover(val image: ImageBitmap, val byteCount: Int)
-
-internal fun interface BookCoverSource {
-    suspend fun load(request: BookCoverRequest): DecodedBookCover?
-}
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 internal class BookCoverLoader(
-    private val source: BookCoverSource,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val source: BookCoverDecoder,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    maxBytes: Int = (Runtime.getRuntime().maxMemory() / 8).coerceIn(
+        1,
+        Int.MAX_VALUE.toLong(),
+    ).toInt(),
+    parentScope: CoroutineScope? = null,
 ) {
-    private val cache = object : LruCache<BookCoverRequest, DecodedBookCover>(4 * 1024 * 1024) {
+    private val scope =
+        CoroutineScope(SupervisorJob(parentScope?.coroutineContext?.get(Job)) + ioDispatcher)
+    private val cache = object : LruCache<BookCoverRequest, DecodedBookCover>(maxBytes) {
         override fun sizeOf(key: BookCoverRequest, value: DecodedBookCover): Int = value.byteCount
     }
-    private val decode = Mutex()
+    private val decode = Semaphore(2)
+    private val inFlight = mutableMapOf<BookCoverRequest, Deferred<ImageBitmap?>>()
     private val lock = Any()
     private var generation = 0L
 
@@ -33,11 +40,19 @@ internal class BookCoverLoader(
 
     suspend fun loadCover(request: BookCoverRequest): ImageBitmap? {
         peekCover(request)?.let { return it }
-        return withContext(ioDispatcher) {
-            decode.withLock {
-                peekCover(request)?.let { return@withLock it }
-                val epoch = synchronized(lock) { generation }
-                val result = source.load(request) ?: return@withLock null
+        val pending = synchronized(lock) {
+            cache[request]?.let { return it.image }
+            inFlight.getOrPut(request) { startDecode(request, generation) }
+        }
+        pending.start()
+        return pending.await()
+    }
+
+    private fun startDecode(request: BookCoverRequest, epoch: Long): Deferred<ImageBitmap?> {
+        val pending = scope.async(start = CoroutineStart.LAZY) {
+            decode.withPermit {
+                if (synchronized(lock) { epoch != generation }) return@withPermit null
+                val result = source.load(request) ?: return@withPermit null
                 currentCoroutineContext().ensureActive()
                 synchronized(lock) {
                     if (epoch != generation) return@synchronized null
@@ -46,10 +61,17 @@ internal class BookCoverLoader(
                 }
             }
         }
+        pending.invokeOnCompletion {
+            synchronized(lock) {
+                if (inFlight[request] === pending) inFlight.remove(request)
+            }
+        }
+        return pending
     }
 
     fun clear() = synchronized(lock) {
         generation++
         cache.evictAll()
+        inFlight.clear()
     }
 }

@@ -12,8 +12,8 @@ import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.ReadingState
 import dev.twotechy.inknest.data.repository.RoomReadingRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
-import dev.twotechy.inknest.data.source.books.BookCoverCache
 import dev.twotechy.inknest.data.source.books.BookMetadata
+import dev.twotechy.inknest.data.source.books.FileBookCoverStore
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingDataSource
 import dev.twotechy.inknest.data.source.koreader.CurrentReadingSnapshot
 import dev.twotechy.inknest.data.source.koreader.ReadingRefreshException
@@ -383,7 +383,7 @@ class ReadingCacheIntegrationTest {
         var load: suspend (
             ReadingSourceConfig,
         ) -> CurrentReadingSnapshot = { snapshot(it, "A.epub") }
-        private val covers = BookCoverCache(File(directory, "covers"))
+        private val covers = FileBookCoverStore(File(directory, "covers"))
         var repository = createRepository()
 
         fun enableSkip() {
@@ -395,7 +395,7 @@ class ReadingCacheIntegrationTest {
             }
         }
 
-        fun createCover(): File = File(directory, "covers/fixture.png").apply {
+        fun createCover(): File = File(directory, "covers/v1-${"a".repeat(64)}.webp").apply {
             checkNotNull(parentFile).apply { check(mkdirs() || isDirectory) }
             writeText("fixture")
         }

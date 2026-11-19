@@ -35,7 +35,7 @@ Transitions, menus and dialogs stay static: no decorative animation, ripple, sha
 | Image cache | Contract |
 | --- | --- |
 | App icons | Shared RAM cache, 100 icons at 128px; keys include component/version and locale/density. IO misses use an initial-letter fallback. |
-| Decoded book covers | Shared 4 MiB retained-allocation LRU; immutable URI and 64px display-size buckets capped at 480px. Active references/temporary buffers are outside this budget. Decodes serialize and duplicate requests reuse results. |
+| Decoded book covers | Shared retained-allocation LRU capped at one eighth of the app heap; keys include immutable URI, display mode and 64px size buckets capped at 480px. Active references/temporary buffers are outside this budget. At most two different keys decode concurrently; duplicate requests share work independently of caller cancellation. E-Ink requests prefer RGB565, Standard uses ARGB8888; transparency may require ARGB8888. Grayscale is applied at render time. |
 
 Home/Library share a static book placeholder and IO decoding. Clear/disconnect invalidates decoded covers and prevents stale in-flight work restoring them. No bitmap belongs in ViewModels or saved state. Disk thumbnails follow the [reading-cache contract](reading-cache.md).
 

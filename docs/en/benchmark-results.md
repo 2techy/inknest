@@ -4,6 +4,23 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1,000 books, 200 history entries and 50,000 events. Optimized `benchmark`, `CompilationMode.None`.
 
+## 2026-11-19 — Cover cache and WebP thumbnails
+
+Two scenarios passed, five iterations each. Compared with the 2026-11-18 reference; differences include intervening changes, not an isolated WebP comparison. Scan and memory values are medians; frame values are percentiles.
+
+| Scenario | Metric | Reference | Current | Change |
+| --- | --- | --- | --- | --- |
+| `libraryScanAndEnrich` | Scan (s) | 29.693 | 25.541 | −13.98% |
+| `libraryGridScroll` | CPU frame P50 (ms) | 30.163 | 15.975 | −47.04% |
+| `libraryGridScroll` | CPU frame P95 (ms) | 76.004 | 28.266 | −62.81% |
+| `libraryGridScroll` | CPU frame P99 (ms) | 89.551 | 32.776 | −63.40% |
+| `libraryScanAndEnrich` | PSS (MiB) | 73.749 | 66.737 | −9.51% |
+| `libraryScanAndEnrich` | RSS (MiB) | 166.336 | 174.656 | +5.00% |
+| `libraryGridScroll` | PSS (MiB) | 70.942 | 61.345 | −13.53% |
+| `libraryGridScroll` | RSS (MiB) | 163.492 | 165.496 | +1.23% |
+
+Report: `cover-step6-Measure`; APK `FCC6BC00…`, base `8f173cd` + cover changes. References: `baseline-step1-user-20261118-201053-Measure` (scan), `scroll-grid-selection-fix-20261118-Measure` (scroll). Memory is sampled after each journey.
+
 ## 2026-11-19 — Reading refresh optimization
 
 Foreground refresh median (s), five iterations per scenario; both builds passed 2/2. Same instrumentation and six-second quiet-period/HOME priming setup.

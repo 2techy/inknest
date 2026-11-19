@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.source.koreader.impl
 
 import dev.twotechy.inknest.data.source.books.BookMetadata
-import dev.twotechy.inknest.data.source.books.BookMetadataReader
+import dev.twotechy.inknest.data.source.books.BookMetadataEnricher
 import dev.twotechy.inknest.data.source.books.ResolvedBook
 import dev.twotechy.inknest.data.source.books.impl.BookProbeDataSource
 import dev.twotechy.inknest.data.source.capability.ProbeIssue
@@ -33,7 +33,7 @@ internal class KoreaderCurrentReadingDataSource(
     private val books: BookProbeDataSource,
     private val lua: ReaderLuaDataSource = ReaderLuaDataSource(),
     private val access: SafSourceAccess? = null,
-    private val metadataReader: BookMetadataReader? = null,
+    private val metadataReader: BookMetadataEnricher? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val now: () -> Long = System::currentTimeMillis,
 ) : CurrentReadingDataSource {

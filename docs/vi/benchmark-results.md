@@ -4,6 +4,23 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1.000 sách, 200 history và 50.000 events. Target `benchmark` tối ưu, `CompilationMode.None`.
 
+## 2026-11-19 — Cache bìa và thumbnail WebP
+
+Hai scenario pass, mỗi case năm vòng. So với baseline 2026-11-18; chênh lệch gồm cả thay đổi xen giữa, chưa tách riêng tác động WebP. Scan và bộ nhớ dùng median; frame dùng percentile.
+
+| Scenario | Chỉ số | Baseline | Hiện tại | Thay đổi |
+| --- | --- | --- | --- | --- |
+| `libraryScanAndEnrich` | Scan (s) | 29.693 | 25.541 | −13.98% |
+| `libraryGridScroll` | CPU frame P50 (ms) | 30.163 | 15.975 | −47.04% |
+| `libraryGridScroll` | CPU frame P95 (ms) | 76.004 | 28.266 | −62.81% |
+| `libraryGridScroll` | CPU frame P99 (ms) | 89.551 | 32.776 | −63.40% |
+| `libraryScanAndEnrich` | PSS (MiB) | 73.749 | 66.737 | −9.51% |
+| `libraryScanAndEnrich` | RSS (MiB) | 166.336 | 174.656 | +5.00% |
+| `libraryGridScroll` | PSS (MiB) | 70.942 | 61.345 | −13.53% |
+| `libraryGridScroll` | RSS (MiB) | 163.492 | 165.496 | +1.23% |
+
+Report: `cover-step6-Measure`; APK `FCC6BC00…`, code gốc `8f173cd` + thay đổi bìa. Tham chiếu: `baseline-step1-user-20261118-201053-Measure` (scan), `scroll-grid-selection-fix-20261118-Measure` (cuộn). Bộ nhớ lấy mẫu sau mỗi journey.
+
 ## 2026-11-19 — Tối ưu làm mới dữ liệu đọc
 
 Median foreground refresh (s), năm vòng mỗi scenario; cả hai bản pass 2/2. Cùng instrumentation và setup chờ ổn định sáu giây/prime qua HOME.

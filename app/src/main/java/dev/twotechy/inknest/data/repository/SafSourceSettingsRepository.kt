@@ -2,7 +2,7 @@ package dev.twotechy.inknest.data.repository
 
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
-import dev.twotechy.inknest.data.source.books.BookCoverCache
+import dev.twotechy.inknest.data.source.books.FileBookCoverStore
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
@@ -36,7 +36,7 @@ internal class SafSourceSettingsRepository(
     private val files: SourceDocumentReader,
     scope: CoroutineScope,
     private val library: LibraryRepository,
-    private val covers: BookCoverCache,
+    private val covers: FileBookCoverStore,
     private val statistics: StatisticsRepository,
 ) : SourceSettingsRepository {
     private data class Refresh(val generation: Long = 0)
