@@ -4,6 +4,8 @@ import dev.twotechy.inknest.data.source.io.copyBounded
 import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
+import dev.twotechy.inknest.data.source.stats.SnapshotFileMetadata
+import dev.twotechy.inknest.data.source.stats.SnapshotFingerprint
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
 import java.io.File
 
@@ -12,12 +14,29 @@ internal class StatisticsSnapshotFiles(
     private val files: SourceDocumentReader,
     private val tree: String,
 ) {
-    suspend fun copyTo(directory: File): Boolean {
+    suspend fun fingerprint(): SnapshotFingerprint = metadata().fingerprint()
+
+    suspend fun copyTo(directory: File): SnapshotFingerprint {
         val before = metadata()
         if (before[DATABASE_NAME] == null) throw MissingSourceFile()
         copyFiles(directory, before)
         if (before != metadata()) throw StatisticsSnapshotChanged()
-        return before["$DATABASE_NAME-wal"] != null
+        return before.fingerprint()
+    }
+
+    private fun Map<String, SourceDocument?>.fingerprint() = SnapshotFingerprint(
+        get(DATABASE_NAME).fingerprint(),
+        get("$DATABASE_NAME-wal").fingerprint(),
+        get("$DATABASE_NAME-shm").fingerprint(),
+    )
+
+    private fun SourceDocument?.fingerprint(): SnapshotFileMetadata {
+        if (this == null) return SnapshotFileMetadata.Absent
+        val bytes = size
+        val timestamp = modified
+        if (bytes == null || timestamp == null) return SnapshotFileMetadata.Unknown
+        if (bytes < 0 || timestamp <= 0) return SnapshotFileMetadata.Unknown
+        return SnapshotFileMetadata.Present(bytes, timestamp)
     }
 
     private suspend fun metadata(): Map<String, SourceDocument?> =

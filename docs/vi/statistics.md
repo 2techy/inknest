@@ -33,6 +33,7 @@ Thiếu DB, mất quyền hoặc schema chưa hỗ trợ là không khả dụng
 
 - Nhập tối đa 500 sự kiện mỗi lô vào generation tạm riêng trong Room. Sự kiện trang/layout gốc ở trên đĩa; SQL tính trước giây/trang theo ngày. UI state chỉ có tổng, generation, múi giờ và thời điểm chụp.
 - Bản chụp thành công đã đóng hoàn toàn được kích hoạt nguyên tử. Mỗi lần thử dùng generation riêng; lỗi/hủy giữ bản đang dùng trước đó. Làm mới thay thế, không nối thêm.
+- Trong cùng tiến trình, làm mới dùng lại generation đang hoạt động khi fingerprint DB/WAL/SHM khớp lần import thành công gần nhất, nguồn và múi giờ khớp, Room vẫn giữ generation đó. Bỏ qua import giữ timestamp bản chụp; lần làm mới vẫn hoàn tất. Xóa cache, đổi nguồn, chia lại ngày hoặc khởi động lại tiến trình cần import lại. Xem quy tắc và giới hạn fingerprint tại [tích hợp nguồn](koreader-integration.md).
 - Token nhập đăng ký trước sao chép bị vô hiệu khi xóa cache. Dọn dẹp theo con trỏ Room đã commit, kể cả khi hủy đồng thời với kích hoạt; xóa generation bỏ dở sau thao tác và lúc khởi động.
 - Cây KOReader phân vùng thống kê; đổi thư mục sách không làm mất dữ liệu. Xóa cache/ngắt kết nối xóa sự kiện, tổng, token và timestamp, giữ tùy chọn/ghim. Xem [lưu trữ cache](reading-cache.md).
 - Khởi động, trở lại foreground và làm mới từ Trang chủ/Cài đặt/Thống kê dùng chung tác vụ cấp ứng dụng. Chuyển nguồn ngăn bản cũ nạp lại dữ liệu đã ngắt. Đổi tab, đơn vị, kỳ, tìm kiếm và đồng hồ không đọc SAF.

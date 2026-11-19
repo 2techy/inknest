@@ -111,7 +111,7 @@ class SafTreeReaderTest {
         val directory = Files.createTempDirectory(cache.toPath(), "stats-missing-wal-").toFile()
         try {
             withContext(h.reader.permissionSnapshot()) {
-                assertFalse(StatisticsSnapshotFiles(h.reader, h.tree).copyTo(directory))
+                assertFalse(StatisticsSnapshotFiles(h.reader, h.tree).copyTo(directory).hasWal)
             }
             assertEquals(listOf("statistics.sqlite3"), directory.list().orEmpty().toList())
             assertEquals("book", File(directory, "statistics.sqlite3").readText())

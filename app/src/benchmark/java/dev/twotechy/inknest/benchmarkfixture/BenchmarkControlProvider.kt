@@ -90,10 +90,10 @@ class BenchmarkControlProvider : ContentProvider() {
     }
 
     private suspend fun refreshStatistics(container: AppContainer) {
-        val before = container.statisticsRepository.data.value.updatedAt
+        val before = container.statisticsRepository.data.value.sync.lastAttemptAt
         container.statisticsRepository.refresh()
         val result = container.statisticsRepository.data.first {
-            !it.sync.running && (it.updatedAt != before || it.sync.error != null)
+            !it.sync.running && (it.sync.lastAttemptAt != before || it.sync.error != null)
         }
         check(result.sync.error == null)
     }

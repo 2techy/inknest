@@ -8,6 +8,8 @@ import dev.twotechy.inknest.data.local.reading.ReadingDatabase
 import dev.twotechy.inknest.data.repository.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.SourceFolder
 import dev.twotechy.inknest.data.repository.StatisticsImporter
+import dev.twotechy.inknest.data.source.stats.SnapshotFileMetadata
+import dev.twotechy.inknest.data.source.stats.SnapshotFingerprint
 import dev.twotechy.inknest.data.source.stats.StatisticsEventReader
 import dev.twotechy.inknest.data.source.stats.StatisticsEventSource
 import dev.twotechy.inknest.model.ReadingEvent
@@ -38,6 +40,30 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class StatisticsImportTest {
+    @Test fun unchangedSnapshotsSkipButWalAndUnknownMetadataRequireImport() = runBlocking {
+        withFixture { it.verifyFingerprints() }
+    }
+
+    @Test fun recentMetadataMustBeImportedAgainAfterItSettles() = runBlocking {
+        withFixture { it.verifyRecentMetadata() }
+    }
+
+    @Test fun clearSourceAndTimezoneChangesInvalidateSkip() = runBlocking {
+        withFixture { it.verifySkipInvalidation() }
+    }
+
+    @Test fun rejectedPublicationAndCancellationNeverEnableSkip() = runBlocking {
+        withFixture { it.verifyRejectedPublication() }
+    }
+
+    @Test fun skipUsesCopiedFingerprintAndRequiresThePublishedTimezone() = runBlocking {
+        withFixture { it.verifyCopiedFingerprintAndZoneRace() }
+    }
+
+    @Test fun closeFailureAndLostActivationDoNotRememberFingerprint() = runBlocking {
+        withFixture { it.verifyCloseFailureAndActivationRace() }
+    }
+
     @Test fun batchesPublishAtomicallyAndRebinLocallyAcrossDst() = runBlocking {
         withFixture { fixture ->
             fixture.importer.refresh("tree")
@@ -85,38 +111,41 @@ private class ImportFixture {
     private var zone = ZoneId.of("UTC")
     private var calls = 0
     private var permissionSnapshots = 0
+    private var timestamp = 100_000L
+    private var fingerprint: SnapshotFingerprint? = null
+    private var copiedFingerprint: SnapshotFingerprint? = null
+    private var failOnClose = false
     private var failAfterBatch = false
     private var retry = false
     private var entered: CompletableDeferred<Unit>? = null
     private var gate: CompletableDeferred<Unit>? = null
     private val source = object : StatisticsEventSource {
+        override suspend fun fingerprint(tree: String): SnapshotFingerprint? {
+            assertEquals(
+                "statistics-permissions-$permissionSnapshots",
+                currentCoroutineContext()[CoroutineName]?.name,
+            )
+            return fingerprint
+        }
+
         override suspend fun <T> withEvents(
             tree: String,
             consume: suspend (StatisticsEventReader) -> T,
         ): T {
             calls++
             assertEquals(
-                "statistics-permissions-$calls",
+                "statistics-permissions-$permissionSnapshots",
                 currentCoroutineContext()[CoroutineName]?.name,
             )
-            val previous = dao.source(tree)
-            val first = StatisticsEventReader { batch ->
-                batch(List(500) { event("2026-11-01T05:30:00Z", page = 1) })
-                assertEquals(previous, dao.source(tree))
-                entered?.complete(Unit)
-                gate?.await()
-                if (failAfterBatch || retry) throw IOException("Interrupted snapshot")
-                batch(
-                    listOf(
-                        event("2026-11-01T06:30:00Z", page = 1),
-                        event("2026-11-01T06:40:00Z", page = 1, layout = 200),
-                        event("2026-11-02T00:30:00Z", page = null),
-                        event("2026-11-02T01:00:00Z", page = 9).copy(seconds = 0),
-                        event("2027-01-01T00:00:00Z", page = 1),
-                    ),
-                )
+            val first = snapshotReader(tree)
+            val snapshot = object : StatisticsEventReader by first {
+                override val fingerprint = copiedFingerprint ?: this@ImportFixture.fingerprint
             }
-            if (!retry) return consume(first)
+            if (!retry) {
+                val result = consume(snapshot)
+                if (failOnClose) throw IOException("Snapshot close failed")
+                return result
+            }
             try {
                 consume(first)
                 error("Expected failed attempt")
@@ -135,11 +164,163 @@ private class ImportFixture {
         source,
         Mutex(),
         permissionSnapshot = { CoroutineName("statistics-permissions-${++permissionSnapshots}") },
+        now = { timestamp },
     ) { zone }
 
-    suspend fun select() {
+    private suspend fun snapshotReader(tree: String): StatisticsEventReader {
+        val previous = dao.source(tree)
+        return StatisticsEventReader { batch ->
+            batch(List(500) { event("2026-11-01T05:30:00Z", page = 1) })
+            assertEquals(previous, dao.source(tree))
+            entered?.complete(Unit)
+            gate?.await()
+            if (failAfterBatch || retry) throw IOException("Interrupted snapshot")
+            batch(
+                listOf(
+                    event("2026-11-01T06:30:00Z", page = 1),
+                    event("2026-11-01T06:40:00Z", page = 1, layout = 200),
+                    event("2026-11-02T00:30:00Z", page = null),
+                    event("2026-11-02T01:00:00Z", page = 9).copy(seconds = 0),
+                    event("2027-01-01T00:00:00Z", page = 1),
+                ),
+            )
+        }
+    }
+
+    suspend fun select(tree: String = "tree") {
         val before = config.config.first()
-        config.activateTree(before, config.treeCandidate(before, SourceFolder.KOReader, "tree"))
+        config.activateTree(before, config.treeCandidate(before, SourceFolder.KOReader, tree))
+    }
+
+    suspend fun verifyFingerprints() {
+        fingerprint = stableFingerprint()
+        importer.refresh("tree")
+        val previous = dao.source("tree")
+        importer.refresh("tree")
+        assertEquals(1, calls)
+        assertEquals(previous, dao.source("tree"))
+        fingerprint = stableFingerprint().copy(wal = SnapshotFileMetadata.Present(30, 2))
+        importer.refresh("tree")
+        assertEquals(2, calls)
+        fingerprint = stableFingerprint()
+        importer.refresh("tree")
+        assertEquals(3, calls)
+        fingerprint = stableFingerprint().copy(shm = SnapshotFileMetadata.Present(40, 3))
+        importer.refresh("tree")
+        assertEquals(4, calls)
+        fingerprint = stableFingerprint().copy(wal = SnapshotFileMetadata.Unknown)
+        repeat(2) { importer.refresh("tree") }
+        assertEquals(6, calls)
+        fingerprint = stableFingerprint().copy(database = SnapshotFileMetadata.Present(50, 4))
+        importer.refresh("tree")
+        assertEquals(7, calls)
+    }
+
+    suspend fun verifyRecentMetadata() {
+        fingerprint =
+            stableFingerprint().copy(database = SnapshotFileMetadata.Present(50, timestamp))
+        importer.refresh("tree")
+        timestamp += 10_000
+        // A write in the same coarse mtime bucket may have happened after the first copy.
+        importer.refresh("tree")
+        assertEquals(2, calls)
+        importer.refresh("tree")
+        assertEquals(2, calls)
+        fingerprint =
+            stableFingerprint().copy(database = SnapshotFileMetadata.Present(50, timestamp + 1))
+        repeat(2) { importer.refresh("tree") }
+        assertEquals(4, calls)
+    }
+
+    suspend fun verifySkipInvalidation() {
+        fingerprint = stableFingerprint()
+        importer.refresh("tree")
+        database.readingDao().clearAll()
+        importer.refresh("tree")
+        assertEquals(2, calls)
+        zone = ZoneId.of("America/New_York")
+        importer.rebin("tree", zone)
+        importer.refresh("tree")
+        assertEquals(3, calls)
+        select("other")
+        importer.refresh("other")
+        select()
+        importer.refresh("tree")
+        assertEquals(5, calls)
+    }
+
+    suspend fun verifyRejectedPublication() = coroutineScope {
+        fingerprint = stableFingerprint()
+        entered = CompletableDeferred()
+        gate = CompletableDeferred()
+        val pending = async { importer.refresh("tree") }
+        entered?.await()
+        select("other")
+        gate?.complete(Unit)
+        pending.await()
+        assertNull(dao.source("tree"))
+        entered = null
+        gate = null
+        select()
+        importer.refresh("tree")
+        assertEquals(2, calls)
+        fingerprint = stableFingerprint().copy(wal = SnapshotFileMetadata.Present(20, 2))
+        verifyCancellation()
+        importer.refresh("tree")
+        assertEquals(5, calls)
+    }
+
+    suspend fun verifyCopiedFingerprintAndZoneRace() = coroutineScope {
+        fingerprint = stableFingerprint()
+        copiedFingerprint = stableFingerprint().copy(wal = SnapshotFileMetadata.Present(20, 2))
+        importer.refresh("tree")
+        fingerprint = copiedFingerprint
+        importer.refresh("tree")
+        assertEquals(1, calls)
+        fingerprint = stableFingerprint()
+        copiedFingerprint = null
+        entered = CompletableDeferred()
+        gate = CompletableDeferred()
+        val previous = dao.source("tree")
+        val pending = async { importer.refresh("tree") }
+        entered?.await()
+        zone = ZoneId.of("America/New_York")
+        gate?.complete(Unit)
+        pending.await()
+        assertEquals(previous, dao.source("tree"))
+        entered = null
+        gate = null
+        importer.refresh("tree")
+        assertEquals(3, calls)
+    }
+
+    suspend fun verifyCloseFailureAndActivationRace() = coroutineScope {
+        fingerprint = stableFingerprint()
+        failOnClose = true
+        try {
+            importer.refresh("tree")
+            fail("Snapshot must close successfully before publication")
+        } catch (_: IOException) {
+            assertNull(dao.source("tree"))
+        }
+        failOnClose = false
+        importer.refresh("tree")
+        assertEquals(2, calls)
+        val previous = checkNotNull(dao.source("tree"))
+        fingerprint = stableFingerprint().copy(wal = SnapshotFileMetadata.Present(20, 2))
+        entered = CompletableDeferred()
+        gate = CompletableDeferred()
+        val pending = async { importer.refresh("tree") }
+        entered?.await()
+        val replacement = previous.copy(generation = "replacement")
+        dao.putSource(replacement)
+        gate?.complete(Unit)
+        pending.await()
+        assertEquals(replacement, dao.source("tree"))
+        entered = null
+        gate = null
+        importer.refresh("tree")
+        assertEquals(4, calls)
     }
 
     suspend fun verifySummaryAndRebin() {
@@ -198,6 +379,7 @@ private class ImportFixture {
     suspend fun verifyCancellation() = coroutineScope {
         importer.refresh("tree")
         val previous = dao.source("tree")
+        fingerprint = fingerprint?.copy(database = SnapshotFileMetadata.Present(3, 1))
         entered = CompletableDeferred()
         gate = CompletableDeferred()
         val pending = async { importer.refresh("tree") }
@@ -219,3 +401,9 @@ private fun event(time: String, page: Long?, layout: Long? = 100) =
     ReadingEvent(Instant.parse(time).toEpochMilli(), 60, 1, page, layout)
 
 private fun day(date: String) = LocalDate.parse(date).toEpochDay()
+
+private fun stableFingerprint() = SnapshotFingerprint(
+    SnapshotFileMetadata.Present(2, 1),
+    SnapshotFileMetadata.Absent,
+    SnapshotFileMetadata.Absent,
+)

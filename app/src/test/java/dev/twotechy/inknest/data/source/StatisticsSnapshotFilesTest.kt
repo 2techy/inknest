@@ -4,6 +4,8 @@ import dev.twotechy.inknest.data.source.saf.MissingSourceFile
 import dev.twotechy.inknest.data.source.saf.SourceDocument
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
 import dev.twotechy.inknest.data.source.saf.safProviderOperation
+import dev.twotechy.inknest.data.source.stats.SnapshotFileMetadata
+import dev.twotechy.inknest.data.source.stats.SnapshotFingerprint
 import dev.twotechy.inknest.data.source.stats.StatisticsSnapshotChanged
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotFiles
 import dev.twotechy.inknest.data.source.stats.impl.StatisticsSnapshotProbe
@@ -24,10 +26,42 @@ import org.junit.rules.TemporaryFolder
 class StatisticsSnapshotFilesTest {
     @get:Rule val temporary = TemporaryFolder()
 
+    @Test fun fingerprintsDistinguishAbsentUnknownAndChangingWal() = runTest {
+        val documents = Documents()
+        val source = StatisticsSnapshotFiles(documents, "tree")
+        val before = source.fingerprint()
+        assertEquals(SnapshotFileMetadata.Present(2, 1), before.database)
+        assertEquals(SnapshotFileMetadata.Absent, before.wal)
+        assertEquals(SnapshotFileMetadata.Absent, before.shm)
+        assertEquals(before, source.copyTo(temporary.newFolder()))
+        documents.wal = true
+        assertTrue(before != source.fingerprint())
+        documents.modified = null
+        assertEquals(SnapshotFileMetadata.Unknown, source.fingerprint().database)
+        documents.modified = 0
+        assertEquals(SnapshotFileMetadata.Unknown, source.fingerprint().wal)
+        documents.modified = 1
+        documents.size = null
+        assertEquals(SnapshotFileMetadata.Unknown, source.fingerprint().database)
+    }
+
+    @Test fun onlyKnownSettledMetadataIsReusable() {
+        fun fingerprint(file: SnapshotFileMetadata) = SnapshotFingerprint(
+            file,
+            SnapshotFileMetadata.Absent,
+            SnapshotFileMetadata.Absent,
+        )
+        assertFalse(fingerprint(SnapshotFileMetadata.Unknown).reusableAt(10_000))
+        assertFalse(fingerprint(SnapshotFileMetadata.Absent).reusableAt(10_000))
+        assertFalse(fingerprint(SnapshotFileMetadata.Present(2, 5_001)).reusableAt(10_000))
+        assertFalse(fingerprint(SnapshotFileMetadata.Present(2, 20_000)).reusableAt(10_000))
+        assertTrue(fingerprint(SnapshotFileMetadata.Present(2, 5_000)).reusableAt(10_000))
+    }
+
     @Test fun absentWalAndShmAreValidWhileDisappearingWalInvalidatesTheCopy() = runTest {
         val documents = Documents()
         val directory = temporary.newFolder()
-        assertFalse(StatisticsSnapshotFiles(documents, "tree").copyTo(directory))
+        assertFalse(StatisticsSnapshotFiles(documents, "tree").copyTo(directory).hasWal)
         assertEquals("db", File(directory, StatisticsSnapshotFiles.DATABASE_NAME).readText())
         documents.wal = true
         documents.loseWalOnOpen = true
@@ -60,6 +94,8 @@ class StatisticsSnapshotFilesTest {
         var loseWalOnOpen = false
         var metadataFailure = false
         var attempts = 0
+        var modified: Long? = 1
+        var size: Long? = 2
 
         override suspend fun describe(tree: String, path: List<String>): SourceDocument {
             val name = path.last()
@@ -67,7 +103,7 @@ class StatisticsSnapshotFilesTest {
             checkWalMetadata(path)
             if (name.endsWith("-shm")) throw MissingSourceFile()
             if (name.endsWith("-wal") && !wal) throw MissingSourceFile()
-            return SourceDocument("content://test/$name", null, 2, 1)
+            return SourceDocument("content://test/$name", null, size, modified)
         }
 
         private fun checkWalMetadata(path: List<String>) {

@@ -4,6 +4,17 @@
 
 AVD: `Tango_2_Virtual`, Android 14/API 34, x86_64, 862×1648, density 320, font scale 1.0. Fixture: 1,000 books, 200 history entries and 50,000 events. Optimized `benchmark`, `CompilationMode.None`.
 
+## 2026-11-19 — Statistics import optimization
+
+Foreground refresh median (s), five iterations per scenario; 2/2 passed.
+
+| Scenario | Before | After | Change |
+| --- | --- | --- | --- |
+| `homeReturnUnchanged` | 9.375 | 5.494 | −41.40% |
+| `homeReturnChanged` | 9.323 | 6.066 | −34.93% |
+
+Report: `home-step4-trace-Measure`; reference: `step3-20261119-001645-Measure`. APK `8FC9FD14…`, base `a116650` + local changes. Separate runs; AVD restarted before the latest run.
+
 ## 2026-11-19 — SAF direct lookup
 
 **Operations** — total operation plus data-readiness validation, in seconds. One iteration per build; both builds passed 3/3. Reference: master `e8453e5`, with identical instrumentation on both builds.
