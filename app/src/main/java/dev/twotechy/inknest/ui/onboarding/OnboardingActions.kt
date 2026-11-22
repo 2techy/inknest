@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.ui.onboarding
 
 import dev.twotechy.inknest.model.DisplayMode
-import dev.twotechy.inknest.ui.settings.SourceConnectionActions
+import dev.twotechy.inknest.ui.shared.SourceFolderActions
 
 internal data class OnboardingActions(
     val mode: (DisplayMode) -> Unit,
@@ -9,5 +9,5 @@ internal data class OnboardingActions(
     val back: () -> Unit,
     val finish: () -> Unit,
     val requestLauncher: () -> Unit,
-    val connection: SourceConnectionActions,
+    val folders: SourceFolderActions,
 )

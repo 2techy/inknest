@@ -69,6 +69,53 @@ class AppNavigationViewModelTest {
         assertEquals(TopLevelDestination.Home.name, vm.selected.value)
     }
 
+    @Test fun launcherHandoffKeepsSetupOpenOnlyOnceAfterRestoration() {
+        val saved = SavedStateHandle()
+        val navigation = AppNavigationViewModel(saved)
+        navigation.select(TopLevelDestination.Settings)
+        navigation.reviewSetup()
+        navigation.beginOnboardingLauncherRequest()
+
+        val restored = AppNavigationViewModel(
+            SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) }),
+        )
+        restored.handleHomeIntent(fromHomeKey = false) { true }
+        assertEquals(true, restored.onboardingVisible.value)
+        assertEquals(TopLevelDestination.Settings.name, restored.selected.value)
+
+        restored.handleHomeIntent(fromHomeKey = false) { true }
+        assertEquals(false, restored.onboardingVisible.value)
+        assertEquals(TopLevelDestination.Home.name, restored.selected.value)
+    }
+
+    @Test fun coldStartRestoresTheLauncherScreenForFirstRunAndReview() {
+        for (completed in listOf(false, true)) {
+            val navigation = AppNavigationViewModel(SavedStateHandle())
+            var restored = false
+            navigation.handleInitialLaunch(isHome = true, fromHistory = false)
+            navigation.restoreLauncherSetup(completed) { restored = true }
+            navigation.offerSetup(completed)
+
+            assertEquals(true, restored)
+            assertEquals(true, navigation.onboardingVisible.value)
+            navigation.goHome()
+            navigation.restoreLauncherSetup(completed) { error("Restore must run once per launch") }
+            assertEquals(false, navigation.onboardingVisible.value)
+        }
+    }
+
+    @Test fun homeKeyAndUnsuccessfulLauncherHandoffLeaveSetup() {
+        for ((fromHomeKey, isDefaultLauncher) in listOf(true to true, false to false)) {
+            val navigation = AppNavigationViewModel(SavedStateHandle())
+            navigation.offerSetup(false)
+            navigation.beginOnboardingLauncherRequest()
+
+            navigation.handleHomeIntent(fromHomeKey) { isDefaultLauncher }
+
+            assertEquals(false, navigation.onboardingVisible.value)
+        }
+    }
+
     @Test
     fun `completed setup stays hidden until manually requested`() {
         val vm = AppNavigationViewModel(SavedStateHandle())

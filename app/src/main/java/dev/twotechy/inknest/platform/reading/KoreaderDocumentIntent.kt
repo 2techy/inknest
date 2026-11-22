@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
+import dev.twotechy.inknest.model.KOREADER_PACKAGE
 
 // Some devices expose SAF descriptors as /mnt/user/... paths that KOReader's Lua runtime
 // cannot reopen. Its own FileProvider resolves the same original file in the reader's namespace.
@@ -35,7 +36,6 @@ private fun externalDocumentPath(uri: Uri): PrimaryTreePath? {
     return PrimaryTreePath.parse(id)?.takeIf { it.segments.isNotEmpty() }
 }
 
-private const val KOREADER_PACKAGE = "org.koreader.launcher"
 private const val URI_GRANTS = Intent.FLAG_GRANT_READ_URI_PERMISSION or
     Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
     Intent.FLAG_GRANT_PREFIX_URI_PERMISSION

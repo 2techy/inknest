@@ -4,12 +4,14 @@
 
 Cài đặt InkNest, kết nối nguồn đọc, cập nhật ứng dụng và khôi phục quyền truy cập thư mục.
 
-Tải APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc [biên dịch từ mã nguồn](development.md). Mở InkNest và chọn E-Ink hoặc Tiêu chuẩn. Có thể bỏ qua thiết lập và quay lại tại Cài đặt → Giới thiệu → Xem lại thiết lập.
+Tải APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc [biên dịch từ mã nguồn](development.md). Mở InkNest và chọn E-Ink hoặc Tiêu chuẩn. Chọn **Bỏ qua thiết lập** để vào thẳng Trang chủ.
+
+InkNest kiểm tra KOReader ở bước Đọc sách. Khi tìm thấy app, chọn thư mục dữ liệu để kết nối cả hai. Bạn có thể chỉ thêm thư mục sách, thiết lập phần đọc sách sau và hoàn tất với launcher hiện tại. Để quay lại, mở Cài đặt → Giới thiệu → Xem lại thiết lập.
 
 ## Kết nối KOReader
 
 1. Cài riêng KOReader và mở một sách để tạo thư mục cài đặt.
-2. Trong Cài đặt → Đọc và dữ liệu, chọn KOReader.
+2. Trong trình thiết lập, xem trạng thái KOReader. Trong Cài đặt → Đọc và dữ liệu, chọn KOReader nếu app có sẵn và chưa được chọn.
 3. Chọn thư mục dữ liệu chứa `settings.reader.lua` hoặc `history.lua`.
 4. Thêm một hoặc nhiều thư mục sách; bao gồm cả thư mục con. Chạm thư mục để thay, hoặc gỡ khỏi InkNest mà không xóa tệp. Không chấp nhận các thư mục gốc chồng lấn.
 5. Làm mới. Thư viện gồm cả sách được nhận diện nhưng chưa từng mở; sách hiện tại/trạng thái lấy từ KOReader. Thống kê cần `settings/statistics.sqlite3`.

@@ -4,19 +4,21 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.twotechy.inknest.ui.components.LauncherActions
-import dev.twotechy.inknest.ui.settings.SourceConnectionActions
 import dev.twotechy.inknest.ui.settings.SourceFolderSelection
+import dev.twotechy.inknest.ui.shared.SourceFolderActions
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun OnboardingRoute(
     onboarding: OnboardingViewModel,
     isDefault: Boolean,
-    launcher: LauncherActions,
+    requestLauncher: () -> Unit,
     padding: PaddingValues,
 ) {
     val state by onboarding.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     SourceFolderSelection(
         state.pendingFolder.takeIf { state.step == 1 },
         onboarding::acceptFolder,
@@ -32,9 +34,12 @@ internal fun OnboardingRoute(
             next = onboarding::next,
             back = onboarding::back,
             finish = onboarding::finish,
-            requestLauncher = launcher.request,
-            connection = SourceConnectionActions(
-                onboarding::selectSourceApp,
+            requestLauncher = {
+                scope.launch {
+                    if (onboarding.prepareLauncherRequest()) requestLauncher()
+                }
+            },
+            folders = SourceFolderActions(
                 onboarding::requestFolder,
                 onboarding::replaceBookFolder,
                 onboarding::removeBookFolder,

@@ -11,13 +11,13 @@ import dev.twotechy.inknest.data.repository.sources.SourceSettingsRepository
 import dev.twotechy.inknest.data.repository.sources.impl.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.ui.settings.SourceConnectionUiState
-import dev.twotechy.inknest.ui.shared.SourceSetupError
 import dev.twotechy.inknest.ui.shared.SourceSetupStateHolder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class OnboardingViewModel(
@@ -35,23 +35,38 @@ internal class OnboardingViewModel(
     private val step = savedState.getStateFlow("setupStep", 0)
     private val finished = savedState.getStateFlow("setupFinished", false)
     private val sourceSetup = SourceSetupStateHolder(sources, apps, savedState, viewModelScope)
-    private val content = combine(preferences.appPreferences, sourceSetup.state, operation) {
+    private val content = combine(
+        preferences.appPreferences,
+        sourceSetup.state,
+        operation,
+        apps.isLoading,
+        apps.error,
+    ) {
             prefs,
             source,
             action,
+            appLoading,
+            appError,
         ->
+        val saving = action.saving || source.saving
         OnboardingUiState(
             mode = prefs.displayMode,
-            saving = action.saving || source.saving,
+            saving = saving,
             saveError = action.saveError,
             preferenceError = action.preferenceError,
+            koreaderDetection = when {
+                source.apps.isNotEmpty() -> KoreaderDetection.Found
+                appLoading -> KoreaderDetection.Checking
+                appError != null -> KoreaderDetection.Failed
+                else -> KoreaderDetection.NotFound
+            },
             connection = SourceConnectionUiState(
                 source.source,
                 source.apps,
-                action.saving || source.saving,
+                saving,
             ),
-            sourceError = source.error == SourceSetupError.Source,
-            folderConflict = source.error == SourceSetupError.FolderConflict,
+            sourceError = source.error,
+            bookFolderSelection = source.bookFolderSelection,
             preferences = prefs,
             pendingFolder = source.pendingFolder,
         )
@@ -71,7 +86,34 @@ internal class OnboardingViewModel(
         savedState["setupStep"] = (step.value + 1).coerceAtMost(2)
     }
     fun back() {
-        if (step.value == 0) finish() else savedState["setupStep"] = step.value - 1
+        when (step.value) {
+            0 -> finish()
+
+            2 -> {
+                discardLauncherCheckpoint()
+                savedState["setupStep"] = 1
+            }
+
+            else -> savedState["setupStep"] = 0
+        }
+    }
+    fun restoreLauncherStep() {
+        savedState["setupStep"] = 2
+        savedState["setupFinished"] = false
+    }
+    suspend fun prepareLauncherRequest(): Boolean = save(finishing = false) {
+        preferences.setOnboardingLauncherPending(true)
+    }
+    fun discardLauncherCheckpoint() {
+        viewModelScope.launch {
+            try {
+                preferences.setOnboardingLauncherPending(false)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                operation.update { it.copy(preferenceError = true) }
+            }
+        }
     }
     fun finish() = perform(finishing = true) {
         preferences.completeOnboarding()
@@ -79,27 +121,35 @@ internal class OnboardingViewModel(
     }
     fun setDisplayMode(mode: DisplayMode) =
         perform(finishing = false) { preferences.setDisplayMode(mode) }
-    fun selectSourceApp(packageName: String) = sourceSetup.selectApp(packageName)
     fun requestFolder(folder: SourceFolder) = sourceSetup.requestFolder(folder)
     fun replaceBookFolder(uri: String) = sourceSetup.replaceBookFolder(uri)
     fun removeBookFolder(uri: String) = sourceSetup.removeBookFolder(uri)
-    fun acceptFolder(folder: SourceFolder, uri: String, flags: Int) =
-        sourceSetup.acceptFolder(folder, uri, flags)
+    fun acceptFolder(folder: SourceFolder, uri: String, flags: Int) = sourceSetup.acceptFolder(
+        folder,
+        uri,
+        flags,
+        pairKoreader =
+            folder == SourceFolder.KOReader && sourceSetup.state.value.apps.isNotEmpty(),
+    )
     fun dismissFolder() = sourceSetup.dismissFolder()
 
     private fun perform(finishing: Boolean, block: suspend () -> Unit) {
-        if (operation.value.saving || sourceSetup.state.value.saving) return
+        viewModelScope.launch { save(finishing, block) }
+    }
+
+    private suspend fun save(finishing: Boolean, block: suspend () -> Unit): Boolean {
+        if (operation.value.saving || sourceSetup.state.value.saving) return false
         operation.value = Operation(saving = true)
-        viewModelScope.launch {
-            try {
-                block()
-                operation.value = Operation()
-            } catch (cancelled: CancellationException) {
-                operation.value = Operation()
-                throw cancelled
-            } catch (_: Exception) {
-                operation.value = Operation(saveError = finishing, preferenceError = !finishing)
-            }
+        return try {
+            block()
+            operation.value = Operation()
+            true
+        } catch (cancelled: CancellationException) {
+            operation.value = Operation()
+            throw cancelled
+        } catch (_: Exception) {
+            operation.value = Operation(saveError = finishing, preferenceError = !finishing)
+            false
         }
     }
 }

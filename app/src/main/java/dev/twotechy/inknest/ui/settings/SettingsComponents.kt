@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.theme.InkBorder
@@ -50,6 +51,7 @@ internal fun SettingsRow(
     description: String? = null,
     icon: Int? = null,
     enabled: Boolean = true,
+    descriptionMaxLines: Int = 2,
     onClick: () -> Unit,
 ) {
     Column {
@@ -81,7 +83,7 @@ internal fun SettingsRow(
                         description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        maxLines = descriptionMaxLines,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
@@ -291,8 +293,12 @@ private fun SettingsDescription(text: String) {
 }
 
 @Composable
-internal fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {
+internal fun SettingsSection(
+    title: String,
+    contentSpacing: Dp = InkLayoutTokens.sectionContentGap,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
         Text(
             title,
             modifier = Modifier.semantics { heading() },

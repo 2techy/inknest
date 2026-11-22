@@ -37,6 +37,7 @@ class AndroidInstalledAppsRepositoryTest {
         override suspend fun setShowHomeHeatmap(show: Boolean) = Unit
         override suspend fun setShowHomeStats(show: Boolean) = Unit
         override suspend fun setShowHomePinnedApps(show: Boolean) = Unit
+        override suspend fun setOnboardingLauncherPending(pending: Boolean) = Unit
         override suspend fun completeOnboarding() = Unit
         override val pinnedComponentIds = pins
         var prunedValidIds: Set<String>? = null

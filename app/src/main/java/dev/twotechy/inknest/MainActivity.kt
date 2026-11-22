@@ -33,9 +33,16 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.isHomeRequest()) navigation.goHome()
+        if (intent.isHomeRequest()) {
+            val app = application as InkNestApplication
+            navigation.handleHomeIntent(intent.getBooleanExtra(EXTRA_FROM_HOME_KEY, false)) {
+                app.container.launcherModeController.isDefaultLauncher()
+            }
+        }
     }
 }
 
 private fun Intent.isHomeRequest() =
     action == Intent.ACTION_MAIN && hasCategory(Intent.CATEGORY_HOME)
+
+private const val EXTRA_FROM_HOME_KEY = "android.intent.extra.FROM_HOME_KEY"

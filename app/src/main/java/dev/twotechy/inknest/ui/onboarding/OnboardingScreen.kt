@@ -34,7 +34,6 @@ import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.settings.DisplayModeChoices
 import dev.twotechy.inknest.ui.settings.SettingsCommand
 import dev.twotechy.inknest.ui.settings.SettingsSection
-import dev.twotechy.inknest.ui.settings.SourceConnectionContent
 import dev.twotechy.inknest.ui.theme.InkButtonTokens
 import dev.twotechy.inknest.ui.theme.InkOnboardingTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
@@ -49,6 +48,11 @@ internal fun OnboardingScreen(
         0 -> R.string.setup_title
         1 -> R.string.setup_source_title
         else -> R.string.setup_launcher_title
+    }
+    val description = when (state.step) {
+        0 -> R.string.setup_welcome
+        1 -> R.string.setup_source_description
+        else -> R.string.setup_launcher_description
     }
     ScreenScaffold(
         contentPadding = contentPadding,
@@ -65,18 +69,17 @@ internal fun OnboardingScreen(
             Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
         ) {
-            item { SetupProgress(state.step) }
             item {
-                Text(
-                    stringResource(
-                        when (state.step) {
-                            0 -> R.string.setup_welcome
-                            1 -> R.string.setup_source_description
-                            else -> R.string.setup_launcher_description
-                        },
-                    ),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                val readingStep = state.step == 1
+                val spacing = if (readingStep) InkSpacing.sm else InkSpacing.lg
+                val typography = MaterialTheme.typography
+                Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
+                    SetupProgress(state.step)
+                    Text(
+                        stringResource(description),
+                        style = if (readingStep) typography.bodyMedium else typography.bodyLarge,
+                    )
+                }
             }
             item { SetupStepContent(state, actions) }
             state.errorMessage?.let { message ->
@@ -128,9 +131,7 @@ private fun SetupStepContent(state: OnboardingUiState, actions: OnboardingAction
             DisplayModeChoices(state.mode, !state.saving, actions.mode)
         }
 
-        1 -> SettingsSection(stringResource(R.string.reading_source_heading)) {
-            SourceConnectionContent(state.connection, actions.connection)
-        }
+        1 -> OnboardingReadingContent(state, actions.folders)
 
         else -> SettingsSection(stringResource(R.string.default_home_app)) {
             if (state.isDefaultLauncher) {
@@ -140,6 +141,10 @@ private fun SetupStepContent(state: OnboardingUiState, actions: OnboardingAction
                     style = MaterialTheme.typography.bodyLarge,
                 )
             } else {
+                Text(
+                    stringResource(R.string.setup_launcher_not_default),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
                 SettingsCommand(
                     stringResource(R.string.request_default_launcher),
                     !state.saving,
@@ -155,6 +160,7 @@ private fun OnboardingFooter(state: OnboardingUiState, actions: OnboardingAction
     val primaryLabel = when {
         state.saving -> R.string.saving
         state.step == 2 -> R.string.finish_setup
+        state.step == 1 && !state.hasReadingFolder -> R.string.setup_reading_later
         else -> R.string.next
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
@@ -165,25 +171,30 @@ private fun OnboardingFooter(state: OnboardingUiState, actions: OnboardingAction
             primary = true,
             onClick = if (state.step == 2) actions.finish else actions.next,
         )
-        Box(
-            Modifier.fillMaxWidth().heightIn(min = InkButtonTokens.minHeight).clickable(
-                enabled = !state.saving,
-                role = Role.Button,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = actions.finish,
-            ).padding(InkSpacing.sm),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                stringResource(R.string.skip_setup),
-                style = MaterialTheme.typography.labelLarge,
-                color = if (state.saving) {
-                    MaterialTheme.colorScheme.outline
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-            )
-        }
+        if (state.step == 0) SkipSetupAction(state.saving, actions.finish)
+    }
+}
+
+@Composable
+private fun SkipSetupAction(saving: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.fillMaxWidth().heightIn(min = InkButtonTokens.minHeight).clickable(
+            enabled = !saving,
+            role = Role.Button,
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick,
+        ).padding(InkSpacing.sm),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            stringResource(R.string.skip_setup),
+            style = MaterialTheme.typography.labelLarge,
+            color = if (saving) {
+                MaterialTheme.colorScheme.outline
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+        )
     }
 }

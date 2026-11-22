@@ -8,6 +8,8 @@ SAF access, parser limits and error contracts for real KOReader sources in debug
 
 Preferences DataStore stores source identity, selected `org.koreader.launcher` package, KOReader tree and independent Books trees. The system picker supplies persisted read grants. Invalid/cancelled selections retain active config; obsolete grants are released. Disconnect removes source keys/grants while preserving pins, appearance and onboarding. Room caches reading data; see [reading cache](reading-cache.md).
 
+Onboarding observes KOReader in the installed-app catalog. When the user selects a valid KOReader tree, activation can save the detected package alongside the tree if no reader is selected.
+
 Only primary internal storage through Android ExternalStorageProvider is supported. Other providers/volumes are rejected. Document IDs are validated by volume/path segments; children must remain within the granted root. Source paths resolve only into configured Books or KOReader trees. Primary aliases are accepted only after canonical filesystem identity is checked on the device. Unicode, case and spaces are retained. Dot segments (`.`/`..`), sibling-prefix matches and title/basename guessing are rejected. A missing grant never triggers guessed paths or broader storage access.
 
 ## Parsers and limits

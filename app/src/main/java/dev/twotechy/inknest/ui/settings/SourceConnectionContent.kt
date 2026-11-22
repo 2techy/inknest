@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.settings
 
+import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -11,13 +12,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.sources.SourceFolder
+import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.model.SourceAccessState
+import dev.twotechy.inknest.ui.shared.SourceFolderActions
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun SourceConnectionContent(
     state: SourceConnectionUiState,
-    actions: SourceConnectionActions,
+    actions: SourceFolderActions,
+    onSelectApp: (String) -> Unit,
 ) {
     val source = state.source
     Column {
@@ -30,11 +34,12 @@ internal fun SourceConnectionContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        SourceAppChoices(state, actions.selectApp)
+        SourceAppChoices(state, onSelectApp)
         SettingsRow(
             stringResource(R.string.koreader_folder),
             folderDescription(source.koreaderFolder, source.koreaderAccess),
             enabled = source.available && !state.saving,
+            descriptionMaxLines = Int.MAX_VALUE,
             onClick = { actions.selectFolder(SourceFolder.KOReader) },
         )
         BookFoldersContent(state, actions)
@@ -43,24 +48,35 @@ internal fun SourceConnectionContent(
 
 @Composable
 internal fun folderDescription(path: String?, access: SourceAccessState?): String {
-    val label = path?.let(::sourceFolderLabel) ?: stringResource(R.string.folder_not_selected)
+    val label =
+        path?.let { fullSourceFolderLabel(it) } ?: stringResource(R.string.folder_not_selected)
     val detail = sourceAccessError(access)?.let { stringResource(it) }
     return if (detail == null) label else "$label · $detail"
 }
 
-internal fun sourceFolderLabel(path: String): String = try {
-    if (path.startsWith(
-            "content://",
-        )
-    ) {
-        DocumentsContract.getTreeDocumentId(path.toUri()).substringAfter(':').ifEmpty {
-            "/"
-        }
+@Composable
+private fun fullSourceFolderLabel(path: String): String {
+    val uri = path.toUri()
+    val documentId = sourceTreeId(uri) ?: return path
+    val primary = documentId.takeIf { uri.authority == "com.android.externalstorage.documents" }
+        ?.let { PrimaryTreePath.parse(it) }
+    return if (primary == null) {
+        treeFolderLabel(documentId)
     } else {
-        path
+        stringResource(R.string.internal_storage_folder_path, primary.segments.joinToString("/"))
     }
+}
+
+internal fun sourceFolderLabel(path: String): String =
+    sourceTreeId(path.toUri())?.let(::treeFolderLabel) ?: path
+
+private fun treeFolderLabel(documentId: String): String =
+    documentId.substringAfter(':').ifEmpty { "/" }
+
+private fun sourceTreeId(uri: Uri): String? = try {
+    if (uri.scheme == "content") DocumentsContract.getTreeDocumentId(uri) else null
 } catch (_: IllegalArgumentException) {
-    path
+    null
 }
 
 private fun sourceAccessError(access: SourceAccessState?): Int? = when (access) {

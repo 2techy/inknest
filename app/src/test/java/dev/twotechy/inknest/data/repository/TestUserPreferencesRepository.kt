@@ -19,7 +19,11 @@ internal class TestUserPreferencesRepository : UserPreferencesRepository {
     override suspend fun setShowHomeStats(show: Boolean) = update { it.copy(showHomeStats = show) }
     override suspend fun setShowHomePinnedApps(show: Boolean) =
         update { it.copy(showHomePinnedApps = show) }
-    override suspend fun completeOnboarding() = update { it.copy(onboardingCompleted = true) }
+    override suspend fun setOnboardingLauncherPending(pending: Boolean) =
+        update { it.copy(onboardingLauncherPending = pending) }
+    override suspend fun completeOnboarding() = update {
+        it.copy(onboardingCompleted = true, onboardingLauncherPending = false)
+    }
     override suspend fun pin(componentId: String) = Unit
     override suspend fun unpin(componentId: String) = Unit
     override suspend fun movePin(componentId: String, offset: Int) = Unit

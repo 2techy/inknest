@@ -188,6 +188,6 @@ class SettingsViewModelTest {
         settings.acceptFolder(SourceFolder.Books, "tree", 1)
         runCurrent()
         assertEquals(SettingsError.Source, settings.uiState.value.error)
-        assertFalse(onboarding.uiState.value.sourceError)
+        assertEquals(null, onboarding.uiState.value.sourceError)
     }
 }

@@ -34,7 +34,16 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
     fun finishSetup(finished: Boolean) {
         if (finished && onboardingVisible.value) goHome()
     }
+    fun restoreLauncherSetup(completed: Boolean, restoreStep: () -> Unit) {
+        if (setupOffered) return
+        restoreStep()
+        savedState["setupEntry"] =
+            if (completed) SetupEntry.Review.name else SetupEntry.FirstRun.name
+        setupOffered = true
+        savedState["onboardingVisible"] = true
+    }
     fun reviewSetup() {
+        cancelOnboardingLauncherRequest()
         savedState["setupEntry"] = SetupEntry.Review.name
         setupOffered = true
         savedState["settingsPage"] = "Overview"
@@ -74,6 +83,7 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
             savedState["settingsReturnDestination"] = selected.value
         }
         savedState["pendingLibrarySearch"] = false
+        cancelOnboardingLauncherRequest()
         session.value++
         savedState["settingsPage"] = "Overview"
         savedState["onboardingVisible"] = false
@@ -86,7 +96,25 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
         select(TopLevelDestination.Home)
     }
 
+    fun beginOnboardingLauncherRequest() {
+        if (onboardingVisible.value) savedState[ONBOARDING_LAUNCHER_REQUEST] = true
+    }
+
+    fun cancelOnboardingLauncherRequest() {
+        savedState.remove<Boolean>(ONBOARDING_LAUNCHER_REQUEST)
+    }
+
+    fun handleHomeIntent(fromHomeKey: Boolean, isDefaultLauncher: () -> Boolean) {
+        // Android can bring the newly selected HOME app forward before its role result arrives.
+        val pending = savedState.remove<Boolean>(ONBOARDING_LAUNCHER_REQUEST) == true
+        val setupHandoff = pending && onboardingVisible.value
+        val automaticHandoff = setupHandoff && !fromHomeKey
+        if (!automaticHandoff || !isDefaultLauncher()) goHome()
+    }
+
     companion object {
+        private const val ONBOARDING_LAUNCHER_REQUEST = "onboardingLauncherRequest"
+
         val Factory = viewModelFactory {
             initializer { AppNavigationViewModel(createSavedStateHandle()) }
         }

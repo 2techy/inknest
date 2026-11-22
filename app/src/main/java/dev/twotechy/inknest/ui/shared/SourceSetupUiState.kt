@@ -10,6 +10,7 @@ internal data class SourceSetupUiState(
     val pendingFolder: SourceFolder? = null,
     val saving: Boolean = false,
     val error: SourceSetupError? = null,
+    val bookFolderSelection: Boolean = false,
 )
 
 // Each screen owns its actions/picker. Only persisted source data is shared by repositories.

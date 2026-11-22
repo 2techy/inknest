@@ -19,24 +19,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.sources.BookFolderState
 import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.ui.components.ConfirmationDialog
+import dev.twotechy.inknest.ui.shared.SourceFolderActions
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
+import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
-internal fun BookFoldersContent(state: SourceConnectionUiState, actions: SourceConnectionActions) {
+internal fun BookFoldersContent(
+    state: SourceConnectionUiState,
+    actions: SourceFolderActions,
+    compact: Boolean = false,
+    status: BookFolderStatus = BookFolderStatus(),
+) {
     var removing by remember { mutableStateOf<String?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { removing = null }
     val enabled = state.source.available && !state.saving
     Column(Modifier.padding(top = InkSpacing.lg)) {
-        SettingsSection(stringResource(R.string.book_folders)) {
-            if (state.source.booksFolders.isEmpty()) {
+        SettingsSection(
+            stringResource(R.string.book_folders),
+            contentSpacing = if (compact) InkSpacing.xs else InkLayoutTokens.sectionContentGap,
+        ) {
+            if (!compact && state.source.booksFolders.isEmpty()) {
                 Text(
                     stringResource(R.string.folder_not_selected),
                     style = MaterialTheme.typography.bodyMedium,
@@ -45,8 +58,24 @@ internal fun BookFoldersContent(state: SourceConnectionUiState, actions: SourceC
             state.source.booksFolders.forEach { folder ->
                 BookFolderRow(folder, enabled, actions.replaceBookFolder) { removing = it }
             }
-            SettingsCommand(stringResource(R.string.add_book_folder), enabled) {
-                actions.selectFolder(SourceFolder.Books)
+            status.errorMessage?.let { message ->
+                Text(
+                    stringResource(message),
+                    Modifier.padding(vertical = InkSpacing.xs)
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            val addFolderLabel = stringResource(
+                if (status.saving) R.string.book_folder_saving else R.string.add_book_folder,
+            )
+            val addFolder = { actions.selectFolder(SourceFolder.Books) }
+            if (compact) {
+                Box(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+                    SettingsRow(addFolderLabel, enabled = enabled, onClick = addFolder)
+                }
+            } else {
+                SettingsCommand(addFolderLabel, enabled, addFolder)
             }
         }
     }
@@ -81,6 +110,7 @@ private fun BookFolderRow(
                 path.substringAfterLast('/').ifEmpty { path },
                 folderDescription(folder.uri, folder.access),
                 enabled = enabled,
+                descriptionMaxLines = Int.MAX_VALUE,
                 onClick = { replace(folder.uri) },
             )
         }
