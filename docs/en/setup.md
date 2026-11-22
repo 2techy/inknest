@@ -30,6 +30,8 @@ Library combines Books folders; its folder menu filters one root. Refresh scans 
 
 - Tap or long-press a Library book to view details, then use the reading button to open KOReader. Home opens the current book directly. Missing files, grants or handlers produce an error; reading state refreshes from KOReader on return.
 - Set the default Home app in Settings → Launcher. To switch back, use Android Settings → Apps → Default apps → Home app; names vary by firmware. HOME returns to InkNest Home when it owns that role. Apps/pins work without reading sources.
+- In Apps, tap an app to open it or touch and hold it to manage Home pins or open **App info** in Android Settings. Pinned apps appear first in Home order. Search includes every app and matches names and packages.
+- Home’s **Quick access** shows up to four pinned apps in one row. **See all** next to its title opens Apps, where all pins are listed.
 - E-Ink uses grayscale app icons; Standard keeps their colors. Both use static transitions. Settings → Appearance controls display mode and Home sections, including mini stats, reading rhythm and pins; hiding pins does not delete them. Font size follows Android; panel refresh remains controlled by firmware.
 
 ## App updates

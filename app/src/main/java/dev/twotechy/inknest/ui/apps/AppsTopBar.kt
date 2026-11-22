@@ -1,6 +1,8 @@
 package dev.twotechy.inknest.ui.apps
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
@@ -12,18 +14,20 @@ import dev.twotechy.inknest.ui.components.SearchField
 @Composable
 internal fun AppsTopBar(
     state: AppsUiState,
-    searchFocusRequester: FocusRequester,
     onSearchQueryChanged: (String) -> Unit,
     onSearchActiveChanged: (Boolean) -> Unit,
     onToggleViewMode: () -> Unit,
 ) {
     if (state.isSearchActive) {
+        val searchFocus = remember { FocusRequester() }
+        LaunchedEffect(searchFocus) { searchFocus.requestFocus() }
         SearchField(
             state.searchQuery,
             stringResource(R.string.search_apps_hint),
-            searchFocusRequester,
+            searchFocus,
             onSearchQueryChanged,
             onClose = { onSearchActiveChanged(false) },
+            showClearAction = true,
         )
     } else {
         ScreenHeader(stringResource(R.string.apps_title)) {

@@ -5,9 +5,9 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.core.net.toUri
 
 internal class LauncherModeController(private val context: Context) {
 
@@ -45,10 +45,7 @@ internal class LauncherModeController(private val context: Context) {
     }
 
     fun createApplicationDetailsSettingsIntent(): Intent =
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = "package:${context.packageName}".toUri()
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
+        createApplicationDetailsSettingsIntent(context.packageName)
 
     fun openHomeSettings(): Boolean {
         val candidates = listOf(
@@ -69,3 +66,8 @@ internal class LauncherModeController(private val context: Context) {
         return false
     }
 }
+
+internal fun createApplicationDetailsSettingsIntent(packageName: String): Intent = Intent(
+    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+    Uri.fromParts("package", packageName, null),
+).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

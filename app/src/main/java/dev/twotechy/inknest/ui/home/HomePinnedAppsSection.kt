@@ -47,7 +47,7 @@ internal fun HomePinnedAppsSection(
                     onClick = actions.openApps,
                 )
             } else {
-                HomePinnedApps(pins, iconLoader, actions.launchApp, actions.openApps)
+                HomePinnedApps(pins, iconLoader, actions.launchApp)
             }
         }
     }
