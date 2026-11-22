@@ -39,6 +39,7 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
             showHomeStats = it[KEY_SHOW_STATS] ?: true,
             showHomePinnedApps = it[KEY_SHOW_PINS] ?: true,
             onboardingCompleted = it[KEY_ONBOARDING_COMPLETED] ?: false,
+            onboardingLauncherPending = it[KEY_ONBOARDING_LAUNCHER_PENDING] ?: false,
         )
     }.distinctUntilChanged()
 
@@ -54,8 +55,20 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
     override suspend fun setShowHomePinnedApps(show: Boolean) {
         dataStore.edit { it[KEY_SHOW_PINS] = show }
     }
+    override suspend fun setOnboardingLauncherPending(pending: Boolean) {
+        dataStore.edit {
+            if (pending) {
+                it[KEY_ONBOARDING_LAUNCHER_PENDING] = true
+            } else {
+                it.remove(KEY_ONBOARDING_LAUNCHER_PENDING)
+            }
+        }
+    }
     override suspend fun completeOnboarding() {
-        dataStore.edit { it[KEY_ONBOARDING_COMPLETED] = true }
+        dataStore.edit {
+            it[KEY_ONBOARDING_COMPLETED] = true
+            it.remove(KEY_ONBOARDING_LAUNCHER_PENDING)
+        }
     }
 
     override fun retryRead() {
@@ -113,6 +126,8 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
         private val KEY_SHOW_STATS = booleanPreferencesKey("show_home_stats")
         private val KEY_SHOW_PINS = booleanPreferencesKey("show_home_pinned_apps")
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        private val KEY_ONBOARDING_LAUNCHER_PENDING =
+            booleanPreferencesKey("onboarding_launcher_pending")
         private const val DELIMITER = "\n"
 
         fun encodeList(items: List<String>): String = items.joinToString(DELIMITER)

@@ -4,12 +4,14 @@
 
 Install and configure InkNest, manage updates and recover access to your reading folders.
 
-Download the APK from the [latest release](https://github.com/2techy/inknest/releases/latest), or [build from source](development.md). Open InkNest and choose E-Ink or Standard. Setup is optional; return through Settings → About → Review setup.
+Download the APK from the [latest release](https://github.com/2techy/inknest/releases/latest), or [build from source](development.md). Open InkNest and choose E-Ink or Standard. Select **Skip setup** to go straight to Home.
+
+In the reading step, InkNest checks for KOReader. When it finds the app, choose its data folder to connect both. You can add just Books folders, set up reading later, and finish with your current launcher. To return, open Settings → About → Review setup.
 
 ## Connect KOReader
 
 1. Install KOReader separately and open a book once to create its settings directory.
-2. In Settings → Reading & data, select KOReader.
+2. In setup, check for the KOReader status. In Settings → Reading & data, select KOReader if it is available and has not been selected.
 3. Select its data folder containing `settings.reader.lua` or `history.lua`.
 4. Add one or more Books folders; subfolders are included. Tap a folder to replace it, or remove it without deleting files. Overlapping roots are rejected.
 5. Refresh. Library includes recognized books even if never opened; current reading/status comes from KOReader. Statistics requires `settings/statistics.sqlite3`.

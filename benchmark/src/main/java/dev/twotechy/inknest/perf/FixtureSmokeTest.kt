@@ -44,8 +44,8 @@ class FixtureSmokeTest {
         }
         click(device, "About")
         click(device, "Review setup")
-        click(device, "Next")
-        check(device.wait(Until.hasObject(By.text("Your reading space")), 10_000))
+        click(device, "Continue")
+        check(device.wait(Until.hasObject(By.text("Reading setup")), 10_000))
         check(device.takeScreenshot(File(screenshots, "Setup.png")))
         context.startActivity(homeIntent())
         journey.awaitHome()

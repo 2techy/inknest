@@ -48,6 +48,10 @@ internal class ReadingSourceConfigRepository(private val store: DataStore<Prefer
                 values[sourceId] == before.sourceId && values[koreader] == before.koreaderTreeUri &&
                     values[books].orEmpty() == before.booksTreeUris,
             )
+            if (candidate.sourcePackage != before.sourcePackage) {
+                check(values[sourcePackage] == before.sourcePackage)
+                values[sourcePackage] = checkNotNull(candidate.sourcePackage)
+            }
             values[sourceId] = checkNotNull(candidate.sourceId)
             candidate.koreaderTreeUri?.let { values[koreader] = it }
             values[books] = candidate.booksTreeUris

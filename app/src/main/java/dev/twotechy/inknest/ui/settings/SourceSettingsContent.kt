@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.sources.SourceStatus
 import dev.twotechy.inknest.ui.components.currentUiLocale
+import dev.twotechy.inknest.ui.shared.SourceFolderActions
 import java.text.DateFormat
 import java.util.Date
 
@@ -15,12 +16,12 @@ internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActi
     Column {
         SourceConnectionContent(
             SourceConnectionUiState(source, state.sourceApps, state.saving),
-            SourceConnectionActions(
-                actions.sourceApp,
+            SourceFolderActions(
                 actions.connect,
                 actions.replaceBookFolder,
                 actions.removeBookFolder,
             ),
+            actions.sourceApp,
         )
         SettingsCommand(
             stringResource(R.string.disconnect_source),

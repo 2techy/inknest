@@ -13,16 +13,21 @@ import dev.twotechy.inknest.platform.apps.LauncherModeController
 internal data class LauncherActions(val request: () -> Unit, val openSettings: () -> Unit)
 
 @Composable
-internal fun rememberLauncherActions(controller: LauncherModeController): LauncherActions {
+internal fun rememberLauncherActions(
+    controller: LauncherModeController,
+    onRequestCancelled: () -> Unit,
+): LauncherActions {
     val context = LocalContext.current
     val openSettings = {
         if (!controller.openHomeSettings()) {
+            onRequestCancelled()
             Toast.makeText(context, R.string.settings_unavailable, Toast.LENGTH_SHORT).show()
         }
     }
     val request =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode != Activity.RESULT_OK && !controller.isDefaultLauncher()) {
+                onRequestCancelled()
                 Toast.makeText(context, R.string.home_role_not_set, Toast.LENGTH_SHORT).show()
             }
         }

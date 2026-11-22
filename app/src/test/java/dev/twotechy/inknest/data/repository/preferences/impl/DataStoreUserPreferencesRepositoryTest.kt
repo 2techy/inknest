@@ -53,6 +53,7 @@ class DataStoreUserPreferencesRepositoryTest {
             val repository = DataStoreUserPreferencesRepository(store)
             repository.pin("reader/Activity")
             repository.setShowHomeStats(false)
+            repository.setOnboardingLauncherPending(true)
             repository.setShowHomeStats(true)
             repository.setShowHomeStats(false)
         } finally {
@@ -67,6 +68,11 @@ class DataStoreUserPreferencesRepositoryTest {
             val repository = DataStoreUserPreferencesRepository(store)
             assertEquals(listOf("reader/Activity"), repository.pinnedComponentIds.first())
             assertEquals(false, repository.appPreferences.first().showHomeStats)
+            assertTrue(repository.appPreferences.first().onboardingLauncherPending)
+            repository.completeOnboarding()
+            val completed = repository.appPreferences.first()
+            assertTrue(completed.onboardingCompleted)
+            assertEquals(false, completed.onboardingLauncherPending)
         } finally {
             secondJob.cancelAndJoin()
         }

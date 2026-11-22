@@ -37,6 +37,8 @@ import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.settings.SettingsRoute
 import dev.twotechy.inknest.ui.settings.SettingsViewModel
 import dev.twotechy.inknest.ui.theme.InkNestTheme
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.filter
 
 @Composable
 internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewModel) {
@@ -52,9 +54,18 @@ internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewMo
     val onboarding: OnboardingViewModel = viewModel(factory = container.onboardingViewModelFactory)
     val preferences by app.preferences.collectAsStateWithLifecycle()
     LaunchedEffect(preferences?.onboardingCompleted) {
-        preferences?.let { navigation.offerSetup(it.onboardingCompleted) }
+        preferences?.let { prefs ->
+            if (prefs.onboardingLauncherPending) {
+                navigation.restoreLauncherSetup(
+                    prefs.onboardingCompleted,
+                    onboarding::restoreLauncherStep,
+                )
+            } else {
+                navigation.offerSetup(prefs.onboardingCompleted)
+            }
+        }
     }
-    OnboardingCompletionEffect(onboarding, navigation)
+    OnboardingNavigationEffects(onboarding, navigation)
     CompositionLocalProvider(
         LocalContentGestureSession provides navigation.gestureSession,
         LocalBookCoverLoader provides container.bookCoverLoader,
@@ -66,12 +77,21 @@ internal fun InkNestApp(container: AppContainer, navigation: AppNavigationViewMo
 }
 
 @Composable
-private fun OnboardingCompletionEffect(
+private fun OnboardingNavigationEffects(
     onboarding: OnboardingViewModel,
     navigation: AppNavigationViewModel,
 ) {
     val state by onboarding.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(state.finished) { navigation.finishSetup(state.finished) }
+    val leavingLauncherStep = state.preferences != null && state.step != 2
+    LaunchedEffect(leavingLauncherStep) {
+        if (leavingLauncherStep) navigation.cancelOnboardingLauncherRequest()
+    }
+    LaunchedEffect(onboarding, navigation) {
+        navigation.onboardingVisible.dropWhile { !it }.filter { !it }.collect {
+            onboarding.discardLauncherCheckpoint()
+        }
+    }
 }
 
 @Composable
@@ -89,7 +109,10 @@ private fun InkNestContent(
     val detailsVisible = libraryDetailsVisible(container, tab, setupVisible)
     val saveableStateHolder = rememberSaveableStateHolder()
     val isDefaultLauncher by rememberDefaultLauncher(container.launcherModeController)
-    val launcher = rememberLauncherActions(container.launcherModeController)
+    val launcher = rememberLauncherActions(container.launcherModeController) {
+        navigation.cancelOnboardingLauncherRequest()
+        if (setupVisible) onboarding.discardLauncherCheckpoint()
+    }
     val openPage = { value: SettingsPage -> navigation.openSettingsPage(value.name) }
     HomeBackHandler(tab, isDefaultLauncher, navigation::goHome)
 
@@ -100,7 +123,10 @@ private fun InkNestContent(
             OnboardingRoute(
                 onboarding = onboarding,
                 isDefault = isDefaultLauncher,
-                launcher = launcher,
+                requestLauncher = {
+                    navigation.beginOnboardingLauncherRequest()
+                    launcher.request()
+                },
                 padding = padding,
             )
         } else {

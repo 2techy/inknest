@@ -3,12 +3,14 @@ package dev.twotechy.inknest.data.repository.sources
 import dev.twotechy.inknest.data.local.database.reading.readingCacheKey
 import dev.twotechy.inknest.data.repository.preferences.impl.DataStoreUserPreferencesRepository
 import dev.twotechy.inknest.data.repository.testPreferencesDataStore
+import dev.twotechy.inknest.model.KOREADER_PACKAGE
 import dev.twotechy.inknest.model.ReadingSourceConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -99,5 +101,35 @@ class ReadingSourceConfigRepositoryTest {
         source.activateTree(replaced, replaced.copy(booksTreeUris = emptySet()))
         assertEquals(emptySet<String>(), source.config.first().booksTreeUris)
         assertEquals(id, source.config.first().sourceId)
+    }
+
+    @Test fun readerPairingReusesLegacyTreeIdentity() = runTest {
+        val file = folder.newFile("reader.preferences_pb")
+        file.delete()
+        val source = ReadingSourceConfigRepository(testPreferencesDataStore(file, backgroundScope))
+        val initial = source.config.first()
+        val legacy = source.treeCandidate(initial, SourceFolder.KOReader, "content://tree/koreader")
+        source.activateTree(initial, legacy)
+        val paired = legacy.copy(sourcePackage = KOREADER_PACKAGE)
+
+        source.activateTree(legacy, paired)
+
+        assertEquals(paired, source.config.first())
+    }
+
+    @Test fun changedReaderSelectionRejectsPairingWithoutChangingFolders() = runTest {
+        val file = folder.newFile("reader-conflict.preferences_pb")
+        file.delete()
+        val source = ReadingSourceConfigRepository(testPreferencesDataStore(file, backgroundScope))
+        val before = source.config.first()
+        val candidate = source.treeCandidate(before, SourceFolder.KOReader, "content://tree/reader")
+            .copy(sourcePackage = KOREADER_PACKAGE)
+        source.setSourcePackage("other.reader")
+        val selected = source.config.first()
+
+        val error = runCatching { source.activateTree(before, candidate) }.exceptionOrNull()
+        assertTrue(error is IllegalStateException)
+
+        assertEquals(selected, source.config.first())
     }
 }

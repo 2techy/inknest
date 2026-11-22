@@ -8,6 +8,8 @@ Contract truy cập SAF, giới hạn parser và lỗi của nguồn KOReader th
 
 Preferences DataStore lưu định danh nguồn, package `org.koreader.launcher` đã chọn, cây KOReader và các cây sách độc lập. Trình chọn hệ thống cấp quyền đọc lưu lâu dài. Chọn sai/hủy giữ cấu hình hiện hành; giải phóng quyền cũ không dùng. Ngắt kết nối xóa khóa/quyền nguồn, giữ ghim, giao diện và thiết lập. Room lưu cache; xem [cache đọc](reading-cache.md).
 
+Trình thiết lập theo dõi KOReader trong danh sách ứng dụng đã cài. Khi người dùng chọn cây KOReader hợp lệ, bước kích hoạt có thể lưu package đã nhận diện cùng cây nếu chưa chọn trình đọc.
+
 Chỉ hỗ trợ bộ nhớ trong chính qua ExternalStorageProvider Android; từ chối provider/volume khác. Kiểm tra document ID theo volume/đoạn đường dẫn; con phải trong gốc đã cấp quyền. Chỉ phân giải đường dẫn trong cây sách/KOReader đã cấu hình. Bí danh bộ nhớ chính phải khớp định danh filesystem chuẩn trên thiết bị. Giữ Unicode, hoa thường và khoảng trắng; từ chối đoạn `.`/`..`, khớp tiền tố thư mục anh em và đoán tên sách/tên tệp. Thiếu quyền không dẫn tới đoán đường dẫn/mở rộng truy cập.
 
 ## Parser và giới hạn

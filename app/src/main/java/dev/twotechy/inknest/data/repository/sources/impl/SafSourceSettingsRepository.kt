@@ -18,6 +18,7 @@ import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.data.source.saf.SafSourceAccess
 import dev.twotechy.inknest.data.source.saf.SourceDocumentReader
+import dev.twotechy.inknest.model.KOREADER_PACKAGE
 import dev.twotechy.inknest.model.SourceAccessState
 import java.io.File
 import java.io.IOException
@@ -118,7 +119,7 @@ internal class SafSourceSettingsRepository(
         )
 
     override suspend fun selectApp(packageName: String) {
-        require(packageName == "org.koreader.launcher")
+        require(packageName == KOREADER_PACKAGE)
         config.setSourcePackage(packageName)
     }
 
@@ -129,7 +130,13 @@ internal class SafSourceSettingsRepository(
         try {
             access.persist(uri.toUri(), flags)
             if (folder == SourceFolder.KOReader) validateReaderTree(uri)
-            reading.replaceSource(before, config.treeCandidate(before, folder, uri, replacedTree))
+            val candidate = config.treeCandidate(before, folder, uri, replacedTree)
+            val paired = if (folder == SourceFolder.KOReader && selection.pairKoreader) {
+                candidate.copy(sourcePackage = before.sourcePackage ?: KOREADER_PACKAGE)
+            } else {
+                candidate
+            }
+            reading.replaceSource(before, paired)
         } finally {
             releaseUnused(before.grantedTrees + uri)
         }

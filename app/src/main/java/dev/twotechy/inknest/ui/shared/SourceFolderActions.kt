@@ -1,9 +1,8 @@
-package dev.twotechy.inknest.ui.settings
+package dev.twotechy.inknest.ui.shared
 
 import dev.twotechy.inknest.data.repository.sources.SourceFolder
 
-internal data class SourceConnectionActions(
-    val selectApp: (String) -> Unit,
+internal data class SourceFolderActions(
     val selectFolder: (SourceFolder) -> Unit,
     val replaceBookFolder: (String) -> Unit,
     val removeBookFolder: (String) -> Unit,

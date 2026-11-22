@@ -1,5 +1,7 @@
 package dev.twotechy.inknest.model
 
+internal const val KOREADER_PACKAGE = "org.koreader.launcher"
+
 data class ReadingSourceConfig(
     val sourceId: String? = null,
     val koreaderTreeUri: String? = null,

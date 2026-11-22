@@ -6,4 +6,5 @@ data class AppPreferences(
     val showHomePinnedApps: Boolean = true,
     val onboardingCompleted: Boolean = false,
     val showHomeHeatmap: Boolean = true,
+    val onboardingLauncherPending: Boolean = false,
 )

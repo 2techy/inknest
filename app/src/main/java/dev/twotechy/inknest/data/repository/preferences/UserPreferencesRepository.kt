@@ -11,6 +11,7 @@ interface UserPreferencesRepository {
     suspend fun setShowHomeHeatmap(show: Boolean)
     suspend fun setShowHomeStats(show: Boolean)
     suspend fun setShowHomePinnedApps(show: Boolean)
+    suspend fun setOnboardingLauncherPending(pending: Boolean)
     suspend fun completeOnboarding()
 
     val pinnedComponentIds: Flow<List<String>>
