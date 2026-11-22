@@ -30,6 +30,8 @@ Thư viện gộp các thư mục sách; menu thư mục lọc một nguồn g�
 
 - Chạm hoặc nhấn giữ sách trong Thư viện để xem chi tiết, rồi dùng nút đọc để mở KOReader. Trang chủ mở trực tiếp sách hiện tại. Thiếu tệp, quyền hoặc trình xử lý sẽ báo lỗi; dữ liệu đọc cập nhật từ KOReader khi quay lại.
 - Đặt ứng dụng Trang chủ mặc định tại Cài đặt → Trình khởi chạy. Để đổi lại, vào Cài đặt Android → Ứng dụng → Ứng dụng mặc định → Ứng dụng Trang chủ; tên mục tùy firmware. HOME về Trang chủ InkNest khi ứng dụng giữ vai trò này. Ứng dụng/ghim dùng được khi chưa có nguồn đọc.
+- Trong Ứng dụng, chạm để mở app hoặc nhấn giữ để quản lý ghim trên Trang chủ hay mở **Thông tin ứng dụng** trong Cài đặt Android. Các app đã ghim xuất hiện trước theo thứ tự trên Trang chủ. Tìm kiếm theo tên hoặc package trên toàn bộ ứng dụng.
+- Mục **Truy cập nhanh** trên Trang chủ hiển thị tối đa bốn ứng dụng đã ghim trong một hàng. Nút **Xem tất cả** cạnh tiêu đề mở màn Ứng dụng để xem toàn bộ ghim.
 - E-Ink dùng biểu tượng thang xám; Tiêu chuẩn giữ màu gốc. Cả hai dùng chuyển trạng thái tĩnh. Cài đặt → Giao diện điều chỉnh chế độ và các mục Trang chủ, gồm thống kê nhanh, nhịp đọc và ghim; ẩn ghim không xóa ghim. Cỡ chữ theo Android; firmware quản lý làm mới màn hình.
 
 ## Cập nhật ứng dụng

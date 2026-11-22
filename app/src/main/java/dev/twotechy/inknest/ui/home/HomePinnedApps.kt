@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,10 +18,8 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import dev.twotechy.inknest.R
 import dev.twotechy.inknest.platform.icons.AppIconLoader
 import dev.twotechy.inknest.ui.components.AppIcon
 import dev.twotechy.inknest.ui.components.quietClick
@@ -36,38 +33,28 @@ internal fun HomePinnedApps(
     pins: List<HomePinUiModel>,
     iconLoader: AppIconLoader?,
     onAppClick: (String) -> Unit,
-    onOpenApps: () -> Unit,
 ) {
-    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val fontScale = LocalDensity.current.fontScale
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val gap = InkAppGridTokens.horizontalGap
-        val minimumCellWidth = InkAppGridTokens.minCellWidth * fontScale
-        val columns = ((maxWidth + gap) / (minimumCellWidth + gap)).toInt().coerceAtLeast(1)
-        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-            val row = pins.take(columns)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(gap)) {
-                row.forEach { pin ->
-                    key(pin.componentId) {
-                        HomePinItem(
-                            pin,
-                            iconLoader,
-                            onClick = { onAppClick(pin.componentId) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+        val columns = InkAppGridTokens.columnsFor(maxWidth, fontScale)
+            .coerceAtMost(InkAppGridTokens.HOME_MAX_COLUMNS)
+        val row = pins.take(columns)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(InkAppGridTokens.horizontalGap),
+        ) {
+            row.forEach { pin ->
+                key(pin.componentId) {
+                    HomePinItem(
+                        pin,
+                        iconLoader,
+                        onClick = { onAppClick(pin.componentId) },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-                // Keep a short row aligned with the responsive app grid.
-                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
-            if (pins.size > columns) {
-                Text(
-                    stringResource(R.string.home_all_pins_count, pins.size),
-                    Modifier.quietClick(
-                        onOpenApps,
-                    ).sizeIn(minHeight = InkAppGridTokens.iconFrame).padding(InkSpacing.md),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
+            // Keep a short row aligned with the responsive app grid.
+            repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
         }
     }
 }

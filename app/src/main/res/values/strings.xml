@@ -16,6 +16,11 @@
     <string name="no_launcher_apps_detail">No launchable applications were found on this device.</string>
     <string name="pinned_apps">Pinned</string>
     <string name="all_apps">All apps</string>
+    <string name="other_apps">Other apps</string>
+    <string name="app_actions">App actions</string>
+    <string name="app_info">App info</string>
+    <string name="app_info_unavailable">Couldn’t open App info</string>
+    <string name="clear_search_query">Clear search query</string>
     <string name="pinned">Pinned</string>
     <string name="pin_app">Pin to Home</string>
     <string name="unpin_app">Unpin from Home</string>
@@ -256,7 +261,6 @@
     <string name="home_heatmap">Reading rhythm</string>
     <string name="home_heatmap_description">Show reading activity on Home.</string>
     <string name="home_heatmap_title">Reading rhythm</string>
-    <string name="home_all_pins_count">View all · %1$d</string>
     <string name="license_luaj" translatable="false">LuaJ</string>
     <string name="license_material_symbols" translatable="false">Material Symbols</string>
     <string name="license_mit" translatable="false">MIT</string>

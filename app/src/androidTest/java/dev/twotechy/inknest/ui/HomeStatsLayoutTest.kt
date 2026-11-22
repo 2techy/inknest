@@ -40,7 +40,7 @@ import dev.twotechy.inknest.ui.components.SearchField
 import dev.twotechy.inknest.ui.home.HomeActions
 import dev.twotechy.inknest.ui.home.HomeHeader
 import dev.twotechy.inknest.ui.home.HomePinUiModel
-import dev.twotechy.inknest.ui.home.HomePinnedApps
+import dev.twotechy.inknest.ui.home.HomePinnedAppsSection
 import dev.twotechy.inknest.ui.home.HomeReadingActivity
 import dev.twotechy.inknest.ui.home.HomeReadingActivitySection
 import dev.twotechy.inknest.ui.home.HomeReadingStats
@@ -82,21 +82,38 @@ class HomeStatsLayoutTest {
     @After fun close() = instrumentation.runOnMainSync { activity.finish() }
 
     @Test fun responsivePinsKeepOrderAndOverflowReachable() {
-        for ((width, font) in listOf(320f to 1f, 320f to 2f, 720f to 1f, 720f to 2f)) {
+        val seeAll = context.getString(R.string.home_view_all)
+        val layouts =
+            listOf(
+                Triple(320f, 1f, 3),
+                Triple(320f, 2f, 1),
+                Triple(720f, 1f, 4),
+                Triple(720f, 2f, 4),
+            )
+        for ((width, font, count) in layouts) {
             val opened = AtomicInteger()
             val launched = AtomicInteger()
             show(width, font) {
-                HomePinnedApps(pins, null, {
-                    launched.set(it.substringAfter('/').toInt())
-                }, { opened.incrementAndGet() })
+                HomePinnedAppsSection(
+                    pins,
+                    null,
+                    HomeActions(
+                        reading = {},
+                        refresh = {},
+                        launchApp = { launched.set(it.substringAfter('/').toInt()) },
+                        openStats = {},
+                        openApps = { opened.incrementAndGet() },
+                        settings = {},
+                    ),
+                )
             }
             val labels = nodes().mapNotNull { it.text?.toString() }.filter { it.startsWith("Pin ") }
-            assertTrue(labels.isNotEmpty())
-            assertTrue(labels.size < pins.size)
-            assertEquals(pins.take(labels.size).map { it.label }, labels)
+            assertEquals(pins.take(count).map { it.label }, labels)
+            assertEquals(1, nodes().count { it.text?.toString()?.contains(seeAll) == true })
+            assertTrue(bounds(actionNode(seeAll)).bottom <= bounds(actionNode("Pin 1")).top)
             click("Pin 1")
             assertEquals("launch at width=$width font=$font", 1, launched.get())
-            click(context.getString(R.string.home_all_pins_count, pins.size))
+            click(seeAll)
             assertEquals("overflow at width=$width font=$font", 1, opened.get())
         }
     }

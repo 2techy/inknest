@@ -39,6 +39,7 @@ internal fun SearchField(
     focus: FocusRequester,
     onQuery: (String) -> Unit,
     onClose: () -> Unit,
+    showClearAction: Boolean = false,
 ) {
     // Editing/selection must update synchronously; derived search results may arrive later.
     // Closing search disposes this field; a new session starts from the ViewModel's saved query.
@@ -94,11 +95,28 @@ internal fun SearchField(
                 }
             },
         )
+        SearchFieldActions(showClearAction && editing.text.isNotEmpty(), onClose) {
+            editing = TextFieldValue()
+            onQuery("")
+            focus.requestFocus()
+        }
+    }
+}
+
+@Composable
+private fun SearchFieldActions(showClearAction: Boolean, onClose: () -> Unit, onClear: () -> Unit) {
+    if (showClearAction) {
         HeaderIconButton(
-            R.drawable.ic_close,
-            stringResource(R.string.close_search),
+            R.drawable.ic_clear_query,
+            stringResource(R.string.clear_search_query),
             placement = HeaderIconPlacement.Centered,
-            onClick = onClose,
+            onClick = onClear,
         )
     }
+    HeaderIconButton(
+        R.drawable.ic_close,
+        stringResource(R.string.close_search),
+        placement = HeaderIconPlacement.Centered,
+        onClick = onClose,
+    )
 }
