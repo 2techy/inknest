@@ -6,7 +6,9 @@ internal object InkSettingsTokens {
     val rowMinHeight = 64.dp
     val choiceMinHeight = 56.dp
     val toggleMinHeight = 64.dp
-    val rowPadding = InkSpacing.md
+    val rowPadding = InkSpacing.sm
+    val sectionGap = InkSpacing.xl
+    val headingGap = InkSpacing.sm
     val leadingSize = 32.dp
     val iconSize = 24.dp
     val chevronSize = 20.dp

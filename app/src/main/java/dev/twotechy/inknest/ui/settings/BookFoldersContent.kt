@@ -31,7 +31,7 @@ import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.ui.components.ConfirmationDialog
 import dev.twotechy.inknest.ui.shared.SourceFolderActions
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
-import dev.twotechy.inknest.ui.theme.InkLayoutTokens
+import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
@@ -47,7 +47,7 @@ internal fun BookFoldersContent(
     Column(Modifier.padding(top = InkSpacing.lg)) {
         SettingsSection(
             stringResource(R.string.book_folders),
-            contentSpacing = if (compact) InkSpacing.xs else InkLayoutTokens.sectionContentGap,
+            contentSpacing = if (compact) InkSpacing.xs else InkSettingsTokens.headingGap,
         ) {
             if (!compact && state.source.booksFolders.isEmpty()) {
                 Text(

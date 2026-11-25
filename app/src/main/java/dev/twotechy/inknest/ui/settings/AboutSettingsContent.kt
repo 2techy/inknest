@@ -17,13 +17,12 @@ import androidx.compose.ui.text.style.TextAlign
 import dev.twotechy.inknest.BuildConfig
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.AppUpdateState
-import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun AboutSettingsContent(update: AppUpdateState, actions: SettingsActions) {
-    Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(InkSettingsTokens.sectionGap)) {
         AboutIdentity()
         Column {
             SettingsRow(
