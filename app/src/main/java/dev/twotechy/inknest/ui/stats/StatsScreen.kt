@@ -63,16 +63,20 @@ internal fun StatsScreen(
 private fun StatsDashboard(overview: StatsOverview, options: StatsOptions, actions: StatsActions) {
     Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap)) {
         StatsHighlights(overview, options.unit)
-        StatsSection {
-            StatsTrend(overview, options, actions.period, actions.day)
-        }
-        StatsSection {
-            Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {
-                Text(
-                    stringResource(R.string.stats_activity),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                ReadingHeatmap(overview.activity, overview.lastDay, options.unit)
+        Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {
+            StatsSection {
+                StatsTrend(overview, options, actions.period, actions.day)
+            }
+            StatsSection {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap),
+                ) {
+                    Text(
+                        stringResource(R.string.stats_activity),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    ReadingHeatmap(overview.activity, overview.lastDay, options.unit)
+                }
             }
         }
         StatsSection {
