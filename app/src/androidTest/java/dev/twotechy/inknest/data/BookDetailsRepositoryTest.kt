@@ -102,6 +102,10 @@ class BookDetailsRepositoryTest {
     }
 
     private fun statisticsFixture(): StatisticsRepository = object : StatisticsRepository {
+        override fun observeDay(day: LocalDate, page: Int): Nothing = error("Day details not used")
+
+        override fun retryDay() = Unit
+
         override val data = MutableStateFlow(
             StatisticsData(
                 generation = "g",

@@ -14,6 +14,7 @@ import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.statistics.StatisticsPeriod
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkSpacing
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -21,6 +22,7 @@ internal fun StatsTrend(
     overview: StatsOverview,
     options: StatsOptions,
     onPeriod: (StatisticsPeriod) -> Unit,
+    onDay: (LocalDate) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
         Row(
@@ -67,6 +69,6 @@ internal fun StatsTrend(
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        StatsChart(buckets, overview.lastDay, options)
+        StatsChart(buckets, overview.lastDay, options, onDay)
     }
 }

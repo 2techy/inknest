@@ -5,12 +5,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import dev.twotechy.inknest.model.ReadingItemId
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 internal class AppNavigationViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     val selected = savedState.getStateFlow("selectedDestination", TopLevelDestination.Home.name)
     val settingsPage = savedState.getStateFlow("settingsPage", "Overview")
+    private val details = MutableStateFlow(
+        savedState.get<ArrayList<String>>("detailStack").orEmpty()
+            .chunked(3).mapNotNull(DetailDestination::restore),
+    )
+    val detailStack = details.asStateFlow()
     val onboardingVisible = savedState.getStateFlow("onboardingVisible", false)
     private val session = MutableStateFlow(0L)
     val gestureSession = session.asStateFlow()
@@ -19,6 +26,33 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
     fun openSettingsPage(page: String) {
         savedState["settingsPage"] = page
     }
+    fun openStatsDay(day: LocalDate) {
+        if (onboardingVisible.value) return
+        if (selected.value == TopLevelDestination.Stats.name && details.value.isEmpty()) {
+            setDetails(listOf(DetailDestination.StatsDay(day)))
+        }
+    }
+
+    fun openBook(id: ReadingItemId) {
+        if (onboardingVisible.value) return
+        val stack = details.value
+        val canOpen = when (selected.value) {
+            TopLevelDestination.Library.name -> stack.isEmpty()
+            TopLevelDestination.Stats.name -> stack.singleOrNull() is DetailDestination.StatsDay
+            else -> false
+        }
+        if (canOpen) setDetails(stack + DetailDestination.Book(id))
+    }
+
+    fun backFromDetail() {
+        setDetails(details.value.dropLast(1))
+    }
+
+    private fun setDetails(stack: List<DetailDestination>) {
+        savedState["detailStack"] = ArrayList(stack.flatMap(DetailDestination::savedParts))
+        details.value = stack
+    }
+
     fun offerSetup(completed: Boolean) {
         val entry = savedState.get<String>("setupEntry") ?: SetupEntry.FirstRun.name
         if (completed && entry == SetupEntry.FirstRun.name) {
@@ -44,6 +78,7 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
     }
     fun reviewSetup() {
         cancelOnboardingLauncherRequest()
+        setDetails(emptyList())
         savedState["setupEntry"] = SetupEntry.Review.name
         setupOffered = true
         savedState["settingsPage"] = "Overview"
@@ -56,6 +91,7 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
         initialLaunchHandled = true
         if (restoring) return
         if (isHome && !fromHistory) {
+            setDetails(emptyList())
             savedState["selectedDestination"] = TopLevelDestination.Home.name
             savedState["settingsPage"] = "Overview"
             savedState["onboardingVisible"] = false
@@ -83,6 +119,7 @@ internal class AppNavigationViewModel(private val savedState: SavedStateHandle) 
             savedState["settingsReturnDestination"] = selected.value
         }
         savedState["pendingLibrarySearch"] = false
+        setDetails(emptyList())
         cancelOnboardingLauncherRequest()
         session.value++
         savedState["settingsPage"] = "Overview"

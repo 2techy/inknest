@@ -10,11 +10,15 @@ import dev.twotechy.inknest.data.repository.statistics.miniStatistics
 import dev.twotechy.inknest.data.source.saf.MissingSourceFileException
 import dev.twotechy.inknest.data.source.statistics.StatisticsEventDataSource
 import dev.twotechy.inknest.data.source.statistics.UnsupportedStatisticsSchemaException
+import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.ReadingSourceConfig
 import dev.twotechy.inknest.model.ReadingStatistics
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsData
+import dev.twotechy.inknest.model.StatisticsDayBook
+import dev.twotechy.inknest.model.StatisticsDayDetail
 import dev.twotechy.inknest.platform.clock.StatisticsClock
 import dev.twotechy.inknest.platform.clock.SystemStatisticsClock
 import dev.twotechy.inknest.platform.tracing.OperationTracer
@@ -33,8 +37,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -72,6 +78,7 @@ internal class KoreaderStatisticsRepository(
     private val status =
         MutableStateFlow<Pair<String?, ReadingSyncStatus>>(null to ReadingSyncStatus())
     private val observationRetry = ObservationRetry()
+    private val dayRetry = ObservationRetry()
     private val readError = MutableStateFlow<String?>(null)
     private val tree = config.config.map { it.koreaderTreeUri }.distinctUntilChanged()
     override val data = tree.flatMapLatest { selected ->
@@ -120,6 +127,94 @@ internal class KoreaderStatisticsRepository(
             ReadingStatistics(daily, streak)
         }
     }.flowOn(defaultDispatcher)
+
+    override fun observeDay(day: LocalDate, page: Int): Flow<StatisticsDayDetail> {
+        require(page >= 0)
+        val selection = combine(data, config.config, clock.moments) { cached, selected, moment ->
+            if (day > moment.today) null else cached.daySelection(selected, moment.zone)
+        }.distinctUntilChanged()
+        return selection.flatMapLatest { selected ->
+            val details = if (selected == null) {
+                flowOf(StatisticsDayDetail(loading = false))
+            } else {
+                observeCachedDay(selected, day, page)
+            }
+            combine(details, data) { detail, cached ->
+                if (selected != null && cached.generation != selected.generation) {
+                    StatisticsDayDetail()
+                } else {
+                    detail.copy(
+                        sync = cached.sync,
+                        loading = detail.loading || (detail.amount == null && cached.sync.running),
+                    )
+                }
+            }
+        }.buffer(0).flowOn(defaultDispatcher)
+    }
+
+    override fun retryDay() {
+        dayRetry.retry()
+        observationRetry.retry()
+        config.retryRead()
+    }
+
+    private fun StatisticsData.daySelection(
+        selected: ReadingSourceConfig,
+        zone: ZoneId,
+    ): DaySelection? {
+        val source = selected.koreaderTreeUri ?: return null
+        val generation = generation ?: return null
+        if (sourceTree != source || this.zone != zone) return null
+        return DaySelection(source, generation, selected.sourceId, selected.booksTreeUris)
+    }
+
+    private fun observeCachedDay(
+        selected: DaySelection,
+        day: LocalDate,
+        page: Int,
+    ): Flow<StatisticsDayDetail> {
+        val failed = MutableStateFlow(false)
+        val snapshots = dao.observeDayDetail(
+            selected.source,
+            selected.generation,
+            day.toEpochDay(),
+            selected.fileSource,
+            selected.libraryFolders,
+            DAY_BOOK_PAGE_SIZE + 1,
+            page.toLong() * DAY_BOOK_PAGE_SIZE,
+        ).map { rows ->
+            val first = rows.firstOrNull() ?: return@map StatisticsDayDetail()
+            StatisticsDayDetail(
+                amount = StatisticsAmount(first.daySeconds, first.dayPages),
+                books = rows.take(DAY_BOOK_PAGE_SIZE).mapNotNull { row ->
+                    row.bookId?.let {
+                        StatisticsDayBook(
+                            it,
+                            row.title,
+                            StatisticsAmount(checkNotNull(row.bookSeconds), row.bookPages),
+                            row.libraryPath?.let { path ->
+                                selected.fileSource?.let { source -> ReadingItemId(source, path) }
+                            },
+                        )
+                    }
+                },
+                hasMore = rows.size > DAY_BOOK_PAGE_SIZE,
+                loading = false,
+            )
+        }.recoverObservation(
+            dayRetry,
+            onError = { failed.value = true },
+            onSuccess = { failed.value = false },
+        ).onStart { emit(StatisticsDayDetail()) }
+        return combine(snapshots, failed) { snapshot, error -> snapshot.copy(cacheError = error) }
+    }
+
+    private data class DaySelection(
+        val source: String,
+        val generation: String,
+        val fileSource: String?,
+        val libraryFolders: Set<String>,
+    )
 
     init {
         scope.launch {
@@ -195,6 +290,8 @@ internal class KoreaderStatisticsRepository(
         }
     }
 }
+
+private const val DAY_BOOK_PAGE_SIZE = 30
 
 private fun statisticsIssue(error: Exception): ReadingSyncIssue = when (error) {
     is SecurityException -> ReadingSyncIssue.PermissionLost

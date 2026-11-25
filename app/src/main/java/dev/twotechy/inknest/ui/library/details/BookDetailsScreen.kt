@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.model.BookDetails
 import dev.twotechy.inknest.model.BookReadingStatistics
 import dev.twotechy.inknest.model.BookStatisticsStatus
 import dev.twotechy.inknest.ui.components.ActionButton
@@ -72,21 +73,20 @@ internal fun BookDetailsScreen(
         },
         gesturesEnabled = false,
     ) {
+        val contentScroll = rememberScrollState()
+        val loadingScroll = rememberScrollState()
+        val book = state.details.book
+        if (book == null) {
+            BookDetailsUnavailable(state.details, actions.retry)
+            return@ScreenScaffold
+        }
+        val loadingHistory = state.historyExpanded &&
+            state.details.statistics.status == BookStatisticsStatus.Loading
+        val scrollState = if (loadingHistory) loadingScroll else contentScroll
         Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+            Modifier.fillMaxWidth().verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(InkSpacing.md),
         ) {
-            val book = state.details.book
-            if (book == null) {
-                val message = if (state.details.loading) {
-                    R.string.library_loading
-                } else {
-                    R.string.book_details_removed
-                }
-                Text(stringResource(message))
-                ActionButton(stringResource(R.string.book_details_retry), onClick = actions.retry)
-                return@Column
-            }
             BookDetailsHero(book, state.zone, actions.open)
             Column {
                 book.description?.let {
@@ -108,10 +108,7 @@ internal fun BookDetailsScreen(
                     actions.history,
                 )
                 if (state.historyExpanded) {
-                    BookDetailsHistory(
-                        state.details.statistics,
-                        actions.page,
-                    )
+                    BookDetailsHistory(state.details.statistics, actions.page)
                 }
                 HorizontalDivider()
                 BookDetailsExpander(
@@ -124,6 +121,18 @@ internal fun BookDetailsScreen(
                 HorizontalDivider()
             }
         }
+    }
+}
+
+@Composable
+private fun BookDetailsUnavailable(details: BookDetails, retry: () -> Unit) {
+    val message = if (details.loading) R.string.library_loading else R.string.book_details_removed
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(InkSpacing.md),
+    ) {
+        Text(stringResource(message))
+        ActionButton(stringResource(R.string.book_details_retry), onClick = retry)
     }
 }
 

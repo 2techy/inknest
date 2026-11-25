@@ -230,6 +230,15 @@
     <string name="stats_axis_minutes">%1$s min</string>
     <string name="stats_axis_pages">%1$s pg</string>
     <string name="stats_calculating">Calculating reading statistics…</string>
+    <string name="stats_day_details">Day details</string>
+    <string name="stats_day_chart_label">%1$s, %2$s</string>
+    <string name="stats_day_books">Books read</string>
+    <string name="stats_day_unknown_book">Unknown book title</string>
+    <string name="stats_day_empty">No reading recorded for this day.</string>
+    <string name="stats_day_unavailable">Reading statistics for this day are unavailable.</string>
+    <string name="stats_day_empty_page">No books on this page.</string>
+    <string name="stats_day_previous_page">Previous page</string>
+    <string name="stats_day_next_page">Next page</string>
     <string name="gesture_release_refresh">Release to refresh</string>
     <string name="home_apps_refresh_error">Unable to refresh apps</string>
     <string name="home_apps_refresh_retry">Your existing apps are still available. Tap to retry.</string>

@@ -1,10 +1,48 @@
 package dev.twotechy.inknest.ui.navigation
 
 import androidx.lifecycle.SavedStateHandle
+import dev.twotechy.inknest.model.ReadingItemId
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class AppNavigationViewModelTest {
+    @Test fun bookOpenedFromStatsRestoresAndReturnsToItsDay() {
+        val day = LocalDate.of(2026, 11, 24)
+        val book = ReadingItemId("source", "primary:books/A, B.epub")
+        val dayDetail = DetailDestination.StatsDay(day)
+        val bookDetail = DetailDestination.Book(book)
+        val handle = SavedStateHandle()
+        val navigation = AppNavigationViewModel(handle)
+        navigation.openStatsDay(day)
+        assertEquals(emptyList<DetailDestination>(), navigation.detailStack.value)
+
+        navigation.select(TopLevelDestination.Stats)
+        navigation.openStatsDay(day)
+        navigation.openBook(book)
+
+        val restored = AppNavigationViewModel(
+            SavedStateHandle(handle.keys().associateWith { handle.get<Any?>(it) }),
+        )
+        restored.handleInitialLaunch(isHome = true, fromHistory = false, restoring = true)
+        restored.openStatsDay(day.plusDays(1))
+        assertEquals(listOf(dayDetail, bookDetail), restored.detailStack.value)
+        restored.backFromDetail()
+        assertEquals(listOf(dayDetail), restored.detailStack.value)
+        restored.backFromDetail()
+        assertEquals(emptyList<DetailDestination>(), restored.detailStack.value)
+        assertEquals(TopLevelDestination.Stats.name, restored.selected.value)
+
+        restored.select(TopLevelDestination.Library)
+        restored.openBook(book)
+        restored.openStatsDay(day)
+        assertEquals(listOf(bookDetail), restored.detailStack.value)
+        assertEquals(TopLevelDestination.Library.name, restored.selected.value)
+        restored.handleHomeIntent(fromHomeKey = true) { true }
+        assertEquals(emptyList<DetailDestination>(), restored.detailStack.value)
+        assertEquals(TopLevelDestination.Home.name, restored.selected.value)
+    }
+
     @Test fun settingsReturnsToOriginAfterRecreationAndLegacyDefaultsToHome() {
         val handle = SavedStateHandle()
         val vm = AppNavigationViewModel(handle)

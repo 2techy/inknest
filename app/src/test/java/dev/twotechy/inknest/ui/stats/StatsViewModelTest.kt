@@ -149,6 +149,10 @@ class StatsViewModelTest {
 }
 
 private class FakeStatisticsRepository(today: LocalDate) : StatisticsRepository {
+    override fun observeDay(day: LocalDate, page: Int): Nothing = error("Day details not used")
+
+    override fun retryDay() = Unit
+
     override val data = MutableStateFlow(
         StatisticsData(
             days = mapOf(

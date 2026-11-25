@@ -25,11 +25,8 @@ internal interface StatisticsDao : BookProfileDao {
 
     @Query(
         """
-        SELECT profiles.* FROM statistics_books s JOIN books profiles ON profiles.id=COALESCE(
-            (SELECT CASE WHEN COUNT(DISTINCT f.bookId)=1 THEN MIN(f.bookId) END
-             FROM book_files f WHERE f.sourceId=:fileSource AND f.checksum=s.checksum),
-            s.profileId
-        )
+        SELECT profiles.* FROM statistics_books s
+        JOIN books profiles ON profiles.id=$BOOK_PROFILE_ID_SQL
         WHERE s.generation=:generation AND s.bookId=:bookId
             AND EXISTS (SELECT 1 FROM statistics_sources WHERE generation=s.generation)
         """,
@@ -90,6 +87,50 @@ internal interface StatisticsDao : BookProfileDao {
 
     @Query("SELECT * FROM statistics_sources WHERE source=:source")
     suspend fun source(source: String): StatisticsSourceEntity?
+
+    @Query(
+        """
+        WITH active AS (
+            SELECT generation FROM statistics_sources
+            WHERE source=:source AND generation=:generation
+        ), layouts AS (
+            SELECT bookId, page, totalPages, SUM(seconds) AS seconds
+            FROM statistics_events
+            WHERE generation=(SELECT generation FROM active) AND day=:day AND seconds>0
+            GROUP BY bookId, page, totalPages
+        ), book_totals AS (
+            SELECT bookId, SUM(seconds) AS seconds,
+                CASE WHEN MAX(page IS NULL) THEN NULL ELSE COUNT(*) END AS pages
+            FROM layouts GROUP BY bookId
+            ORDER BY seconds DESC, bookId ASC LIMIT :limit OFFSET :offset
+        )
+        SELECT COALESCE(d.seconds, 0) AS daySeconds,
+            CASE WHEN d.day IS NULL THEN 0 ELSE d.pages END AS dayPages,
+            p.bookId, p.seconds AS bookSeconds, p.pages AS bookPages, profiles.title,
+            (SELECT CASE WHEN COUNT(DISTINCT f.path)=1 AND COUNT(DISTINCT f.bookId)=1
+                THEN MIN(CASE WHEN l.fileId IS NOT NULL THEN f.path END) END
+                FROM book_files f
+                LEFT JOIN library_books l ON l.fileId=f.id AND l.sourceId=f.sourceId
+                    AND l.folderKey IN (:libraryFolders)
+                WHERE f.sourceId=:fileSource AND f.checksum=s.checksum
+            ) AS libraryPath
+        FROM active
+        LEFT JOIN statistics_days d ON d.generation=active.generation AND d.day=:day
+        LEFT JOIN book_totals p ON 1=1
+        LEFT JOIN statistics_books s ON s.generation=active.generation AND s.bookId=p.bookId
+        LEFT JOIN books profiles ON profiles.id=$BOOK_PROFILE_ID_SQL
+        ORDER BY p.seconds DESC, p.bookId ASC
+        """,
+    )
+    fun observeDayDetail(
+        source: String,
+        generation: String,
+        day: Long,
+        fileSource: String?,
+        libraryFolders: Set<String>,
+        limit: Int,
+        offset: Long,
+    ): Flow<List<StatisticsDayDetailRow>>
 
     @Query("SELECT * FROM statistics_imports WHERE id=:id")
     suspend fun findOperation(id: String): StatisticsImportEntity?
@@ -195,6 +236,14 @@ internal interface StatisticsDao : BookProfileDao {
     )
     suspend fun pruneBooks()
 }
+
+private const val BOOK_PROFILE_ID_SQL = """
+    COALESCE(
+        (SELECT CASE WHEN COUNT(DISTINCT f.bookId)=1 THEN MIN(f.bookId) END
+         FROM book_files f WHERE f.sourceId=:fileSource AND f.checksum=s.checksum),
+        s.profileId
+    )
+"""
 
 private const val BOOK_DAYS_SQL = """
     SELECT r.day AS day, SUM(r.seconds) AS seconds,
