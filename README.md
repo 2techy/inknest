@@ -26,6 +26,9 @@ InkNest is an offline Android launcher built around reading on E-Ink devices. Br
 | --- | --- | --- |
 | <img src="docs/assets/screenshots/home.png" alt="Home with current reading, activity calendar and quick access to pinned apps" width="260"> | <img src="docs/assets/screenshots/library.png" alt="Library grid with sample book covers, authors and reading progress" width="260"> | <img src="docs/assets/screenshots/statistics.png" alt="Reading time, monthly trend and activity calendar" width="260"> |
 
+<details>
+<summary>More screenshots</summary>
+
 | Apps | Book details | Day details |
 | --- | --- | --- |
 | <img src="docs/assets/screenshots/apps.png" alt="Pinned apps and installed apps in a grayscale grid" width="260"> | <img src="docs/assets/screenshots/book-details.png" alt="Book cover, progress, reading statistics and daily reading history for Walden" width="260"> | <img src="docs/assets/screenshots/day-details.png" alt="Reading time, recorded pages and linked books for a selected day" width="260"> |
@@ -33,6 +36,8 @@ InkNest is an offline Android launcher built around reading on E-Ink devices. Br
 | Settings | App updates |
 | --- | --- |
 | <img src="docs/assets/screenshots/settings.png" alt="Settings for reading data, appearance, launcher and About" width="260"> | <img src="docs/assets/screenshots/app-updates.png" alt="App updates with current and latest versions, download details and release notes" width="260"> |
+
+</details>
 
 Screenshots captured on an Android 14 emulator in E-Ink mode with synthetic reading data and sample covers.
 
