@@ -6,6 +6,10 @@ import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Upsert
+import dev.twotechy.inknest.data.local.database.books.BookEntity
+import dev.twotechy.inknest.data.local.database.books.BookFileEntity
+import dev.twotechy.inknest.data.local.database.books.BookProfileDao
+import dev.twotechy.inknest.data.local.database.books.bookFileId
 import kotlinx.coroutines.flow.Flow
 
 private const val CURRENT_QUERY = """
@@ -16,13 +20,13 @@ private const val CURRENT_QUERY = """
         b.fingerprint AS book_fingerprint,
         b.currentPage AS book_currentPage, b.totalPages AS book_totalPages,
         b.description AS book_description
-    FROM reading_sources s LEFT JOIN reading_items b
+    FROM reading_sources s LEFT JOIN reading_book_rows b
         ON s.sourceId=b.sourceId AND s.snapshotKey=b.snapshotKey AND s.currentPath=b.path
     WHERE s.sourceId=:sourceId AND s.snapshotKey=:snapshotKey
 """
 
 @Dao
-internal interface ReadingDao {
+internal interface ReadingDao : BookProfileDao {
     @Query(CURRENT_QUERY)
     fun observe(sourceId: String, snapshotKey: String): Flow<CachedReading?>
 
@@ -30,32 +34,32 @@ internal interface ReadingDao {
     suspend fun get(sourceId: String, snapshotKey: String): CachedReading?
 
     @Query(
-        "SELECT * FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND historyOrder IS NOT NULL ORDER BY historyOrder",
+        "SELECT * FROM reading_book_rows WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND historyOrder IS NOT NULL ORDER BY historyOrder",
     )
-    fun observeHistory(sourceId: String, snapshotKey: String): Flow<List<ReadingBookEntity>>
+    fun observeHistory(sourceId: String, snapshotKey: String): Flow<List<ReadingBookRow>>
 
     @Query(
-        "SELECT * FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND path=:path",
+        "SELECT * FROM reading_book_rows WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey AND path=:path",
     )
-    suspend fun book(sourceId: String, snapshotKey: String, path: String): ReadingBookEntity?
+    suspend fun book(sourceId: String, snapshotKey: String, path: String): ReadingBookRow?
 
     @Query(
         """
-        SELECT b.* FROM reading_items b JOIN reading_sources s
+        SELECT b.* FROM reading_book_rows b JOIN reading_sources s
         ON b.sourceId=s.sourceId AND b.snapshotKey=s.snapshotKey
         WHERE b.sourceId=:sourceId AND b.path=:path
         ORDER BY s.lastSuccessAt DESC LIMIT 1
     """,
     )
-    suspend fun recentBook(sourceId: String, path: String): ReadingBookEntity?
+    suspend fun recentBook(sourceId: String, path: String): ReadingBookRow?
 
-    @Query("SELECT * FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey")
-    suspend fun books(sourceId: String, snapshotKey: String): List<ReadingBookEntity>
+    @Query("SELECT * FROM reading_book_rows WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey")
+    suspend fun books(sourceId: String, snapshotKey: String): List<ReadingBookRow>
 
     @Transaction
     suspend fun carryForward(previous: ReadingCacheKey, next: ReadingCacheKey, issue: String) {
         val old = get(previous.sourceId, previous.snapshotKey) ?: run {
-            attempt(next.sourceId, next.snapshotKey, System.currentTimeMillis())
+            attempt(next, System.currentTimeMillis())
             updateError(next.sourceId, next.snapshotKey, issue)
             return
         }
@@ -78,7 +82,7 @@ internal interface ReadingDao {
     }
 
     @Query(
-        "SELECT coverUri FROM reading_items WHERE coverUri IS NOT NULL UNION SELECT coverUri FROM library_books WHERE coverUri IS NOT NULL",
+        "SELECT DISTINCT b.coverUri FROM books b JOIN book_files f ON f.bookId=b.id WHERE b.coverUri IS NOT NULL",
     )
     suspend fun coverUris(): List<String>
 
@@ -92,7 +96,7 @@ internal interface ReadingDao {
     )
     suspend fun pruneBooks(sourceId: String, snapshotKey: String, currentPath: String?)
 
-    @Upsert suspend fun putBook(book: ReadingBookEntity)
+    @Upsert suspend fun putBooks(books: List<ReadingBookEntity>)
 
     @Upsert suspend fun putSource(source: ReadingSourceEntity)
 
@@ -110,33 +114,56 @@ internal interface ReadingDao {
     suspend fun updateError(sourceId: String, snapshotKey: String, error: String)
 
     @Transaction
-    suspend fun attempt(sourceId: String, snapshotKey: String, time: Long) {
-        ensureSource(ReadingSourceEntity(sourceId, snapshotKey))
-        updateAttempt(sourceId, snapshotKey, time)
+    suspend fun attempt(key: ReadingCacheKey, time: Long) {
+        ensureSource(ReadingSourceEntity(key.sourceId, key.snapshotKey))
+        updateAttempt(key.sourceId, key.snapshotKey, time)
     }
 
     @Transaction
     suspend fun save(
         source: ReadingSourceEntity,
-        books: List<ReadingBookEntity>,
+        books: List<ReadingBookRow>,
         replaceHistory: Boolean,
     ) {
         if (replaceHistory) resetHistory(source.sourceId, source.snapshotKey)
-        for (book in books) {
-            putBook(
-                if (!replaceHistory && book.historyOrder == null) {
-                    val previous = book(source.sourceId, source.snapshotKey, book.path)
-                    book.copy(
-                        historyOrder = previous?.historyOrder,
-                        lastReadAt = previous?.lastReadAt,
-                    )
-                } else {
-                    book
-                },
+        val files = books.map { book ->
+            val id = bookFileId(
+                book.sourceId,
+                book.path,
+                book.fingerprint,
+                "reading:${book.snapshotKey}",
             )
+            BookFileEntity(id, id, book.sourceId, book.path, book.fingerprint)
         }
+        putProfiles(
+            books.zip(files) { book, file ->
+                BookEntity(file.bookId, book.title, book.author, book.coverUri, book.description)
+            },
+        )
+        insertFiles(files)
+        putBooks(books.zip(files) { book, file -> readingEntity(book, file, replaceHistory) })
         pruneBooks(source.sourceId, source.snapshotKey, source.currentPath)
         putSource(source)
+        pruneFiles()
+        pruneProfiles("file:*")
+    }
+
+    private suspend fun readingEntity(
+        book: ReadingBookRow,
+        file: BookFileEntity,
+        replaceHistory: Boolean,
+    ): ReadingBookEntity {
+        val row = if (!replaceHistory && book.historyOrder == null) {
+            val previous = book(book.sourceId, book.snapshotKey, book.path)
+            book.copy(lastReadAt = previous?.lastReadAt, historyOrder = previous?.historyOrder)
+        } else {
+            book
+        }
+        return ReadingBookEntity(
+            row.sourceId, row.snapshotKey, row.path, file.id, row.availability,
+            row.progress, row.status, row.lastReadAt, row.historyOrder,
+            row.currentPage, row.totalPages,
+        )
     }
 
     @Query("DELETE FROM reading_items WHERE sourceId=:sourceId AND snapshotKey=:snapshotKey")
@@ -146,9 +173,11 @@ internal interface ReadingDao {
     suspend fun deleteSource(sourceId: String, snapshotKey: String)
 
     @Transaction
-    suspend fun clear(sourceId: String, snapshotKey: String) {
-        deleteBooks(sourceId, snapshotKey)
-        deleteSource(sourceId, snapshotKey)
+    suspend fun clear(key: ReadingCacheKey) {
+        deleteBooks(key.sourceId, key.snapshotKey)
+        deleteSource(key.sourceId, key.snapshotKey)
+        pruneFiles()
+        pruneProfiles("file:*")
     }
 
     @Query("DELETE FROM reading_items")
@@ -173,6 +202,8 @@ internal interface ReadingDao {
         clearLibraryFolders()
         clearBooks()
         clearSources()
+        pruneFiles()
+        pruneProfiles("*")
     }
 
     @Query("DELETE FROM statistics_imports")

@@ -153,9 +153,9 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
 
 ## Data, generated files and release boundaries
 
-- Room is currently schema 8 with destructive cache fallback during development.
-  DataStore owns pins/preferences/source selections separately. Do not silently change
-  schemas or add migrations; stable upgrade behavior must be decided before stable release.
+- Room is currently schema 9. A schema change invalidates the disposable cache and Room
+  rebuilds it from the configured sources. DataStore owns pins/preferences/source selections
+  separately. Decide schema and migration changes explicitly.
 - Generate schemas through Room/KSP and profiles through the benchmark workflow.
   Do not hand-edit generated JSON/profile rules or delete schema history incidentally.
 - Preserve primary-storage SAF containment checks, persisted read grants and bounded

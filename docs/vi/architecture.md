@@ -30,7 +30,7 @@ Khởi tạo dependency dùng chung ngoài luồng chính và truyền dispatche
 
 ## Lưu trữ và theo dõi
 
-- Room schema 8 lưu đệm sách hiện tại/lịch sử, danh mục thư mục và thống kê. Trong giai đoạn phát triển, cache có thể bị xóa và tạo lại; chưa cam kết tương thích nâng cấp ổn định.
+- Room schema 9 lưu đệm sách hiện tại, lịch sử, danh mục thư mục và thống kê. Nâng phiên bản schema tạo lại cache. Xem [cache đọc](reading-cache.md) về hồ sơ sách dùng chung và định danh tệp.
 - DataStore lưu riêng ghim, tùy chọn và lựa chọn nguồn. Locale dùng lưu trữ AppCompat, không dùng Room/DataStore.
 - Xử lý lỗi theo dõi I/O/SQLite dự kiến trước khi chia sẻ flow, thử lại sau 1/2/4/8/16/30 giây và cho phép thử lại thủ công. Giữ bản chụp thành công; phục hồi không tạo dữ liệu rỗng giả hoặc quét SAF.
 - Giữ tín hiệu hủy coroutine. Ghi thất bại phải báo lỗi, không báo thành công hoặc thay giá trị đã lưu.

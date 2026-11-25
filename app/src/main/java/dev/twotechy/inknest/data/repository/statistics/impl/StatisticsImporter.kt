@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.data.repository.statistics.impl
 
-import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookRow
 import dev.twotechy.inknest.data.local.database.statistics.StatisticsDao
 import dev.twotechy.inknest.data.local.database.statistics.StatisticsEventEntity
 import dev.twotechy.inknest.data.local.database.statistics.StatisticsImportEntity
@@ -58,10 +58,11 @@ internal class StatisticsImporter(
                             dao.appendBooks(
                                 operation,
                                 books.map {
-                                    StatisticsBookEntity(
+                                    StatisticsBookRow(
                                         generation,
                                         it.bookId,
                                         it.checksum,
+                                        it.title,
                                     )
                                 },
                             )

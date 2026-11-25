@@ -30,7 +30,7 @@ Initialize shared dependencies off main and wire dispatchers/clocks through cons
 
 ## Storage and observation
 
-- Room schema 8 caches current/history, folder inventory and statistics. Development uses destructive cache fallback; stable upgrade compatibility is not promised.
+- Room schema 9 caches current reading, history, folder inventory and statistics. A schema upgrade rebuilds the disposable cache. See [reading cache](reading-cache.md) for shared book profiles and file identity.
 - DataStore separately owns pins, preferences and source selections. Locale uses AppCompat storage, not Room/DataStore.
 - Recover expected I/O/SQLite observation failures before sharing flows, with 1/2/4/8/16/30-second backoff and manual retry. Retain successful snapshots; recovery never invents empty data or starts a SAF scan.
 - Preserve coroutine cancellation. Failed writes expose errors and never report success or replace saved values.

@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.repository.reading.impl
 
 import dev.twotechy.inknest.data.local.database.reading.CachedReading
-import dev.twotechy.inknest.data.local.database.reading.ReadingBookEntity
+import dev.twotechy.inknest.data.local.database.reading.ReadingBookRow
 import dev.twotechy.inknest.data.local.database.reading.ReadingCacheKey
 import dev.twotechy.inknest.data.local.database.reading.ReadingSourceEntity
 import dev.twotechy.inknest.data.repository.reading.ReadingState
@@ -54,7 +54,7 @@ private fun CachedReading.readingState(): ReadingState {
         ?: ReadingState.Loading
 }
 
-internal fun ReadingBookEntity.toReadingItem() = ReadingItem(
+internal fun ReadingBookRow.toReadingItem() = ReadingItem(
     id = ReadingItemId(sourceId, path),
     title = title,
     description = description,

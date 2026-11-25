@@ -1,7 +1,7 @@
 package dev.twotechy.inknest.data.repository.library.impl
 
 import android.database.sqlite.SQLiteException
-import dev.twotechy.inknest.data.local.database.library.LibraryBookEntity
+import dev.twotechy.inknest.data.local.database.library.LibraryBookRow
 import dev.twotechy.inknest.data.local.database.library.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.database.library.LibraryFolderKey
 import dev.twotechy.inknest.data.local.database.library.LibraryInventoryStore
@@ -73,7 +73,7 @@ internal class SafLibraryFolderRepository(
     private var job: Pair<LibraryFolderKey, Deferred<Unit>>? = null
     private val inventory = key.flatMapLatest { selected ->
         if (selected == null) {
-            flowOf(Triple(null, emptyList<LibraryBookEntity>(), null))
+            flowOf(Triple(null, emptyList<LibraryBookRow>(), null))
         } else {
             combine(
                 inventoryStore.observe(selected),
@@ -89,7 +89,7 @@ internal class SafLibraryFolderRepository(
                 onSuccess = { readErrors.update { it - selected } },
             )
         }
-    }.stateIn(scope, SharingStarted.Eagerly, Triple(null, emptyList<LibraryBookEntity>(), null))
+    }.stateIn(scope, SharingStarted.Eagerly, Triple(null, emptyList<LibraryBookRow>(), null))
     private val catalogErrors = combine(errors, readErrors) { writes, reads ->
         reads.associateWith { ReadingSyncIssue.Cache } + writes
     }
@@ -243,7 +243,7 @@ internal class SafLibraryFolderRepository(
     private suspend fun replaceInventory(active: LibraryFolderKey, found: List<CatalogBook>) {
         val old = inventoryStore.books(active).associateBy { it.path }
         val rows = found.map { file ->
-            old[file.path] ?: LibraryBookEntity(
+            old[file.path] ?: LibraryBookRow(
                 active.source,
                 active.tree,
                 file.path,
@@ -273,14 +273,14 @@ internal class SafLibraryFolderRepository(
         }
     }
 
-    private suspend fun saveMetadataBatch(active: LibraryFolderKey, rows: List<LibraryBookEntity>) =
+    private suspend fun saveMetadataBatch(active: LibraryFolderKey, rows: List<LibraryBookRow>) =
         commit(active) { inventoryStore.putBooks(rows) }
 
     private suspend fun readMetadata(
         selected: ReadingSourceConfig,
         active: LibraryFolderKey,
         file: CatalogBook,
-    ): LibraryBookEntity {
+    ): LibraryBookRow {
         currentCoroutineContext().ensureActive()
         val item = ReadingItem(
             ReadingItemId(active.source, file.path),
@@ -293,7 +293,7 @@ internal class SafLibraryFolderRepository(
             ResolvedBook(file.path, active.tree, file.relative, file.document),
             item,
         )
-        return LibraryBookEntity(
+        return LibraryBookRow(
             active.source, active.tree, file.path,
             book.item.title, book.item.author, book.item.coverUri,
             book.metadata?.fingerprint, book.item.progress, book.item.status.name,

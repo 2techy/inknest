@@ -53,3 +53,5 @@ Chưa có bản chụp thì ẩn lịch; bản rỗng thành công hiện lịch
 ## Thống kê từng sách trong Thư viện
 
 Chi tiết sách dùng chỉ mục book-ID/checksum theo generation trên sự kiện Room. Nhập có giới hạn kích hoạt nguyên tử cùng bản chụp; chia lại ngày sao chép chỉ mục, xóa cache/dọn dẹp xóa nó. Lịch sử phân trang mới nhất trước, giữ quy tắc trang/chưa xác định. Dashboard chỉ theo dõi tổng ngày, không giữ sự kiện từng sách trong UI state. Xem [Thư viện](library.md) về ghép định danh.
+
+Mỗi sách được nhập tham chiếu một hồ sơ trong `books`. Tên từ nguồn vẫn có khi sách thiếu tệp cục bộ hoặc checksum. Truy vấn dùng hồ sơ tệp chung khi checksum xác định được duy nhất một hồ sơ trong nguồn đã chọn. Chia lại ngày giữ các tham chiếu này.

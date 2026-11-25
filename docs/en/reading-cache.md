@@ -7,8 +7,9 @@ Current reading, tracked history, refresh and opening contracts for `RoomReading
 ## Data and source boundaries
 
 - `KoreaderCurrentReadingDataSource` prioritizes valid `lastfile`, falling back to the first valid history path in array order. Missing/corrupt sources differ from successful empty data. A missing/out-of-grant current file retains identity/filename with an availability warning. Never infer current reading from statistics or title/basename matches.
-- Room schema 8 is exported in `app/schemas`; development uses destructive cache fallback, without stable upgrade guarantees. DataStore separately owns preferences, pins and SAF config. Foreground refresh rebuilds disposable data.
-- `reading_items` stores source/path identity, availability, metadata, progress/status, source last-read time and nullable history order. `reading_sources` stores the current pointer, attempt/success times, errors and skipped-history count.
+- Room schema 9 is exported in `app/schemas`. Upgrading from an incompatible schema resets the Room cache. The next refresh reloads reading and statistics from the configured sources, and the Library index rebuilds its inventory. DataStore separately owns preferences, pins and SAF config.
+- `reading_items` stores source/path identity, a file reference, availability, progress/status, source last-read time and nullable history order. `reading_sources` stores the current pointer, attempt/success times, errors and skipped-history count.
+- `books` owns display metadata. `book_files` identifies a file revision by source, canonical path and fingerprint. Reading and Library share the profile for a verified revision. Unknown fingerprints remain scoped to their reading snapshot or library folder. Removing library membership preserves profiles still referenced by history.
 - Domain identity survives primary-storage aliases. Cache rows additionally partition by KOReader-tree/sorted-Books-tree fingerprint. Candidate read/validation/cache write precedes DataStore activation; failure preserves active config/cache. Invisible candidate partitions are removed by clear/disconnect.
 - DataStore/Room have no shared transaction; staging order handles the crash gap. Grant cleanup uses the actual saved config even after caller cancellation.
 

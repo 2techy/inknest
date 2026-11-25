@@ -4,8 +4,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.database.ReadingDatabase
-import dev.twotechy.inknest.data.local.database.library.LibraryBookEntity
-import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookEntity
+import dev.twotechy.inknest.data.local.database.library.LibraryBookRow
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookRow
 import dev.twotechy.inknest.data.local.database.statistics.StatisticsEventEntity
 import dev.twotechy.inknest.data.local.database.statistics.StatisticsImportEntity
 import dev.twotechy.inknest.data.source.formats.epub.epubDescription
@@ -49,7 +49,7 @@ class BookDetailsDataTest {
             val dao = database.statisticsDao()
             for (count in listOf(0, 1, 5, 6, 12)) {
                 val generation = "g$count"
-                dao.putBooks(listOf(StatisticsBookEntity(generation, 1, "hash")))
+                dao.putBooks(listOf(StatisticsBookRow(generation, 1, "hash")))
                 dao.putEvents(
                     (0 until count).map { day ->
                         StatisticsEventEntity(
@@ -95,9 +95,9 @@ class BookDetailsDataTest {
             val dao = database.statisticsDao()
             dao.putBooks(
                 listOf(
-                    StatisticsBookEntity("g", 1, "hash"),
-                    StatisticsBookEntity("g", 2, "hash"),
-                    StatisticsBookEntity("g", 3, "different"),
+                    StatisticsBookRow("g", 1, "hash"),
+                    StatisticsBookRow("g", 2, "hash"),
+                    StatisticsBookRow("g", 3, "different"),
                 ),
             )
             val rows = listOf(
@@ -124,7 +124,7 @@ class BookDetailsDataTest {
 
             val inventory = database.libraryDao()
             inventory.putBooks(
-                listOf(LibraryBookEntity("source", "folder", "path", "Book", fingerprint = "1:1")),
+                listOf(LibraryBookRow("source", "folder", "path", "Book", fingerprint = "1:1")),
             )
             inventory.saveChecksum("source", "folder", "path", "old", "bad")
             assertNull(inventory.checksum("source", "folder", "path", "1:1"))
@@ -137,7 +137,7 @@ class BookDetailsDataTest {
             assertNull(inventory.book("source", "folder", "path"))
             assertEquals(0, dao.observeMatches("g", "hash").first())
             try {
-                dao.appendBooks(operation, listOf(StatisticsBookEntity("g", 1, "hash")))
+                dao.appendBooks(operation, listOf(StatisticsBookRow("g", 1, "hash")))
                 fail("Cleared imports must not restore identities")
             } catch (_: CancellationException) {
                 assertEquals(0, dao.observeMatches("g", "hash").first())
