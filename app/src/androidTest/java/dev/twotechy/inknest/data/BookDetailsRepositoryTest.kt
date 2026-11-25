@@ -5,8 +5,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.database.ReadingDatabase
-import dev.twotechy.inknest.data.local.database.library.LibraryBookEntity
-import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookEntity
+import dev.twotechy.inknest.data.local.database.library.LibraryBookRow
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookRow
 import dev.twotechy.inknest.data.local.database.statistics.StatisticsEventEntity
 import dev.twotechy.inknest.data.repository.books.impl.RoomBookDetailsRepository
 import dev.twotechy.inknest.data.repository.library.LibraryCatalog
@@ -118,7 +118,7 @@ class BookDetailsRepositoryTest {
     private suspend fun seed(database: ReadingDatabase, id: ReadingItemId) {
         database.libraryDao().putBooks(
             listOf(
-                LibraryBookEntity(
+                LibraryBookRow(
                     id.sourceId,
                     "books",
                     id.path,
@@ -127,7 +127,7 @@ class BookDetailsRepositoryTest {
                 ),
             ),
         )
-        database.statisticsDao().putBooks(listOf(StatisticsBookEntity("g", 1, "matching")))
+        database.statisticsDao().putBooks(listOf(StatisticsBookRow("g", 1, "matching")))
     }
 
     private suspend fun verifyPages(

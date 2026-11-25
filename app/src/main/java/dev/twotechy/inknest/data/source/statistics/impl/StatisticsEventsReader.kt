@@ -31,8 +31,10 @@ internal suspend fun readStatisticsBooks(
     db: SQLiteDatabase,
     consume: suspend (List<StatisticsBookIdentity>) -> Unit,
 ) {
-    if (!hasColumn(db, "book", "md5")) return
-    readStatisticsRows(db, "SELECT id, md5 FROM book", Cursor::bookIdentity, consume)
+    if (!hasColumn(db, "book", "id")) return
+    val checksum = if (hasColumn(db, "book", "md5")) "md5" else "NULL"
+    val title = if (hasColumn(db, "book", "title")) "title" else "NULL"
+    readStatisticsRows(db, "SELECT id, $checksum, $title FROM book", Cursor::bookIdentity, consume)
 }
 
 // Both tables share cancellation, row limits and bounded batch ownership.
@@ -102,7 +104,11 @@ private val BOOK_CHECKSUM = Regex("[0-9a-f]{32}")
 
 private fun Cursor.bookIdentity(): StatisticsBookIdentity? {
     if (getType(0) != Cursor.FIELD_TYPE_INTEGER) return null
-    val checksum = getString(1)?.lowercase() ?: return null
-    if (!checksum.matches(BOOK_CHECKSUM)) return null
-    return StatisticsBookIdentity(getLong(0), checksum)
+    val checksum = getString(1)?.lowercase()?.takeIf(BOOK_CHECKSUM::matches)
+    val title = if (getType(2) == Cursor.FIELD_TYPE_STRING) {
+        getString(2).trim().take(1_024).takeIf(String::isNotEmpty)
+    } else {
+        null
+    }
+    return StatisticsBookIdentity(getLong(0), checksum, title)
 }

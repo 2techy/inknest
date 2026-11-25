@@ -7,8 +7,9 @@ Contract sách hiện tại, lịch sử, làm mới và mở sách của `RoomR
 ## Ranh giới dữ liệu và nguồn
 
 - `KoreaderCurrentReadingDataSource` ưu tiên `lastfile` hợp lệ, dự phòng bằng đường dẫn hợp lệ đầu tiên theo thứ tự lịch sử. Nguồn thiếu/hỏng khác dữ liệu rỗng thành công. Sách hiện tại mất/ngoài quyền giữ định danh/tên tệp, kèm cảnh báo truy cập. Không suy sách hiện tại từ thống kê hoặc tên sách/tên tệp.
-- Room schema 8 xuất tại `app/schemas`; giai đoạn phát triển cho xóa/tạo lại cache, chưa bảo đảm nâng cấp ổn định. DataStore giữ riêng tùy chọn, ghim và cấu hình SAF. Làm mới foreground dựng lại cache.
-- `reading_items` lưu định danh nguồn/đường dẫn, truy cập, metadata, tiến độ/trạng thái, thời điểm đọc từ nguồn và thứ tự lịch sử nullable. `reading_sources` lưu con trỏ hiện tại, mốc thử/thành công, lỗi và số mục lịch sử bỏ qua.
+- Room schema 9 xuất tại `app/schemas`. Khi nâng cấp từ schema không tương thích, Room tạo lại cache. Lần làm mới tiếp theo nạp dữ liệu đọc và thống kê từ nguồn đã chọn, còn Thư viện lập lại danh mục. DataStore giữ riêng tùy chọn, ghim và cấu hình SAF.
+- `reading_items` lưu định danh nguồn/đường dẫn, tham chiếu tệp, khả dụng, tiến độ/trạng thái, thời điểm đọc từ nguồn và thứ tự lịch sử có thể rỗng. `reading_sources` lưu con trỏ hiện tại, mốc thử/thành công, lỗi và số mục lịch sử bỏ qua.
+- `books` lưu metadata hiển thị. `book_files` định danh phiên bản tệp theo nguồn, đường dẫn chuẩn và fingerprint. Reading và Thư viện dùng chung hồ sơ của phiên bản xác định được. Nếu thiếu fingerprint, dữ liệu vẫn thuộc riêng bản chụp Reading hoặc thư mục Thư viện. Bỏ tệp khỏi Thư viện giữ lại hồ sơ mà lịch sử còn tham chiếu.
 - Định danh miền giữ qua bí danh bộ nhớ chính. Hàng cache phân vùng thêm bằng fingerprint cây KOReader/các cây sách đã sắp xếp. Đọc/kiểm tra/ghi cache cấu hình ứng viên trước khi kích hoạt DataStore; lỗi giữ cấu hình/cache hiện hành. Phân vùng ứng viên ẩn bị xóa khi xóa cache/ngắt kết nối.
 - DataStore/Room không có giao dịch chung; thứ tự staging xử lý khoảng dừng giữa hai bước. Dọn quyền dựa trên cấu hình thực đã lưu, kể cả sau hủy bên gọi.
 

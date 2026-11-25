@@ -53,3 +53,5 @@ No snapshot hides the calendar; a successful empty snapshot shows it empty. Refr
 ## Per-book statistics in Library
 
 Book details uses a generation-scoped book-ID/checksum index over Room events. Its bounded import activates atomically with the snapshot; rebinning copies it and clear/pruning removes it. Daily history paginates newest first using the same page/unknown semantics. The dashboard continues to observe daily summaries, without raw per-book events in UI state. See [Library](library.md) for identity matching.
+
+Each imported book references a profile in `books`. The source title remains available for books without a local file or checksum. The profile lookup uses a shared file profile when the checksum identifies a single profile in the selected source. Rebinning retains these references.

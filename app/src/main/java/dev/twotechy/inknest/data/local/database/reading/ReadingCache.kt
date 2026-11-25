@@ -7,6 +7,7 @@ import dev.twotechy.inknest.model.ReadingSyncIssue
 import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 
 internal fun ReadingSourceConfig.readingCacheKey(): ReadingCacheKey? {
@@ -34,15 +35,16 @@ internal class ReadingCache(
         next: ReadingCacheKey,
         issue: ReadingSyncIssue,
     ) = dao.carryForward(previous, next, issue.name)
-    fun observe(key: ReadingCacheKey) = dao.observe(key.sourceId, key.snapshotKey)
+    fun observe(key: ReadingCacheKey) =
+        dao.observe(key.sourceId, key.snapshotKey).distinctUntilChanged()
     suspend fun current(key: ReadingCacheKey) = dao.get(key.sourceId, key.snapshotKey)
-    suspend fun attempt(key: ReadingCacheKey, time: Long) =
-        dao.attempt(key.sourceId, key.snapshotKey, time)
+    suspend fun attempt(key: ReadingCacheKey, time: Long) = dao.attempt(key, time)
     suspend fun fail(key: ReadingCacheKey, issue: ReadingSyncIssue) =
         dao.updateError(key.sourceId, key.snapshotKey, issue.name)
-    suspend fun clear(key: ReadingCacheKey) = dao.clear(key.sourceId, key.snapshotKey)
+    suspend fun clear(key: ReadingCacheKey) = dao.clear(key)
 
-    fun observeHistory(key: ReadingCacheKey) = dao.observeHistory(key.sourceId, key.snapshotKey)
+    fun observeHistory(key: ReadingCacheKey) =
+        dao.observeHistory(key.sourceId, key.snapshotKey).distinctUntilChanged()
     suspend fun coverUris() = dao.coverUris().toSet()
     suspend fun metadata(config: ReadingSourceConfig, path: String): BookMetadata? {
         val key = config.readingCacheKey() ?: return null
@@ -65,7 +67,7 @@ internal class ReadingCache(
             val history = snapshot.history.orEmpty().distinctBy { it.id.path }
             val order = history.mapIndexed { index, book -> book.id.path to index }.toMap()
             val books = (history + listOfNotNull(item)).associateBy { it.id.path }.values.map {
-                ReadingBookEntity(
+                ReadingBookRow(
                     sourceId = key.sourceId,
                     snapshotKey = key.snapshotKey,
                     path = it.id.path,

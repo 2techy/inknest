@@ -4,15 +4,40 @@ import androidx.room3.Dao
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Upsert
+import dev.twotechy.inknest.data.local.database.books.BookEntity
+import dev.twotechy.inknest.data.local.database.books.BookProfileDao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-internal interface StatisticsDao {
-    @Upsert suspend fun putBooks(books: List<StatisticsBookEntity>)
+internal interface StatisticsDao : BookProfileDao {
+    @Upsert suspend fun putBookAliases(books: List<StatisticsBookEntity>)
+
+    @Transaction suspend fun putBooks(books: List<StatisticsBookRow>) {
+        val profiles = books.map { BookEntity("stats:${it.generation}:${it.bookId}", it.title) }
+        putProfiles(profiles)
+        putBookAliases(
+            books.zip(profiles) { row, profile ->
+                StatisticsBookEntity(row.generation, row.bookId, row.checksum, profile.id)
+            },
+        )
+    }
+
+    @Query(
+        """
+        SELECT profiles.* FROM statistics_books s JOIN books profiles ON profiles.id=COALESCE(
+            (SELECT CASE WHEN COUNT(DISTINCT f.bookId)=1 THEN MIN(f.bookId) END
+             FROM book_files f WHERE f.sourceId=:fileSource AND f.checksum=s.checksum),
+            s.profileId
+        )
+        WHERE s.generation=:generation AND s.bookId=:bookId
+            AND EXISTS (SELECT 1 FROM statistics_sources WHERE generation=s.generation)
+        """,
+    )
+    fun observeBookProfile(generation: String, bookId: Long, fileSource: String?): Flow<BookEntity?>
 
     @Transaction
-    suspend fun appendBooks(operation: StatisticsImportEntity, books: List<StatisticsBookEntity>) {
+    suspend fun appendBooks(operation: StatisticsImportEntity, books: List<StatisticsBookRow>) {
         if (findOperation(operation.id) == null) {
             throw CancellationException("Reading cache cleared")
         }
@@ -21,7 +46,7 @@ internal interface StatisticsDao {
 
     @Query(
         """
-        INSERT INTO statistics_books SELECT :generation, bookId, checksum
+        INSERT INTO statistics_books SELECT :generation, bookId, checksum, profileId
         FROM statistics_books WHERE generation=:previous
         """,
     )
@@ -138,6 +163,7 @@ internal interface StatisticsDao {
         deleteBooks(generation)
         deleteDays(generation)
         deleteEvents(generation)
+        pruneProfiles("stats:*")
     }
 
     @Query(
@@ -158,6 +184,7 @@ internal interface StatisticsDao {
         pruneDays()
         pruneEvents()
         clearOperations()
+        pruneProfiles("stats:*")
     }
 
     @Query("DELETE FROM statistics_books WHERE generation=:generation")

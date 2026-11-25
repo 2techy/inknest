@@ -1,6 +1,6 @@
 package dev.twotechy.inknest.data.repository.library.impl
 
-import dev.twotechy.inknest.data.local.database.library.LibraryBookEntity
+import dev.twotechy.inknest.data.local.database.library.LibraryBookRow
 import dev.twotechy.inknest.data.local.database.library.LibraryFolderEntity
 import dev.twotechy.inknest.data.local.database.library.LibraryFolderKey
 import dev.twotechy.inknest.data.local.database.library.LibraryInventoryStore
@@ -119,7 +119,7 @@ class SafLibraryRepositoryTest {
             resumeQueued.await()
             inventory.replace(
                 LibraryFolderEntity(key.source, key.tree, 1, true),
-                listOf(LibraryBookEntity(key.source, key.tree, "primary:A/Book.epub", "Book")),
+                listOf(LibraryBookRow(key.source, key.tree, "primary:A/Book.epub", "Book")),
             )
             runCurrent()
             gate.unlock()
@@ -298,7 +298,7 @@ class SafLibraryRepositoryTest {
 
 private class MemoryLibraryInventoryStore : LibraryInventoryStore {
     private data class Rows(
-        val books: List<LibraryBookEntity> = emptyList(),
+        val books: List<LibraryBookRow> = emptyList(),
         val folder: LibraryFolderEntity? = null,
     )
     private val rows = MutableStateFlow<Map<LibraryFolderKey, Rows>>(emptyMap())
@@ -309,7 +309,7 @@ private class MemoryLibraryInventoryStore : LibraryInventoryStore {
     }
     override fun observeFolder(key: LibraryFolderKey) = rows.map { it[key]?.folder }
     override suspend fun books(key: LibraryFolderKey) = rows.value[key]?.books.orEmpty()
-    override suspend fun putBooks(books: List<LibraryBookEntity>) {
+    override suspend fun putBooks(books: List<LibraryBookRow>) {
         books.groupBy { LibraryFolderKey(it.sourceId, it.folderKey) }.forEach { (key, batch) ->
             rows.update { current ->
                 val previous = current[key] ?: Rows()
@@ -326,7 +326,7 @@ private class MemoryLibraryInventoryStore : LibraryInventoryStore {
     override suspend fun remove(key: LibraryFolderKey) {
         rows.update { it - key }
     }
-    override suspend fun replace(folder: LibraryFolderEntity, books: List<LibraryBookEntity>) {
+    override suspend fun replace(folder: LibraryFolderEntity, books: List<LibraryBookRow>) {
         val key = LibraryFolderKey(folder.sourceId, folder.folderKey)
         rows.update { it + (key to Rows(books, folder)) }
     }
