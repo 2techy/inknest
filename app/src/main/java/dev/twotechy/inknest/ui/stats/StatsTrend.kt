@@ -24,6 +24,7 @@ internal fun StatsTrend(
     onPeriod: (StatisticsPeriod) -> Unit,
     onDay: (LocalDate) -> Unit,
 ) {
+    val buckets = overview.chart
     Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
         Row(
             Modifier.fillMaxWidth(),
@@ -35,40 +36,34 @@ internal fun StatsTrend(
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.titleMedium,
             )
-            Text(statsUnitLabel(options.unit), style = MaterialTheme.typography.bodySmall)
+            if (buckets.isNotEmpty()) {
+                Text(
+                    statsDateRange(buckets.first().date, buckets.last().lastDay, options.period),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
         StatsPeriods(options.period, onPeriod)
-        val buckets = overview.chart
-        if (buckets.isNotEmpty()) {
-            val locale = currentUiLocale()
-            val firstDate = buckets.first().date
-            val lastDate = buckets.last().lastDay
-            val firstPattern = when {
-                options.period == StatisticsPeriod.AllTime -> "yyyy"
-                firstDate.year != lastDate.year -> "dd MMM yyyy"
-                firstDate.month != lastDate.month -> "dd MMM"
-                else -> "dd"
-            }
-            val lastPattern = if (options.period ==
-                StatisticsPeriod.AllTime
-            ) {
-                "yyyy"
-            } else {
-                "dd MMM yyyy"
-            }
-            val first = firstDate.format(DateTimeFormatter.ofPattern(firstPattern, locale))
-            val last = lastDate.format(DateTimeFormatter.ofPattern(lastPattern, locale))
-            Text(
-                if (first ==
-                    last
-                ) {
-                    first
-                } else {
-                    stringResource(R.string.stats_date_range, first, last)
-                },
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
         StatsChart(buckets, overview.lastDay, options, onDay)
     }
+}
+
+@Composable
+private fun statsDateRange(
+    firstDate: LocalDate,
+    lastDate: LocalDate,
+    period: StatisticsPeriod,
+): String {
+    val locale = currentUiLocale()
+    val lastPattern = if (period == StatisticsPeriod.AllTime) "yyyy" else "dd MMM yyyy"
+    val firstPattern = when {
+        period == StatisticsPeriod.AllTime -> lastPattern
+        firstDate.year != lastDate.year -> lastPattern
+        firstDate.month != lastDate.month -> "dd MMM"
+        else -> "dd"
+    }
+    val last = lastDate.format(DateTimeFormatter.ofPattern(lastPattern, locale))
+    if (firstDate == lastDate) return last
+    val first = firstDate.format(DateTimeFormatter.ofPattern(firstPattern, locale))
+    return if (first == last) last else stringResource(R.string.stats_date_range, first, last)
 }

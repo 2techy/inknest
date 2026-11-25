@@ -241,6 +241,7 @@ class HomeStatsLayoutTest {
         val formatter = weekDayFormatter()
         val monday = today.format(formatter)
         awaitText(monday, true)
+        assertStatsTrendSummary()
         scrollStatsWeekForward()
         val saturdayLabel = saturday.format(formatter)
         awaitText(saturdayLabel, true)
@@ -257,6 +258,29 @@ class HomeStatsLayoutTest {
         awaitText(monday, false)
         click(context.getString(R.string.stats_period_month))
         awaitText(saturdayLabel, false)
+    }
+
+    private fun assertStatsTrendSummary() {
+        val locale = resolveUiLocale(activity.resources.configuration.locales.toLanguageTags())
+        val shortEnd = today.plusDays(6).format(DateTimeFormatter.ofPattern("dd MMM", locale))
+        val range = context.getString(
+            R.string.stats_date_range,
+            today.format(DateTimeFormatter.ofPattern("dd", locale)),
+            shortEnd,
+        )
+        val total = context.getString(
+            R.string.stats_chart_total,
+            context.getString(R.string.stats_minutes_value, 2L),
+        )
+        awaitText(range, true)
+        awaitText(total, true)
+        val textNodes = nodes()
+        val rangeBounds = bounds(textNodes.first { it.text?.toString()?.startsWith(range) == true })
+        val totalBounds = bounds(textNodes.first { it.text?.toString() == total })
+        val week = context.getString(R.string.stats_period_week)
+        val weekBounds = bounds(textNodes.first { it.text?.toString() == week })
+        assertTrue(rangeBounds.bottom <= weekBounds.top)
+        assertTrue(totalBounds.left > weekBounds.left)
     }
 
     private fun scrollStatsWeekForward() {
