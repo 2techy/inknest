@@ -1,8 +1,12 @@
 package dev.twotechy.inknest.ui.settings
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +27,10 @@ import dev.twotechy.inknest.model.AppRelease
 import dev.twotechy.inknest.model.AppUpdateError
 import dev.twotechy.inknest.model.AppUpdateState
 import dev.twotechy.inknest.model.UpdateDownloadStage
+import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkLayoutTokens
+import dev.twotechy.inknest.ui.theme.InkRadius
+import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
@@ -32,7 +39,7 @@ internal fun AppUpdatesContent(
     notes: ReleaseNotesDocument,
     actions: UpdateSettingsActions,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(InkSettingsTokens.sectionGap)) {
         UpdateVersionSection(state, actions)
         Column {
             state.snapshot.release?.let { release ->
@@ -60,7 +67,16 @@ internal fun AppUpdatesContent(
 @Composable
 private fun UpdateVersionSection(state: AppUpdateState, actions: UpdateSettingsActions) {
     val action = updatePrimaryAction(state)
-    Column(verticalArrangement = Arrangement.spacedBy(InkSpacing.lg)) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .border(
+                InkBorder.default,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(InkRadius.large),
+            )
+            .padding(InkLayoutTokens.cardPadding),
+        verticalArrangement = Arrangement.spacedBy(InkSpacing.lg),
+    ) {
         Text(
             updateStatusText(state),
             Modifier.semantics {

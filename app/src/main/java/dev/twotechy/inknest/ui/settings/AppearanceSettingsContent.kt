@@ -12,14 +12,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.DisplayMode
-import dev.twotechy.inknest.ui.theme.InkLayoutTokens
+import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 
 @Composable
 internal fun AppearanceSettingsContent(state: SettingsUiState, actions: SettingsActions) {
     val preferences = state.preferences ?: return
     var choosingMode by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { choosingMode = false }
-    Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(InkSettingsTokens.sectionGap)) {
         SettingsSection(stringResource(R.string.settings_general_heading)) {
             SettingsRow(
                 stringResource(R.string.language_title),

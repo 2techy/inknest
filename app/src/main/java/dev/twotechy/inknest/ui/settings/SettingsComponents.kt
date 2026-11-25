@@ -37,10 +37,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.ui.components.ActionButton
 import dev.twotechy.inknest.ui.theme.InkBorder
-import dev.twotechy.inknest.ui.theme.InkLayoutTokens
 import dev.twotechy.inknest.ui.theme.InkRadius
 import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
@@ -54,6 +54,7 @@ internal fun SettingsRow(
     descriptionMaxLines: Int = 2,
     onClick: () -> Unit,
 ) {
+    val dividerInset = if (icon == null) 0.dp else InkSettingsTokens.leadingSize + InkSpacing.md
     Column {
         Row(
             Modifier.fillMaxWidth().heightIn(min = InkSettingsTokens.rowMinHeight)
@@ -96,10 +97,7 @@ internal fun SettingsRow(
                 )
             }
         }
-        HorizontalDivider(
-            thickness = InkBorder.thin,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
+        SettingsDivider(startInset = dividerInset)
     }
 }
 
@@ -128,7 +126,16 @@ internal fun SettingsToggle(
     SettingsSelectionRow(title, description, SelectionState(checked, enabled, Role.Checkbox)) {
         onChange(!checked)
     }
-    HorizontalDivider(thickness = InkBorder.thin, color = MaterialTheme.colorScheme.outlineVariant)
+    SettingsDivider()
+}
+
+@Composable
+private fun SettingsDivider(startInset: Dp = 0.dp) {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = startInset),
+        thickness = InkBorder.thin,
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
 }
 
 private data class SelectionState(val selected: Boolean, val enabled: Boolean, val role: Role)
@@ -295,15 +302,14 @@ private fun SettingsDescription(text: String) {
 @Composable
 internal fun SettingsSection(
     title: String,
-    contentSpacing: Dp = InkLayoutTokens.sectionContentGap,
+    contentSpacing: Dp = InkSettingsTokens.headingGap,
     content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
         Text(
             title,
             modifier = Modifier.semantics { heading() },
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.titleSmall,
         )
         Column { content() }
     }
