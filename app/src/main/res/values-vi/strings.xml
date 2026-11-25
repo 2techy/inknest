@@ -229,6 +229,15 @@
     <string name="stats_axis_minutes">%1$s ph</string>
     <string name="stats_axis_pages">%1$s tr</string>
     <string name="stats_calculating">Đang tính thống kê đọc…</string>
+    <string name="stats_day_details">Chi tiết ngày</string>
+    <string name="stats_day_chart_label">%1$s, %2$s</string>
+    <string name="stats_day_books">Sách đã đọc</string>
+    <string name="stats_day_unknown_book">Sách chưa rõ tên</string>
+    <string name="stats_day_empty">Ngày này không có hoạt động đọc được ghi nhận.</string>
+    <string name="stats_day_unavailable">Không có dữ liệu thống kê cho ngày này.</string>
+    <string name="stats_day_empty_page">Trang này không có sách.</string>
+    <string name="stats_day_previous_page">Trang trước</string>
+    <string name="stats_day_next_page">Trang sau</string>
     <string name="gesture_release_refresh">Thả để làm mới</string>
     <string name="home_apps_refresh_error">Không thể làm mới ứng dụng</string>
     <string name="home_apps_refresh_retry">Ứng dụng hiện có vẫn khả dụng. Chạm để thử lại.</string>

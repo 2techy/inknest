@@ -5,15 +5,23 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.data.local.database.ReadingDatabase
+import dev.twotechy.inknest.data.local.database.library.LibraryBookRow
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsBookRow
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsEventEntity
+import dev.twotechy.inknest.data.local.database.statistics.StatisticsSourceEntity
 import dev.twotechy.inknest.data.repository.sources.ReadingSourceConfigRepository
 import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.data.repository.statistics.impl.KoreaderStatisticsRepository
 import dev.twotechy.inknest.data.source.statistics.StatisticsEventDataSource
 import dev.twotechy.inknest.data.source.statistics.StatisticsEventReader
 import dev.twotechy.inknest.model.ReadingEvent
+import dev.twotechy.inknest.model.ReadingItemId
+import dev.twotechy.inknest.model.StatisticsAmount
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
@@ -34,6 +42,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StatisticsRepositoryTest {
+    @Test fun dayDetailUsesActiveCacheAndPaginatesBooks() = runBlocking {
+        withTimeout(20_000) {
+            val fixture = StatisticsFixture()
+            try {
+                fixture.select("first")
+                fixture.verifyDayDetails()
+            } finally {
+                fixture.close()
+            }
+        }
+    }
+
     @Test fun snapshotReplacementFailureDedupeAndSourceIsolation() = runBlocking {
         withTimeout(20_000) {
             val fixture = StatisticsFixture()
@@ -117,7 +137,100 @@ private class StatisticsFixture {
         val stale = repository.data.first { it.sync.error != null }
         assertEquals(60L, stale.days.values.single().seconds)
         assertTrue(stale.sync.stale)
+        val detail = repository.observeDay(stale.days.keys.single(), 0)
+            .first { it.amount != null && it.sync.stale }
+        assertEquals(StatisticsAmount(60, null), detail.amount)
+        assertEquals(1, detail.books.size)
         fail.set(false)
+    }
+
+    suspend fun verifyDayDetails() {
+        val day = LocalDate.of(2025, 11, 24)
+        val libraryBook = seedDayDetails(day)
+        val first = repository.observeDay(day, 0).first { it.amount != null }
+        assertEquals(StatisticsAmount(180, null), first.amount)
+        assertEquals(30, first.books.size)
+        assertTrue(first.hasMore)
+        assertEquals(listOf(2L, 1L, 3L), first.books.take(3).map { it.id })
+        assertEquals(StatisticsAmount(90, null), first.books[0].amount)
+        assertEquals("KOReader fallback", first.books[0].title)
+        assertEquals(StatisticsAmount(60, 2), first.books[1].amount)
+        assertEquals("Cached title", first.books[1].title)
+        assertEquals(libraryBook, first.books[1].libraryItemId)
+        assertNull(first.books[0].libraryItemId)
+        assertEquals("Stats only", first.books[2].title)
+        assertNull(first.books[2].libraryItemId)
+        assertNull(first.books[3].title)
+        assertEquals(
+            listOf(31L, 32L),
+            repository.observeDay(day, 1).first { it.amount != null }.books.map { it.id },
+        )
+        val empty = repository.observeDay(day.minusDays(1), 0).first { it.amount != null }
+        assertEquals(StatisticsAmount(), empty.amount)
+        assertTrue(empty.books.isEmpty())
+
+        val before = config.config.first()
+        config.activateTree(
+            before,
+            config.treeCandidate(before, SourceFolder.Books, "other-folder", "selected"),
+        )
+        val after = repository.observeDay(day, 0).first { it.amount != null }
+        assertNull(after.books[1].libraryItemId)
+
+        select("second")
+        repository.data.first { it.sourceTree == "second" && it.generation != null }
+        val second = repository.observeDay(day, 0).first { it.amount != null }
+        assertEquals(StatisticsAmount(), second.amount)
+        assertTrue(second.books.isEmpty())
+        database.readingDao().clearAll()
+        repository.data.first { it.generation == null && !it.sync.running }
+        assertNull(repository.observeDay(day, 0).first { !it.loading }.amount)
+    }
+
+    private suspend fun seedDayDetails(day: LocalDate): ReadingItemId {
+        val initial = config.config.first()
+        config.activateTree(initial, config.treeCandidate(initial, SourceFolder.Books, "selected"))
+        val sourceId = checkNotNull(config.config.first().sourceId)
+        val dao = database.statisticsDao()
+        val generation = "active"
+        val rows = listOf(
+            Triple(1L, 30L, 2L),
+            Triple(1L, 20L, 2L),
+            Triple(1L, 10L, 2L),
+            Triple(2L, 90L, null),
+        ) + (3L..32L).map { Triple(it, 1L, 1L) }
+        dao.putEvents(
+            rows.mapIndexed { index, (id, seconds, page) ->
+                StatisticsEventEntity(
+                    generation,
+                    index,
+                    1_000,
+                    seconds,
+                    id,
+                    page,
+                    if (index == 2) 20 else 10,
+                    day.toEpochDay(),
+                )
+            },
+        )
+        dao.putBooks(
+            listOf(
+                StatisticsBookRow(generation, 1, "first", "KOReader title"),
+                StatisticsBookRow(generation, 2, "second", "KOReader fallback"),
+                StatisticsBookRow(generation, 3, null, "Stats only"),
+            ),
+        )
+        database.libraryDao().putBooks(
+            listOf(
+                LibraryBookRow(sourceId, "selected", "a", "Cached title", checksum = "first"),
+                LibraryBookRow("unrelated", "selected", "a", "Other title", checksum = "first"),
+                LibraryBookRow(sourceId, "selected", "b", "One title", checksum = "second"),
+                LibraryBookRow(sourceId, "selected", "c", "Another title", checksum = "second"),
+            ),
+        )
+        dao.summarize(generation)
+        dao.putSource(StatisticsSourceEntity("first", generation, 1, ZoneId.systemDefault().id))
+        return ReadingItemId(sourceId, "a")
     }
 
     suspend fun verifySharedRefresh() {

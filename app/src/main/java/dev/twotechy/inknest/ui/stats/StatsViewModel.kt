@@ -8,6 +8,7 @@ import dev.twotechy.inknest.data.repository.statistics.StatisticsPeriod
 import dev.twotechy.inknest.data.repository.statistics.StatisticsRepository
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.platform.clock.StatisticsClock
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -72,6 +73,10 @@ internal class StatsViewModel(
     fun unit(unit: StatisticsUnit) {
         saved["stats.unit"] = unit.name
     }
+    fun observeDay(day: LocalDate, page: Int) = repository.observeDay(day, page)
+
+    fun retryDay() = repository.retryDay()
+
     private var refreshJob: Job? = null
 
     fun refresh() {

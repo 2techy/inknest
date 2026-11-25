@@ -14,9 +14,6 @@ import dev.twotechy.inknest.ui.home.HomeRoute
 import dev.twotechy.inknest.ui.home.HomeViewModel
 import dev.twotechy.inknest.ui.library.LibraryRoute
 import dev.twotechy.inknest.ui.library.LibraryViewModel
-import dev.twotechy.inknest.ui.library.details.BookDetailsViewModel
-import dev.twotechy.inknest.ui.navigation.AppNavigationViewModel
-import dev.twotechy.inknest.ui.navigation.TopLevelDestination
 import dev.twotechy.inknest.ui.settings.SettingsPage
 import dev.twotechy.inknest.ui.stats.StatsRoute
 import dev.twotechy.inknest.ui.stats.StatsViewModel
@@ -28,10 +25,12 @@ internal fun StatsDestination(
     padding: PaddingValues,
 ) {
     val stats: StatsViewModel = viewModel(factory = container.statsViewModelFactory)
-    StatsRoute(stats, {
-        navigation.select(TopLevelDestination.Settings)
-        navigation.openSettingsPage(SettingsPage.ReadingData.name)
-    }, Modifier.fillMaxSize(), padding)
+    StatsRoute(
+        viewModel = stats,
+        openDay = navigation::openStatsDay,
+        openSettings = navigation::openReadingDataSettings,
+        contentPadding = padding,
+    )
 }
 
 @Composable
@@ -76,20 +75,18 @@ internal fun LibraryDestination(
     padding: PaddingValues,
 ) {
     val library: LibraryViewModel = viewModel(factory = container.libraryViewModelFactory)
-    val details: BookDetailsViewModel =
-        viewModel(factory = container.bookDetailsViewModelFactory)
     LaunchedEffect(navigation, library) {
         if (navigation.consumeLibrarySearch()) library.startHomeSearch()
     }
     LibraryRoute(
         viewModel = library,
-        detailsViewModel = details,
-        dispatcher = container.readingItemDispatcher,
-        onSettings = {
-            navigation.select(TopLevelDestination.Settings)
-            navigation.openSettingsPage(SettingsPage.ReadingData.name)
-        },
-        modifier = Modifier.fillMaxSize(),
+        onBook = navigation::openBook,
+        onSettings = navigation::openReadingDataSettings,
         contentPadding = padding,
     )
+}
+
+internal fun AppNavigationViewModel.openReadingDataSettings() {
+    select(TopLevelDestination.Settings)
+    openSettingsPage(SettingsPage.ReadingData.name)
 }

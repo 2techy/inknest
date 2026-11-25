@@ -2,13 +2,11 @@ package dev.twotechy.inknest.ui.library
 
 import dev.twotechy.inknest.data.repository.library.LibraryFolder
 import dev.twotechy.inknest.model.ReadingItem
-import dev.twotechy.inknest.model.ReadingOpenState
 import dev.twotechy.inknest.model.ReadingSyncIssue
 import dev.twotechy.inknest.model.ReadingSyncStatus
 
 internal data class LibraryUiState(
     val options: LibraryOptions = LibraryOptions(),
-    val opening: ReadingOpenState = ReadingOpenState.Idle,
     val books: List<ReadingItem> = emptyList(),
     val authors: List<LibraryAuthor> = emptyList(),
     val totalCount: Int = 0,

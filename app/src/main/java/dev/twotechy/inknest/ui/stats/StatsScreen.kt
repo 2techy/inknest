@@ -64,7 +64,7 @@ private fun StatsDashboard(overview: StatsOverview, options: StatsOptions, actio
     Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionGap)) {
         StatsHighlights(overview, options.unit)
         StatsSection {
-            StatsTrend(overview, options, actions.period)
+            StatsTrend(overview, options, actions.period, actions.day)
         }
         StatsSection {
             Column(verticalArrangement = Arrangement.spacedBy(InkLayoutTokens.sectionContentGap)) {

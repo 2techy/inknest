@@ -55,6 +55,10 @@ class HomeViewModelTest {
     }
     private var statisticsRefreshes = 0
     private val statistics = object : StatisticsRepository {
+        override fun observeDay(day: LocalDate, page: Int): Nothing = error("Day details not used")
+
+        override fun retryDay() = Unit
+
         override val data = MutableStateFlow(StatisticsData())
         override val stats = this@HomeViewModelTest.stats
         override suspend fun refresh() {

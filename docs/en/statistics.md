@@ -21,6 +21,14 @@ Current buckets include days through today; future slots are blank, past gaps ze
 
 The responsive heatmap shows 16–52 Monday–Sunday week columns. Future dates are absent; unknown days have a diagonal mark. Four grayscale levels use lower 25/50/75-percentile cutoffs of known positive values in the visible window, separately for Time/Pages. Zero/unknown values do not affect thresholds; equal positive values use shade 3. Shades show relative activity, not fixed minute/page thresholds. See [design system](design-system.md) for presentation rules.
 
+## Day details
+
+In **Reading trend → Week**, tap a column or its day label to see reading time, recorded pages and books for that date. Today and past days can open, including dates with no activity. Back restores the chart position and filters.
+
+Books are ordered by time spent reading. InkNest shows the shared profile title when the checksum links to a single profile in the selected source. Other books use their imported KOReader title, or **Unknown book title** if the source has no title. Opening the detail reads the existing cache. A failed refresh keeps the saved figures with a warning.
+
+Tap a book with a chevron to open **Book details**. The link appears when a cached checksum identifies one file in the current Library. Opening the book's details from Library can populate that checksum. Back returns to the day you were viewing.
+
 ## Page counting contract
 
 - Each positive-duration valid row contributes all its seconds. Pages deduplicate `(book ID, page, total_pages layout)` within each local day. Revisits retain time; a different book, recorded layout or day is a separate observation. Period totals sum daily counts.

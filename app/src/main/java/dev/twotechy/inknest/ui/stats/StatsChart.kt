@@ -1,11 +1,15 @@
 package dev.twotechy.inknest.ui.stats
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -19,6 +23,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -30,19 +36,26 @@ import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.components.formatStatsAmount
+import dev.twotechy.inknest.ui.theme.InkHeaderTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsPalette
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
 
 @Composable
-internal fun StatsChart(buckets: List<StatisticsBucket>, today: LocalDate, options: StatsOptions) {
+internal fun StatsChart(
+    buckets: List<StatisticsBucket>,
+    today: LocalDate,
+    options: StatsOptions,
+    onDay: (LocalDate) -> Unit,
+) {
     val values = buckets.map { if (it.date > today) 0L else it.amount.value(options.unit) }
     val scale = chartScale(values.filterNotNull().maxOrNull() ?: 0, options.unit)
     val description = buckets.filter { it.date <= today }.map {
@@ -54,7 +67,7 @@ internal fun StatsChart(buckets: List<StatisticsBucket>, today: LocalDate, optio
             val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
             val axisWidth = InkStatsTokens.chartAxisWidth * fontScale
             val bucketWidth = when (options.period) {
-                StatisticsPeriod.ThisWeek -> InkStatsTokens.chartDayWidth
+                StatisticsPeriod.ThisWeek -> InkHeaderTokens.touchTarget
                 StatisticsPeriod.ThisYear -> InkStatsTokens.chartMonthWidth
                 else -> InkStatsTokens.chartRangeWidth
             }
@@ -63,13 +76,22 @@ internal fun StatsChart(buckets: List<StatisticsBucket>, today: LocalDate, optio
                 ChartAxis(scale, Modifier.width(axisWidth))
                 key(options.period) {
                     Column(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-                        ChartBars(
-                            values,
-                            scale.top,
-                            description,
-                            Modifier.width(plotWidth),
-                        )
-                        ChartDates(buckets, options.period, Modifier.width(plotWidth))
+                        val interactive = options.period == StatisticsPeriod.ThisWeek
+                        Box(Modifier.width(plotWidth)) {
+                            val plot = if (interactive) {
+                                Modifier.clearAndSetSemantics {
+                                }
+                            } else {
+                                Modifier
+                            }
+                            Column(plot.fillMaxWidth()) {
+                                ChartBars(values, scale.top, description, Modifier.fillMaxWidth())
+                                ChartDates(buckets, options.period, Modifier.fillMaxWidth())
+                            }
+                            if (interactive) {
+                                ChartDayActions(buckets, today, options.unit, onDay)
+                            }
+                        }
                     }
                 }
             }
@@ -78,6 +100,39 @@ internal fun StatsChart(buckets: List<StatisticsBucket>, today: LocalDate, optio
             stringResource(R.string.stats_chart_total, formatStatsAmount(total, options.unit)),
             style = MaterialTheme.typography.labelLarge,
         )
+    }
+}
+
+@Composable
+private fun BoxScope.ChartDayActions(
+    buckets: List<StatisticsBucket>,
+    today: LocalDate,
+    unit: StatisticsUnit,
+    onDay: (LocalDate) -> Unit,
+) {
+    val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
+        .withLocale(currentUiLocale())
+    val action = stringResource(R.string.stats_day_details)
+    Row(Modifier.matchParentSize()) {
+        buckets.forEach { bucket ->
+            val cell = Modifier.weight(1f).fillMaxHeight()
+            if (bucket.date <= today) {
+                val date = bucket.date.format(formatter)
+                val value = formatStatsAmount(bucket.amount, unit)
+                val label = stringResource(R.string.stats_day_chart_label, date, value)
+                Box(
+                    cell.clickable(
+                        interactionSource = null,
+                        indication = null,
+                        onClickLabel = action,
+                        role = Role.Button,
+                        onClick = { onDay(bucket.date) },
+                    ).semantics { contentDescription = label },
+                )
+            } else {
+                Box(cell)
+            }
+        }
     }
 }
 

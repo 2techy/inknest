@@ -21,6 +21,14 @@ Cột hiện tại chỉ cộng đến hôm nay; tương lai để trống, kho�
 
 Lịch tự điều chỉnh 16–52 cột tuần thứ Hai–Chủ nhật. Ngày tương lai ẩn; ngày chưa xác định có gạch chéo. Bốn mức xám dùng ngưỡng phân vị dưới 25/50/75 của giá trị dương đã biết trong vùng hiển thị, riêng cho Thời gian/Số trang. Giá trị 0/chưa biết không ảnh hưởng ngưỡng; các giá trị dương bằng nhau dùng mức 3. Sắc độ biểu thị hoạt động tương đối, không phải ngưỡng phút/trang cố định. Xem [hệ thống thiết kế](design-system.md) về trình bày.
 
+## Chi tiết ngày
+
+Trong **Xu hướng đọc → Tuần**, chạm cột hoặc nhãn ngày để xem thời gian đọc, số trang ghi nhận và các sách đã đọc. Có thể mở hôm nay và các ngày đã qua, kể cả ngày không có hoạt động. Quay lại khôi phục vị trí biểu đồ và các bộ lọc.
+
+Sách được xếp theo thời gian đọc giảm dần. InkNest hiện tên từ hồ sơ chung khi checksum ghép được với một hồ sơ duy nhất trong nguồn đã chọn. Sách khác dùng tên đã nhập từ KOReader, hoặc hiện **Sách chưa rõ tên** nếu nguồn thiếu tên. Mở chi tiết dùng cache hiện có. Nếu làm mới thất bại, ứng dụng giữ số liệu đã lưu và hiện cảnh báo.
+
+Chạm vào sách có mũi tên để mở **Thông tin sách**. Liên kết xuất hiện khi checksum đã lưu xác định duy nhất một tệp trong Thư viện hiện tại. Khi bạn mở thông tin sách từ Thư viện, InkNest có thể lưu checksum cho sách đó. Quay lại đưa bạn về ngày đang xem.
+
 ## Quy tắc đếm trang
 
 - Mỗi dòng hợp lệ có thời lượng dương đóng góp đủ số giây. Trang loại trùng `(book ID, page, total_pages layout)` trong từng ngày địa phương. Đọc lại vẫn cộng thời gian; khác sách, bố cục ghi nhận hoặc ngày được tính riêng. Tổng kỳ cộng số trang từng ngày.
