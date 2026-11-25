@@ -33,7 +33,7 @@ class FixtureSmokeTest {
             journey.tab(tab)
             val content = when (tab) {
                 "Library" -> By.text(journey.libraryCount)
-                "Apps" -> By.textStartsWith("All apps")
+                "Apps" -> journey.appsContent
                 "Stats" -> By.text("Reading totals")
                 "Settings" -> By.text("About")
                 else -> By.text("Now reading")

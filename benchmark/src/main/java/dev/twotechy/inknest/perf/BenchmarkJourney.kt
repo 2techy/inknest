@@ -29,6 +29,7 @@ internal class BenchmarkJourney(private val device: UiDevice) {
     private val fixtureReady get() = "Benchmark ready $fixtureRequest"
     val control = BenchmarkControl()
     val libraryCount = "All (${BenchmarkFixture.BOOKS})"
+    val appsContent = By.text(Pattern.compile("All apps|Pinned|Other apps")).pkg(TARGET)
     fun prepare() {
         device.wakeUp()
         device.executeShellCommand("wm dismiss-keyguard")
@@ -96,7 +97,9 @@ internal class BenchmarkJourney(private val device: UiDevice) {
         tab("Library")
         check(device.wait(Until.hasObject(By.text(libraryCount)), 10_000))
         tab("Apps")
-        check(device.wait(Until.hasObject(By.textStartsWith("All apps")), 10_000))
+        check(device.wait(Until.hasObject(appsContent), 10_000)) {
+            "Apps did not show a loaded catalog section"
+        }
         tab("Stats")
         check(device.wait(Until.hasObject(By.text("Reading totals")), 10_000))
         tab("Home")
