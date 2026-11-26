@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.semantics
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.ui.settings.BookFoldersContent
+import dev.twotechy.inknest.ui.settings.SettingsDescriptionFormat
 import dev.twotechy.inknest.ui.settings.SettingsRow
 import dev.twotechy.inknest.ui.settings.SettingsSection
 import dev.twotechy.inknest.ui.settings.folderDescription
@@ -51,7 +52,7 @@ internal fun OnboardingReadingContent(state: OnboardingUiState, actions: SourceF
             title = stringResource(folderTitle),
             description = folder?.let { folderDescription(it, source.koreaderAccess) },
             enabled = source.available && !state.saving,
-            descriptionMaxLines = Int.MAX_VALUE,
+            descriptionFormat = SettingsDescriptionFormat.FullSummary,
             onClick = { actions.selectFolder(SourceFolder.KOReader) },
         )
     }

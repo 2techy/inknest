@@ -11,17 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.data.source.saf.PrimaryTreePath
 import dev.twotechy.inknest.model.SourceAccessState
-import dev.twotechy.inknest.ui.shared.SourceFolderActions
 import dev.twotechy.inknest.ui.theme.InkSpacing
 
 @Composable
 internal fun SourceConnectionContent(
     state: SourceConnectionUiState,
-    actions: SourceFolderActions,
     onSelectApp: (String) -> Unit,
+    onSelectFolder: () -> Unit,
 ) {
     val source = state.source
     Column {
@@ -30,7 +28,7 @@ internal fun SourceConnectionContent(
             Text(
                 stringResource(R.string.integration_unavailable),
                 modifier = Modifier.padding(vertical = InkSpacing.md),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -39,10 +37,9 @@ internal fun SourceConnectionContent(
             stringResource(R.string.koreader_folder),
             folderDescription(source.koreaderFolder, source.koreaderAccess),
             enabled = source.available && !state.saving,
-            descriptionMaxLines = Int.MAX_VALUE,
-            onClick = { actions.selectFolder(SourceFolder.KOReader) },
+            descriptionFormat = SettingsDescriptionFormat.FolderDetails,
+            onClick = onSelectFolder,
         )
-        BookFoldersContent(state, actions)
     }
 }
 

@@ -13,7 +13,7 @@ In the reading step, InkNest checks for KOReader. When it finds the app, choose 
 1. Install KOReader separately and open a book once to create its settings directory.
 2. In setup, check for the KOReader status. In Settings → Reading & data, select KOReader if it is available and has not been selected.
 3. Select its data folder containing `settings.reader.lua` or `history.lua`.
-4. Add one or more Books folders; subfolders are included. Tap a folder to replace it, or remove it without deleting files. Overlapping roots are rejected.
+4. Add one or more book folders. Subfolders are included. Tap a folder and select **Choose folder again** to replace it, or **Remove folder** to remove it from InkNest. Overlapping roots are rejected.
 5. Refresh. Library includes recognized books even if never opened; current reading/status comes from KOReader. Statistics requires `settings/statistics.sqlite3`.
 
 Choose folders through Android's picker. Only primary internal storage is supported; do not choose a broad storage root to bypass missing access. Paths vary by installation.

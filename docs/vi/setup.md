@@ -13,7 +13,7 @@ InkNest kiểm tra KOReader ở bước Đọc sách. Khi tìm thấy app, chọ
 1. Cài riêng KOReader và mở một sách để tạo thư mục cài đặt.
 2. Trong trình thiết lập, xem trạng thái KOReader. Trong Cài đặt → Đọc và dữ liệu, chọn KOReader nếu app có sẵn và chưa được chọn.
 3. Chọn thư mục dữ liệu chứa `settings.reader.lua` hoặc `history.lua`.
-4. Thêm một hoặc nhiều thư mục sách; bao gồm cả thư mục con. Chạm thư mục để thay, hoặc gỡ khỏi InkNest mà không xóa tệp. Không chấp nhận các thư mục gốc chồng lấn.
+4. Thêm một hoặc nhiều thư mục sách. Các thư mục con cũng được tính. Chạm vào thư mục rồi chọn **Chọn lại thư mục** để thay, hoặc **Bỏ thư mục** để gỡ khỏi InkNest. Không chấp nhận các thư mục gốc chồng lấn.
 5. Làm mới. Thư viện gồm cả sách được nhận diện nhưng chưa từng mở; sách hiện tại/trạng thái lấy từ KOReader. Thống kê cần `settings/statistics.sqlite3`.
 
 Chọn thư mục qua trình chọn của Android. Chỉ hỗ trợ bộ nhớ trong chính; không chọn cả gốc bộ nhớ để vượt qua lỗi quyền. Đường dẫn tùy cách cài đặt.

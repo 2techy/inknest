@@ -51,7 +51,7 @@ internal fun SettingsRow(
     description: String? = null,
     icon: Int? = null,
     enabled: Boolean = true,
-    descriptionMaxLines: Int = 2,
+    descriptionFormat: SettingsDescriptionFormat = SettingsDescriptionFormat.Summary,
     onClick: () -> Unit,
 ) {
     val dividerInset = if (icon == null) 0.dp else InkSettingsTokens.leadingSize + InkSpacing.md
@@ -82,9 +82,9 @@ internal fun SettingsRow(
                 if (description != null) {
                     Text(
                         description,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = descriptionFormat.style,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = descriptionMaxLines,
+                        maxLines = descriptionFormat.maxLines,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
