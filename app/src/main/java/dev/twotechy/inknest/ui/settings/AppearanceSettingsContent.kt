@@ -11,7 +11,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.twotechy.inknest.R
-import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.ui.theme.InkSettingsTokens
 
 @Composable
@@ -28,13 +27,7 @@ internal fun AppearanceSettingsContent(state: SettingsUiState, actions: Settings
             )
             SettingsRow(
                 stringResource(R.string.display_mode_heading),
-                stringResource(
-                    if (preferences.displayMode == DisplayMode.EInk) {
-                        R.string.eink_mode
-                    } else {
-                        R.string.standard_mode
-                    },
-                ),
+                stringResource(preferences.displayMode.titleRes()),
                 enabled = !state.saving,
                 onClick = { choosingMode = true },
             )

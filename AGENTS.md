@@ -111,7 +111,9 @@ Do not invent a `:benchmark:lintBenchmark` task; this test module has no such ta
   Use `Exception` suffixes and group related exceptions in one file. Use `Statistics`
   in data/model and `Stats` in UI; narrow visibility only when callers allow it.
 - Use string resources and `ui/theme` tokens, including gesture thresholds. Preserve
-  static E-Ink transitions; Standard changes icon color, not navigation/layout contracts.
+  static E-Ink transitions and layout contracts in both modes. Grayscale keeps neutral UI
+  and grayscale images. Color uses white backgrounds, neutral selection surfaces, ink-blue accents
+  and original-color icons/covers. Reserve clay for the current chart period.
 - Add dependencies to the appropriate commented catalog group and use module aliases.
   Room/KSP implementation code is generated during builds; never hand-edit build output.
 - Add tests for meaningful behavior: failed writes, restoration, cancellation, source

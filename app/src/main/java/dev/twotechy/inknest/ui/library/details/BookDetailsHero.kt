@@ -168,8 +168,8 @@ private fun BookReadButton(book: ReadingItem, open: () -> Unit) {
         Surface(
             Modifier.fillMaxWidth().heightIn(min = InkHomeTokens.continueMinHeight),
             shape = RoundedCornerShape(InkRadius.medium),
-            color = if (enabled) colors.onSurface else colors.surfaceVariant,
-            contentColor = if (enabled) colors.surface else colors.onSurfaceVariant,
+            color = if (enabled) colors.primary else colors.surfaceVariant,
+            contentColor = if (enabled) colors.onPrimary else colors.onSurfaceVariant,
         ) {
             Row(
                 Modifier.padding(

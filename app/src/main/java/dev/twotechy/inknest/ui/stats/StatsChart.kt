@@ -33,14 +33,17 @@ import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.statistics.StatisticsBucket
 import dev.twotechy.inknest.data.repository.statistics.StatisticsPeriod
+import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.model.StatisticsUnit
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.components.formatStatsAmount
+import dev.twotechy.inknest.ui.theme.InkColorPalette
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsPalette
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
+import dev.twotechy.inknest.ui.theme.LocalDisplayMode
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -57,8 +60,13 @@ internal fun StatsChart(
     options: StatsOptions,
     onDay: (LocalDate) -> Unit,
 ) {
-    val values = buckets.map { if (it.date > today) 0L else it.amount.value(options.unit) }
-    val scale = chartScale(values.filterNotNull().maxOrNull() ?: 0, options.unit)
+    val bars = buckets.map {
+        ChartBar(
+            value = if (it.date > today) 0L else it.amount.value(options.unit),
+            isCurrent = today in it.date..it.lastDay,
+        )
+    }
+    val scale = chartScale(bars.mapNotNull { it.value }.maxOrNull() ?: 0, options.unit)
     val description = buckets.filter { it.date <= today }.map {
         "${it.date} – ${minOf(it.lastDay, today)}: ${formatStatsAmount(it.amount, options.unit)}"
     }.joinToString("; ")
@@ -86,7 +94,7 @@ internal fun StatsChart(
                                 Modifier
                             }
                             Column(plot.fillMaxWidth()) {
-                                ChartBars(values, scale.top, description, Modifier.fillMaxWidth())
+                                ChartBars(bars, scale.top, description, Modifier.fillMaxWidth())
                                 ChartDates(buckets, options.period, Modifier.fillMaxWidth())
                             }
                             if (interactive) {
@@ -179,9 +187,18 @@ private fun ChartAxis(scale: ChartScale, modifier: Modifier) {
     }
 }
 
+private data class ChartBar(val value: Long?, val isCurrent: Boolean)
+
 @Composable
-private fun ChartBars(values: List<Long?>, scale: Long, description: String, modifier: Modifier) {
-    val color = MaterialTheme.colorScheme.onSurface
+private fun ChartBars(bars: List<ChartBar>, scale: Long, description: String, modifier: Modifier) {
+    val color = MaterialTheme.colorScheme.primary
+    val highlight = if (LocalDisplayMode.current ==
+        DisplayMode.Color
+    ) {
+        InkColorPalette.clay
+    } else {
+        color
+    }
     val grid = InkStatsPalette.chartGrid
     val lineHeight = with(LocalDensity.current) {
         MaterialTheme.typography.labelSmall.lineHeight.toPx()
@@ -202,9 +219,9 @@ private fun ChartBars(values: List<Long?>, scale: Long, description: String, mod
             drawLine(grid, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
         }
         drawLine(grid, Offset(0f, inset), Offset(0f, baseline), 1.dp.toPx())
-        val step = size.width / values.size.coerceAtLeast(1)
+        val step = size.width / bars.size.coerceAtLeast(1)
         val width = minOf(step * .65f, InkStatsTokens.maxBarWidth.toPx())
-        values.forEachIndexed { index, value ->
+        bars.forEachIndexed { index, (value, isCurrent) ->
             val x = index * step + (step - width) / 2
             if (value == null) {
                 drawLine(
@@ -216,7 +233,7 @@ private fun ChartBars(values: List<Long?>, scale: Long, description: String, mod
             } else if (value > 0) {
                 val height = plotHeight * (value.toDouble() / scale).toFloat()
                 drawRect(
-                    color,
+                    if (isCurrent) highlight else color,
                     Offset(x, baseline - height),
                     Size(width, height.coerceAtLeast(1.dp.toPx())),
                 )

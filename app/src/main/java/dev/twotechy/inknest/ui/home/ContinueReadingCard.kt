@@ -108,8 +108,8 @@ private fun ContinueButton() {
         modifier = Modifier.widthIn(min = InkButtonTokens.minWidth)
             .heightIn(min = InkHomeTokens.continueMinHeight),
         shape = RoundedCornerShape(InkRadius.medium),
-        color = MaterialTheme.colorScheme.onSurface,
-        contentColor = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
         Row(
             Modifier.padding(
@@ -150,7 +150,7 @@ private fun ProgressLabel(book: BookUiModel) {
 
 @Composable
 private fun ProgressTrack(progress: Int) {
-    val ink = MaterialTheme.colorScheme.onSurface
+    val ink = MaterialTheme.colorScheme.primary
     val track = MaterialTheme.colorScheme.outlineVariant
     val description = stringResource(R.string.reading_progress_percent, progress)
     Canvas(

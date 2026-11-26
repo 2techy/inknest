@@ -11,6 +11,7 @@ import dev.twotechy.inknest.data.repository.sources.SourceSettingsRepository
 import dev.twotechy.inknest.data.repository.sources.SourceTreeSelection
 import dev.twotechy.inknest.data.repository.sources.impl.UnconnectedSourceSettingsRepository
 import dev.twotechy.inknest.model.AppInfo
+import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.model.KOREADER_PACKAGE
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
@@ -39,6 +40,26 @@ class OnboardingViewModelTest {
     @Before fun setup() = Dispatchers.setMain(dispatcher)
 
     @After fun teardown() = Dispatchers.resetMain()
+
+    @Test fun displayModeSaveFailureRetainsSelectionAndCanRetry() = runTest(dispatcher) {
+        val prefs = TestUserPreferencesRepository()
+        val vm = OnboardingViewModel(prefs, SavedStateHandle())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect() }
+        runCurrent()
+        prefs.failure = IOException("disk unavailable")
+        vm.setDisplayMode(DisplayMode.Color)
+        runCurrent()
+        assertTrue(vm.uiState.value.preferenceError)
+        assertFalse(vm.uiState.value.saving)
+        assertEquals(DisplayMode.Grayscale, vm.uiState.value.mode)
+        assertEquals(DisplayMode.Grayscale, prefs.appPreferences.value.displayMode)
+        prefs.failure = null
+        vm.setDisplayMode(DisplayMode.Color)
+        runCurrent()
+        assertFalse(vm.uiState.value.preferenceError)
+        assertEquals(DisplayMode.Color, vm.uiState.value.mode)
+        assertFalse(prefs.appPreferences.value.onboardingCompleted)
+    }
 
     @Test fun `skip waits for persisted completion and can retry after failure`() = runTest(
         dispatcher,

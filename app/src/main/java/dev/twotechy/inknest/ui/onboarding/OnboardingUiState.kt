@@ -12,7 +12,7 @@ import dev.twotechy.inknest.ui.shared.SourceSetupError
 
 internal data class OnboardingUiState(
     val step: Int = 0,
-    val mode: DisplayMode = DisplayMode.EInk,
+    val mode: DisplayMode = DisplayMode.Grayscale,
     val saving: Boolean = false,
     val saveError: Boolean = false,
     val preferenceError: Boolean = false,

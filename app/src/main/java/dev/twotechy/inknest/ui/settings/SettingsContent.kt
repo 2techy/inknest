@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.data.repository.sources.SourceStatus
-import dev.twotechy.inknest.model.DisplayMode
 
 @Composable
 internal fun SettingsOverview(open: (SettingsPage) -> Unit) {
@@ -34,38 +33,6 @@ internal fun SettingsOverview(open: (SettingsPage) -> Unit) {
                 icon,
                 onClick = { open(page) },
             )
-        }
-    }
-}
-
-@Composable
-internal fun DisplayModeChoices(
-    mode: DisplayMode,
-    enabled: Boolean,
-    onMode: (DisplayMode) -> Unit,
-) {
-    Column {
-        DisplayMode.entries.forEach { choice ->
-            SettingsChoice(
-                stringResource(
-                    if (choice == DisplayMode.EInk) {
-                        R.string.eink_mode
-                    } else {
-                        R.string.standard_mode
-                    },
-                ),
-                mode == choice,
-                enabled,
-                description = stringResource(
-                    if (choice ==
-                        DisplayMode.EInk
-                    ) {
-                        R.string.eink_description
-                    } else {
-                        R.string.standard_description
-                    },
-                ),
-            ) { onMode(choice) }
         }
     }
 }

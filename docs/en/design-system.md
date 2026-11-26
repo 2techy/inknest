@@ -28,14 +28,14 @@ Home branding/clock use system serif; other text uses system sans-serif. Text us
 
 ## Color and images
 
-Both modes use grayscale UI. E-Ink strengthens structural outlines and grayscales app icons; Standard uses lighter outlines and original icon colors. Informative small text stays primary/secondary. Errors and selection must remain understandable without color alone.
+Grayscale uses neutral UI and desaturates app icons and book covers. Color uses ink-blue accents and keeps original app icon and cover colors. Only the active navigation icon and its marker use the accent. The reading heatmap uses gray or blue shades according to mode. Both use white backgrounds and cards, dark text and clear structural outlines. Color uses neutral gray selection surfaces with visible marks or outlines. The display mode picker previews the same sample Home screen in both modes and stacks the choices when width or font scale requires it. Errors and selection remain understandable without color alone.
 
 Transitions, menus and dialogs stay static: no decorative animation, ripple, shadow, elevation, shimmer or crossfade.
 
 | Image cache | Contract |
 | --- | --- |
 | App icons | Shared RAM cache, 100 icons at 128px; keys include component/version and locale/density. IO misses use an initial-letter fallback. |
-| Decoded book covers | Shared retained-allocation LRU capped at one eighth of the app heap; keys include immutable URI, display mode and 64px size buckets capped at 480px. Active references/temporary buffers are outside this budget. At most two different keys decode concurrently; duplicate requests share work independently of caller cancellation. E-Ink requests prefer RGB565, Standard uses ARGB8888; transparency may require ARGB8888. Grayscale is applied at render time. |
+| Decoded book covers | Shared retained-allocation LRU capped at one eighth of the app heap; keys include immutable URI, display mode and 64px size buckets capped at 480px. Active references/temporary buffers are outside this budget. At most two different keys decode concurrently; duplicate requests share work independently of caller cancellation. Grayscale requests prefer RGB565, Color uses ARGB8888; transparency may require ARGB8888. Grayscale is applied at render time. |
 
 Home/Library share a static book placeholder and IO decoding. Clear/disconnect invalidates decoded covers and prevents stale in-flight work restoring them. No bitmap belongs in ViewModels or saved state. Disk thumbnails follow the [reading-cache contract](reading-cache.md).
 

@@ -28,14 +28,14 @@ Thương hiệu/đồng hồ Trang chủ dùng serif hệ thống; phần khác 
 
 ## Màu sắc và ảnh
 
-Cả hai chế độ dùng UI thang xám. E-Ink tăng viền cấu trúc và chuyển icon ứng dụng sang xám; Tiêu chuẩn dùng viền nhẹ, icon màu gốc. Chữ nhỏ có thông tin dùng màu chính/phụ. Lỗi và lựa chọn phải hiểu được mà không chỉ dựa vào màu.
+Thang xám dùng giao diện trung tính và chuyển biểu tượng ứng dụng, bìa sách sang thang xám. Màu sắc dùng điểm nhấn xanh mực và giữ màu gốc của biểu tượng ứng dụng và bìa sách. Trong thanh điều hướng, chỉ biểu tượng và vạch của mục đang mở dùng màu nhấn. Lịch đọc dùng các sắc độ xám hoặc xanh lam theo chế độ. Cả hai dùng nền và thẻ trắng, chữ tối và viền rõ. Màu sắc dùng nền xám trung tính cho vùng chọn, kèm dấu hoặc viền dễ nhận biết. Bộ chọn minh họa cùng một Trang chủ ở hai chế độ và xếp dọc khi chiều rộng hoặc cỡ chữ cần thêm chỗ. Lỗi và lựa chọn vẫn nhận biết được khi chỉ nhìn thang xám.
 
 Chuyển trạng thái, menu và dialog giữ tĩnh: không animation trang trí, ripple, bóng, elevation, shimmer hoặc crossfade.
 
 | Cache ảnh | Contract |
 | --- | --- |
 | Icon ứng dụng | RAM cache chung, 100 icon ở 128px; khóa gồm component/version và locale/density. Cache miss tải trên IO, dự phòng bằng chữ cái đầu. |
-| Bìa đã giải mã | LRU chung giới hạn một phần tám heap app; khóa gồm URI bất biến, chế độ hiển thị và nhóm kích thước 64px, tối đa 480px. Tham chiếu UI/buffer tạm ngoài ngân sách. Tối đa hai khóa khác nhau giải mã đồng thời; yêu cầu trùng chia sẻ tác vụ độc lập với hủy caller. E-Ink ưu tiên RGB565, Standard dùng ARGB8888; ảnh trong suốt có thể cần ARGB8888. Grayscale áp lúc render. |
+| Bìa đã giải mã | LRU chung giới hạn một phần tám heap app; khóa gồm URI bất biến, chế độ hiển thị và nhóm kích thước 64px, tối đa 480px. Tham chiếu UI/buffer tạm ngoài ngân sách. Tối đa hai khóa khác nhau giải mã đồng thời; yêu cầu trùng chia sẻ tác vụ độc lập với hủy caller. Thang xám ưu tiên RGB565, Màu sắc dùng ARGB8888; ảnh trong suốt có thể cần ARGB8888. Bộ lọc thang xám áp dụng khi hiển thị. |
 
 Trang chủ/Thư viện dùng chung bìa mặc định tĩnh và giải mã IO. Xóa cache/ngắt kết nối vô hiệu bìa đã giải mã, chặn tác vụ cũ nạp lại. Không lưu bitmap trong ViewModel hoặc saved state. Ảnh thu nhỏ trên đĩa theo [contract cache đọc](reading-cache.md).
 

@@ -42,7 +42,7 @@ internal fun BookCover(uri: String?, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         val size = BookCoverSize.forBounds(constraints.maxWidth, constraints.maxHeight)
-        val color = LocalDisplayMode.current == DisplayMode.Standard
+        val color = LocalDisplayMode.current == DisplayMode.Color
         val request = uri?.let { BookCoverRequest(it, size, color) }
         val image = remember(loader, request) {
             mutableStateOf(request?.let { loader?.peekCover(it) })

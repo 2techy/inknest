@@ -19,18 +19,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.CHECKED_STATE_TRUE
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.twotechy.inknest.InkNestApplication
 import dev.twotechy.inknest.MainActivity
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.data.repository.statistics.StatisticsBucket
 import dev.twotechy.inknest.data.repository.statistics.StatisticsRepository
 import dev.twotechy.inknest.model.AppPreferences
+import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.model.ReadingItemId
 import dev.twotechy.inknest.model.ReadingSyncStatus
 import dev.twotechy.inknest.model.StatisticsAmount
@@ -60,15 +66,21 @@ import dev.twotechy.inknest.ui.home.HomeReadingStats
 import dev.twotechy.inknest.ui.home.HomeScreen
 import dev.twotechy.inknest.ui.home.HomeUiState
 import dev.twotechy.inknest.ui.home.ReadingSectionState
+import dev.twotechy.inknest.ui.settings.DisplayModeChoices
+import dev.twotechy.inknest.ui.settings.SettingsSelectionDialog
+import dev.twotechy.inknest.ui.settings.titleRes
+import dev.twotechy.inknest.ui.stats.StatsChart
 import dev.twotechy.inknest.ui.stats.StatsDayActions
 import dev.twotechy.inknest.ui.stats.StatsDayNavigation
 import dev.twotechy.inknest.ui.stats.StatsDayRoute
 import dev.twotechy.inknest.ui.stats.StatsDayScreen
 import dev.twotechy.inknest.ui.stats.StatsDayUiState
 import dev.twotechy.inknest.ui.stats.StatsHighlights
+import dev.twotechy.inknest.ui.stats.StatsOptions
 import dev.twotechy.inknest.ui.stats.StatsOverview
 import dev.twotechy.inknest.ui.stats.StatsRoute
 import dev.twotechy.inknest.ui.stats.StatsViewModel
+import dev.twotechy.inknest.ui.theme.InkColorPalette
 import dev.twotechy.inknest.ui.theme.InkNestTheme
 import java.io.File
 import java.time.LocalDate
@@ -495,6 +507,84 @@ class HomeStatsLayoutTest {
 
     private fun bounds(node: AccessibilityNodeInfo): Rect = Rect().also(node::getBoundsInScreen)
 
+    @Test fun displayModePreviewsWrapAndExposeTheSelectedChoice() {
+        val grayscale = DisplayMode.Grayscale
+        val color = DisplayMode.Color
+        val mode = mutableStateOf(DisplayMode.Grayscale)
+        show(380f, 1f) {
+            SettingsSelectionDialog(stringResource(R.string.display_mode_heading), {}) {
+                DisplayModeChoices(mode.value, enabled = true) { mode.value = it }
+            }
+        }
+        screenshot("display-mode-previews.png")
+        assertEquals(
+            CHECKED_STATE_TRUE,
+            AccessibilityNodeInfoCompat.wrap(displayModeRadio(grayscale)).checked,
+        )
+        assertEquals(bounds(displayModeRadio(grayscale)).top, bounds(displayModeRadio(color)).top)
+        assertTrue(displayModeRadio(color).performAction(AccessibilityNodeInfo.ACTION_CLICK))
+        instrumentation.waitForIdleSync()
+        assertEquals(color, mode.value)
+
+        show(320f, 2f) {
+            DisplayModeChoices(mode.value, enabled = true) { mode.value = it }
+        }
+        assertEquals(
+            CHECKED_STATE_TRUE,
+            AccessibilityNodeInfoCompat.wrap(displayModeRadio(color)).checked,
+        )
+        assertTrue(
+            bounds(displayModeRadio(color)).top >= bounds(displayModeRadio(grayscale)).bottom,
+        )
+        show(320f, 2f) {
+            DisplayModeChoices(mode.value, enabled = false) { mode.value = it }
+        }
+        assertTrue(!displayModeRadio(grayscale).isEnabled)
+    }
+
+    private fun displayModeRadio(mode: DisplayMode): AccessibilityNodeInfo {
+        instrumentation.uiAutomation.waitForIdle(100, 5_000)
+        val label = context.getString(mode.titleRes())
+        return nodes().first { node ->
+            node.isCheckable && (0 until node.childCount).any {
+                node.getChild(it)?.text?.toString() == label
+            }
+        }
+    }
+
+    @Test fun chartOnlyHighlightsPositiveCurrentPeriodsInColorMode() {
+        val clay = InkColorPalette.clay.toArgb()
+        for (mode in DisplayMode.entries) {
+            for (currentPages in listOf(2L, 0L, null)) {
+                val buckets = listOf(
+                    StatisticsBucket(today.minusDays(1), StatisticsAmount(60, 3)),
+                    StatisticsBucket(today, StatisticsAmount(60, currentPages)),
+                    StatisticsBucket(today.plusDays(1), StatisticsAmount(60, 4)),
+                )
+                show(320f, 1f, AppPreferences(displayMode = mode)) {
+                    StatsChart(buckets, today, StatsOptions(unit = StatisticsUnit.Pages)) {}
+                }
+                val screenshot = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
+                val pixels = IntArray(screenshot.width * screenshot.height)
+                screenshot.getPixels(
+                    pixels,
+                    0,
+                    screenshot.width,
+                    0,
+                    0,
+                    screenshot.width,
+                    screenshot.height,
+                )
+                screenshot.recycle()
+                assertEquals(
+                    "mode=$mode currentPages=$currentPages",
+                    mode == DisplayMode.Color && currentPages == 2L,
+                    pixels.any { it == clay },
+                )
+            }
+        }
+    }
+
     private fun show(
         width: Float,
         font: Float,
@@ -522,6 +612,15 @@ class HomeStatsLayoutTest {
         assertTrue("fixture composed", composed.await(5, TimeUnit.SECONDS))
         instrumentation.waitForIdleSync()
         instrumentation.uiAutomation.waitForIdle(200, 5_000)
+        // Wait for the replacement content to reach the rendering surface, not only semantics.
+        val frame = CountDownLatch(1)
+        instrumentation.runOnMainSync {
+            activity.window.decorView.postOnAnimation {
+                activity.window.decorView.postOnAnimation { frame.countDown() }
+            }
+        }
+        assertTrue("frame rendered", frame.await(5, TimeUnit.SECONDS))
+        instrumentation.waitForIdleSync()
     }
 
     private fun nodes(): List<AccessibilityNodeInfo> {
@@ -582,16 +681,7 @@ class HomeStatsLayoutTest {
     }
 
     private fun screenshot(name: String) {
-        // Wait for the replacement content to reach the rendering surface, not only semantics.
-        val frame = CountDownLatch(1)
-        instrumentation.runOnMainSync {
-            activity.window.decorView.postOnAnimation {
-                activity.window.decorView.postOnAnimation { frame.countDown() }
-            }
-        }
-        assertTrue("frame rendered", frame.await(5, TimeUnit.SECONDS))
-        instrumentation.waitForIdleSync()
-        val image = instrumentation.uiAutomation.takeScreenshot()
+        val image = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
         File(context.getExternalFilesDir(null), name).outputStream().use {
             image.compress(Bitmap.CompressFormat.PNG, 100, it)
         }

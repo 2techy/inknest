@@ -6,7 +6,6 @@ internal object InkPalette {
     val primary = Color(0xFF181818)
     val secondary = Color(0xFF333333)
     val muted = Color(0xFF777777)
-    val outline = Color(0xFFA0A0A0)
     val surface = Color(0xFFF2F2F2)
     val background = Color.White
 }

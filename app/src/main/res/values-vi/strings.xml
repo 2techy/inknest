@@ -58,9 +58,9 @@
     <string name="mini_stats_description">Hiện thời gian đọc hôm nay và chuỗi ngày đọc trên Trang chủ.</string>
     <string name="home_pins">Ứng dụng đã ghim</string>
     <string name="home_pins_description">Ẩn hoặc hiện mục này mà không bỏ ghim ứng dụng.</string>
-    <string name="eink_mode">E-Ink</string>
-    <string name="standard_mode">Tiêu chuẩn</string>
-    <string name="display_explanation">E-Ink dùng biểu tượng ứng dụng thang xám. Tiêu chuẩn giữ màu gốc. Bố cục và chuyển trạng thái tĩnh giữ nguyên.</string>
+    <string name="grayscale_mode">Thang xám</string>
+    <string name="color_mode">Màu sắc</string>
+    <string name="display_preview_read">Đọc</string>
     <string name="default_launcher_active">InkNest là trình khởi chạy mặc định</string>
     <string name="default_launcher_inactive">Dùng InkNest làm ứng dụng Trang chủ mặc định</string>
     <string name="default_launcher_description">Chọn trình khởi chạy trong cài đặt Android. Bạn có thể thay đổi bất cứ lúc nào.</string>
@@ -125,8 +125,8 @@
     <string name="home_this_week">Tuần này</string>
     <string name="home_all_apps">Mở tất cả ứng dụng</string>
     <string name="home_now_reading">Đang đọc</string>
-    <string name="eink_description">Biểu tượng ứng dụng thang xám</string>
-    <string name="standard_description">Màu biểu tượng gốc</string>
+    <string name="grayscale_description">Biểu tượng và bìa sách thang xám</string>
+    <string name="color_description">Điểm nhấn xanh mực, ảnh giữ màu gốc</string>
     <string name="default_home_app">Ứng dụng Trang chủ mặc định</string>
     <string name="other_home_app">Trình khởi chạy khác</string>
     <string name="app_version_author">Phiên bản %1$s · Bởi 2techy</string>

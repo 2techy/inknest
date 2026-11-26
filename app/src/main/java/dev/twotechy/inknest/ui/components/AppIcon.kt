@@ -51,7 +51,13 @@ internal fun AppIcon(
                 current,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
-                colorFilter = if (LocalDisplayMode.current == DisplayMode.EInk) grayscale else null,
+                colorFilter = if (LocalDisplayMode.current ==
+                    DisplayMode.Color
+                ) {
+                    null
+                } else {
+                    grayscale
+                },
             )
         }
     }

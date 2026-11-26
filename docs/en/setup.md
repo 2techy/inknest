@@ -4,7 +4,7 @@
 
 Install and configure InkNest, manage updates and recover access to your reading folders.
 
-Download the APK from the [latest release](https://github.com/2techy/inknest/releases/latest), or [build from source](development.md). Open InkNest and choose E-Ink or Standard. Select **Skip setup** to go straight to Home.
+Download the APK from the [latest release](https://github.com/2techy/inknest/releases/latest), or [build from source](development.md). Open InkNest and choose **Grayscale** or **Color**. Select **Skip setup** to go straight to Home.
 
 In the reading step, InkNest checks for KOReader. When it finds the app, choose its data folder to connect both. You can add just Books folders, set up reading later, and finish with your current launcher. To return, open Settings → About → Review setup.
 
@@ -34,7 +34,7 @@ Library combines Books folders; its folder menu filters one root. Refresh scans 
 - Set the default Home app in Settings → Launcher. To switch back, use Android Settings → Apps → Default apps → Home app; names vary by firmware. HOME returns to InkNest Home when it owns that role. Apps/pins work without reading sources.
 - In Apps, tap an app to open it or touch and hold it to manage Home pins or open **App info** in Android Settings. Pinned apps appear first in Home order. Search includes every app and matches names and packages.
 - Home’s **Quick access** shows up to four pinned apps in one row. **See all** next to its title opens Apps, where all pins are listed.
-- E-Ink uses grayscale app icons; Standard keeps their colors. Both use static transitions. Settings → Appearance controls display mode and Home sections, including mini stats, reading rhythm and pins; hiding pins does not delete them. Font size follows Android; panel refresh remains controlled by firmware.
+- **Grayscale** uses neutral controls and desaturates app icons and book covers. **Color** adds ink-blue accents and keeps original icon and cover colors. Both use static transitions. New installs default to Grayscale. Saved E-Ink and Standard choices carry over as Grayscale and Color, respectively. Preview both modes in setup or Settings → Appearance → Display mode. Appearance also controls Home sections, including mini stats, reading rhythm and pins; hiding pins does not delete them. Font size follows Android; panel refresh remains controlled by firmware.
 
 ## App updates
 
