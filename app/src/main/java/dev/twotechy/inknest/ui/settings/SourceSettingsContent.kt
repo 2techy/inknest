@@ -1,28 +1,38 @@
 package dev.twotechy.inknest.ui.settings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.twotechy.inknest.R
+import dev.twotechy.inknest.data.repository.sources.SourceFolder
 import dev.twotechy.inknest.data.repository.sources.SourceStatus
 import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.shared.SourceFolderActions
 import java.text.DateFormat
 import java.util.Date
 
-@Composable
-internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActions) {
+internal fun LazyListScope.readingDataSettings(state: SettingsUiState, actions: SettingsActions) {
     val source = state.source
-    Column {
-        SourceConnectionContent(
-            SourceConnectionUiState(source, state.sourceApps, state.saving),
+    val connection = SourceConnectionUiState(source, state.sourceApps, state.saving)
+    item {
+        SettingsSection(stringResource(R.string.reading_source_heading)) {
+            SourceConnectionContent(connection, actions.sourceApp) {
+                actions.connect(SourceFolder.KOReader)
+            }
+        }
+    }
+    item {
+        BookFoldersContent(
+            connection,
             SourceFolderActions(
                 actions.connect,
                 actions.replaceBookFolder,
                 actions.removeBookFolder,
             ),
-            actions.sourceApp,
         )
+    }
+    item {
         SettingsCommand(
             stringResource(R.string.disconnect_source),
             source.available && !state.saving &&
@@ -30,10 +40,15 @@ internal fun SourceSettingsContent(state: SettingsUiState, actions: SettingsActi
             actions.disconnect,
         )
     }
+    item {
+        SettingsSection(stringResource(R.string.reading_cache_heading)) {
+            DataSettingsContent(state, actions)
+        }
+    }
 }
 
 @Composable
-internal fun DataSettingsContent(state: SettingsUiState, actions: SettingsActions) {
+private fun DataSettingsContent(state: SettingsUiState, actions: SettingsActions) {
     val source = state.source
     val locale = currentUiLocale()
     Column {

@@ -250,7 +250,7 @@
     <string name="add_book_folder">Thêm thư mục sách</string>
     <string name="book_folder_saving">Đang lưu…</string>
     <string name="remove_book_folder">Bỏ thư mục</string>
-    <string name="remove_named_book_folder">Bỏ %1$s khỏi InkNest</string>
+    <string name="reselect_book_folder">Chọn lại thư mục</string>
     <string name="remove_book_folder_description">Bỏ %1$s khỏi InkNest? Sách sẽ không còn trong Thư viện. Tệp sách và dữ liệu KOReader vẫn được giữ trên thiết bị.</string>
     <string name="book_folder_conflict">Thư mục này đã nằm trong một thư mục sách khác. Hãy chọn thư mục riêng hoặc bỏ mục bị trùng trước.</string>
     <string name="library_named_folder_error">Không thể làm mới %1$s. Sách đã lưu được giữ nguyên.</string>

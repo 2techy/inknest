@@ -251,7 +251,7 @@
     <string name="add_book_folder">Add book folder</string>
     <string name="book_folder_saving">Saving…</string>
     <string name="remove_book_folder">Remove folder</string>
-    <string name="remove_named_book_folder">Remove %1$s from InkNest</string>
+    <string name="reselect_book_folder">Choose folder again</string>
     <string name="remove_book_folder_description">Remove %1$s from InkNest? Books will no longer appear in Library. Book files and KOReader data will stay on your device.</string>
     <string name="book_folder_conflict">This folder is already covered by another book folder. Choose a separate folder or remove the overlapping entry first.</string>
     <string name="library_named_folder_error">Could not refresh %1$s. Cached books are kept.</string>
