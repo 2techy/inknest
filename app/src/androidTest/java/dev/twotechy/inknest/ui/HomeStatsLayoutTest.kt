@@ -60,8 +60,11 @@ import dev.twotechy.inknest.ui.home.HomeReadingStats
 import dev.twotechy.inknest.ui.home.HomeScreen
 import dev.twotechy.inknest.ui.home.HomeUiState
 import dev.twotechy.inknest.ui.home.ReadingSectionState
+import dev.twotechy.inknest.ui.stats.StatsDayActions
 import dev.twotechy.inknest.ui.stats.StatsDayNavigation
 import dev.twotechy.inknest.ui.stats.StatsDayRoute
+import dev.twotechy.inknest.ui.stats.StatsDayScreen
+import dev.twotechy.inknest.ui.stats.StatsDayUiState
 import dev.twotechy.inknest.ui.stats.StatsHighlights
 import dev.twotechy.inknest.ui.stats.StatsOverview
 import dev.twotechy.inknest.ui.stats.StatsRoute
@@ -210,7 +213,7 @@ class HomeStatsLayoutTest {
                     amount = amount,
                     books = listOf(
                         StatisticsDayBook(1, "Cached title", amount, libraryBook),
-                        StatisticsDayBook(2, "Stats only", amount),
+                        StatisticsDayBook(2, "Stats only", amount.copy(seconds = 60)),
                     ),
                     loading = false,
                 ),
@@ -301,12 +304,43 @@ class HomeStatsLayoutTest {
             .map(::bounds).sortedBy(Rect::top).takeLast(2)
         assertEquals(2, unknownPages.size)
         assertEquals(unknownPages[0].right, unknownPages[1].right)
+        val shortTime = context.getString(R.string.stats_minutes_value, 1L)
+        val timeBounds = bounds(nodes().first { it.text?.toString() == shortTime })
+        assertEquals(unknownPages[1].right, timeBounds.right)
+        assertTrue(timeBounds.bottom <= unknownPages[1].top)
         val plainTitle = nodes().first { it.text?.toString() == "Stats only" }
         assertTrue(generateSequence(plainTitle) { it.parent }.none { it.isClickable })
         val linkedRow = bounds(actionNode("Cached title"))
         val plainTitleBounds = bounds(plainTitle)
-        assertTrue(plainTitleBounds.centerY() - linkedRow.bottom < plainTitleBounds.height())
+        assertTrue(plainTitleBounds.top - linkedRow.bottom < plainTitleBounds.height())
         click("Cached title")
+    }
+
+    @Test fun dayPagerNavigatesInBothDirections() {
+        val page = mutableStateOf(0)
+        val amount = StatisticsAmount(60, 1)
+        show(412f, 1f) {
+            StatsDayScreen(
+                StatsDayUiState(
+                    today,
+                    StatisticsDayDetail(
+                        amount = amount,
+                        books = listOf(
+                            StatisticsDayBook(1, "Book on page ${page.value + 1}", amount),
+                        ),
+                        hasMore = page.value == 0,
+                    ),
+                    page.value,
+                ),
+                StatsDayActions({ page.value = it }, {}, {}, {}),
+            )
+        }
+        awaitText(context.getString(R.string.stats_day_page, 1), true)
+        click(context.getString(R.string.reading_stats_next_page))
+        awaitText(context.getString(R.string.stats_day_page, 2), true)
+        awaitText("Book on page 2", true)
+        click(context.getString(R.string.reading_stats_previous_page))
+        awaitText("Book on page 1", true)
     }
 
     private fun weekDayFormatter(): DateTimeFormatter =

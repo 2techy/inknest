@@ -243,13 +243,13 @@ class BookDetailsContentTest {
         }
         val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
             .withLocale(context.resources.configuration.locales[0])
-        val next = context.getString(R.string.book_details_next_page)
+        val next = context.getString(R.string.reading_stats_next_page)
         scrollToText(next)
         click(next)
         awaitText(context.getString(R.string.book_details_history_page, 2, 3), true)
         awaitText(date.format(days.first().date), false)
         awaitText(date.format(days[5].date), true)
-        click(context.getString(R.string.book_details_previous_page))
+        click(context.getString(R.string.reading_stats_previous_page))
         awaitText(context.getString(R.string.book_details_history_page, 1, 3), true)
         assertTrue(
             nodes().none {
