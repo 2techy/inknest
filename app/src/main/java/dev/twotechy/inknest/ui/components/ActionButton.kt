@@ -31,7 +31,11 @@ internal fun ActionButton(
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(InkRadius.medium)
-    val ink = if (enabled) colors.onSurface else colors.outline
+    val ink = when {
+        !enabled -> colors.outline
+        primary -> colors.primary
+        else -> colors.onSurface
+    }
     Box(
         modifier.widthIn(min = InkButtonTokens.minWidth).heightIn(min = InkButtonTokens.minHeight)
             .background(if (primary && enabled) ink else colors.surface, shape)
@@ -56,7 +60,7 @@ internal fun ActionButton(
         Text(
             title,
             style = MaterialTheme.typography.labelLarge,
-            color = if (primary && enabled) colors.surface else ink,
+            color = if (primary && enabled) colors.onPrimary else ink,
             textAlign = TextAlign.Center,
         )
     }

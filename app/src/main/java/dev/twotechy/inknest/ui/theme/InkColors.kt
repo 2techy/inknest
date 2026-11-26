@@ -4,7 +4,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import dev.twotechy.inknest.model.DisplayMode
 
-internal fun inkColorScheme(mode: DisplayMode) = lightColorScheme(
+internal fun inkColorScheme(mode: DisplayMode) = when (mode) {
+    DisplayMode.Grayscale -> grayscaleColorScheme
+    DisplayMode.Color -> colorfulColorScheme
+}
+
+private val grayscaleColorScheme = lightColorScheme(
     primary = InkPalette.primary, onPrimary = InkPalette.background,
     primaryContainer = InkPalette.surface, onPrimaryContainer = InkPalette.primary,
     inversePrimary = InkPalette.background,
@@ -20,10 +25,22 @@ internal fun inkColorScheme(mode: DisplayMode) = lightColorScheme(
     error = InkPalette.primary, onError = InkPalette.background,
     errorContainer = InkPalette.surface, onErrorContainer = InkPalette.primary,
     outline = InkPalette.muted,
-    outlineVariant = if (mode == DisplayMode.EInk) InkPalette.muted else InkPalette.outline,
+    outlineVariant = InkPalette.muted,
     scrim = InkPalette.primary,
     surfaceBright = InkPalette.background, surfaceDim = InkPalette.surface,
     surfaceContainerLowest = InkPalette.background, surfaceContainerLow = InkPalette.background,
     surfaceContainer = InkPalette.surface, surfaceContainerHigh = InkPalette.surface,
     surfaceContainerHighest = InkPalette.surface,
+)
+
+private val colorfulColorScheme = grayscaleColorScheme.copy(
+    primary = InkColorPalette.blue,
+    onPrimaryContainer = InkColorPalette.ink,
+    onSecondaryContainer = InkColorPalette.ink,
+    tertiary = InkColorPalette.blue,
+    onTertiaryContainer = InkColorPalette.ink,
+    onBackground = InkColorPalette.ink,
+    onSurface = InkColorPalette.ink,
+    onSurfaceVariant = InkColorPalette.muted,
+    outline = InkColorPalette.outline, outlineVariant = InkColorPalette.outline,
 )

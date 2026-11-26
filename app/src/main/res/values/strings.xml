@@ -58,9 +58,10 @@
     <string name="mini_stats_description">Show today’s reading time and reading streak on Home.</string>
     <string name="home_pins">Pinned apps</string>
     <string name="home_pins_description">Hide or show this section without removing your pins.</string>
-    <string name="eink_mode">E-Ink</string>
-    <string name="standard_mode">Standard</string>
-    <string name="display_explanation">E-Ink uses grayscale app icons. Standard keeps their original colors. Layout and static transitions stay the same.</string>
+    <string name="grayscale_mode">Grayscale</string>
+    <string name="color_mode">Color</string>
+    <string name="display_preview_book_title" translatable="false">Walden</string>
+    <string name="display_preview_read">Read</string>
     <string name="default_launcher_active">InkNest is your default launcher</string>
     <string name="default_launcher_inactive">Use InkNest as your default Home app</string>
     <string name="default_launcher_description">Choose your launcher in Android settings. You can change it at any time.</string>
@@ -126,8 +127,8 @@
     <string name="home_this_week">This week</string>
     <string name="home_all_apps">Open all apps</string>
     <string name="home_now_reading">Now reading</string>
-    <string name="eink_description">Grayscale app icons</string>
-    <string name="standard_description">Original app icon colors</string>
+    <string name="grayscale_description">Grayscale icons and covers</string>
+    <string name="color_description">Ink-blue accents, original image colors</string>
     <string name="default_home_app">Default Home app</string>
     <string name="other_home_app">Another launcher</string>
     <string name="app_version_author">Version %1$s · By 2techy</string>

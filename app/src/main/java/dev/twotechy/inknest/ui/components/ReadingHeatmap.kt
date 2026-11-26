@@ -31,6 +31,7 @@ import dev.twotechy.inknest.ui.components.currentUiLocale
 import dev.twotechy.inknest.ui.theme.InkHeatmapPalette
 import dev.twotechy.inknest.ui.theme.InkSpacing
 import dev.twotechy.inknest.ui.theme.InkStatsTokens
+import dev.twotechy.inknest.ui.theme.LocalHeatmapColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -98,6 +99,7 @@ private fun HeatmapGrid(
     unit: StatisticsUnit,
     layout: HeatmapLayout,
 ) {
+    val colors = LocalHeatmapColors.current
     val locale = currentUiLocale()
     val values = (0 until layout.weeks * 7).map { index ->
         val date = layout.first.plusDays(index.toLong())
@@ -145,7 +147,7 @@ private fun HeatmapGrid(
                             index / 7 * column + (column - side) / 2,
                             index % 7 * row + gapY / 2,
                         )
-                        drawHeatmapCell(top, side, intensity.bucket(value))
+                        drawHeatmapCell(top, side, intensity.bucket(value), colors)
                     }
                 }
             }
@@ -153,11 +155,16 @@ private fun HeatmapGrid(
     }
 }
 
-private fun DrawScope.drawHeatmapCell(top: Offset, side: Float, bucket: Int?) {
+private fun DrawScope.drawHeatmapCell(
+    top: Offset,
+    side: Float,
+    bucket: Int?,
+    colors: InkHeatmapPalette,
+) {
     val radius = CornerRadius(InkStatsTokens.heatmapCornerRadius.toPx())
     val cell = Size(side, side)
-    val outline = InkHeatmapPalette.emptyOutline
-    drawRoundRect(InkHeatmapPalette.fills[bucket ?: 0], top, cell, radius)
+    val outline = colors.emptyOutline
+    drawRoundRect(colors.fills[bucket ?: 0], top, cell, radius)
     if (bucket == 0 || bucket == null) {
         drawRoundRect(
             outline,

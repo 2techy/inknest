@@ -33,8 +33,7 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
 
     override val appPreferences = preferences.map {
         AppPreferences(
-            displayMode = DisplayMode.entries.find { mode -> mode.name == it[KEY_DISPLAY_MODE] }
-                ?: DisplayMode.EInk,
+            displayMode = it.decodeDisplayMode(),
             showHomeHeatmap = it[KEY_SHOW_HEATMAP] ?: true,
             showHomeStats = it[KEY_SHOW_STATS] ?: true,
             showHomePinnedApps = it[KEY_SHOW_PINS] ?: true,
@@ -44,7 +43,12 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
     }.distinctUntilChanged()
 
     override suspend fun setDisplayMode(mode: DisplayMode) {
-        dataStore.edit { it[KEY_DISPLAY_MODE] = mode.name }
+        dataStore.edit {
+            it[KEY_DISPLAY_MODE] = when (mode) {
+                DisplayMode.Grayscale -> "grayscale"
+                DisplayMode.Color -> "color"
+            }
+        }
     }
     override suspend fun setShowHomeHeatmap(show: Boolean) {
         dataStore.edit { it[KEY_SHOW_HEATMAP] = show }
@@ -120,6 +124,12 @@ internal class DataStoreUserPreferencesRepository(private val dataStore: DataSto
     }
 
     internal companion object {
+        private fun Preferences.decodeDisplayMode(): DisplayMode = when (this[KEY_DISPLAY_MODE]) {
+            "grayscale", "EInk" -> DisplayMode.Grayscale
+            "color", "Standard" -> DisplayMode.Color
+            else -> DisplayMode.Grayscale
+        }
+
         val KEY_PINNED_COMPONENT_IDS = stringPreferencesKey("pinned_component_ids")
         private val KEY_DISPLAY_MODE = stringPreferencesKey("display_mode")
         private val KEY_SHOW_HEATMAP = booleanPreferencesKey("show_home_heatmap")

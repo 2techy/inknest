@@ -67,7 +67,7 @@ internal fun InkNestBottomBar(
     onSelect: (TopLevelDestination) -> Unit,
 ) {
     val lineColor = MaterialTheme.colorScheme.outlineVariant
-    val selectedColor = MaterialTheme.colorScheme.onSurface
+    val selectedColor = MaterialTheme.colorScheme.primary
     Column(
         Modifier.background(MaterialTheme.colorScheme.surface)
             .windowInsetsPadding(WindowInsets.navigationBars),
@@ -121,6 +121,7 @@ internal fun InkNestBottomBar(
                         Modifier.fillMaxWidth().padding(bottom = InkSpacing.sm),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
@@ -187,6 +188,7 @@ private fun NavigationEntry(
                 textAlign = TextAlign.Center,
                 style = NavigationLabelStyle,
                 fontWeight = if (tab == selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -210,11 +212,12 @@ private fun DestinationIcon(tab: TopLevelDestination, selected: Boolean) {
         TopLevelDestination.Settings ->
             if (selected) R.drawable.ic_settings_filled else R.drawable.ic_settings_outline
     }
+    val colors = MaterialTheme.colorScheme
     Icon(
         painterResource(drawable),
         contentDescription = null,
         modifier = Modifier.size(NavigationIconSize),
-        tint = MaterialTheme.colorScheme.onSurface,
+        tint = if (selected) colors.primary else colors.onSurface,
     )
 }
 

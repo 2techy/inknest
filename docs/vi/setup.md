@@ -4,7 +4,7 @@
 
 Cài đặt InkNest, kết nối nguồn đọc, cập nhật ứng dụng và khôi phục quyền truy cập thư mục.
 
-Tải APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc [biên dịch từ mã nguồn](development.md). Mở InkNest và chọn E-Ink hoặc Tiêu chuẩn. Chọn **Bỏ qua thiết lập** để vào thẳng Trang chủ.
+Tải APK từ [bản phát hành mới nhất](https://github.com/2techy/inknest/releases/latest), hoặc [biên dịch từ mã nguồn](development.md). Mở InkNest và chọn **Thang xám** hoặc **Màu sắc**. Chọn **Bỏ qua thiết lập** để vào thẳng Trang chủ.
 
 InkNest kiểm tra KOReader ở bước Đọc sách. Khi tìm thấy app, chọn thư mục dữ liệu để kết nối cả hai. Bạn có thể chỉ thêm thư mục sách, thiết lập phần đọc sách sau và hoàn tất với launcher hiện tại. Để quay lại, mở Cài đặt → Giới thiệu → Xem lại thiết lập.
 
@@ -34,7 +34,7 @@ Thư viện gộp các thư mục sách; menu thư mục lọc một nguồn g�
 - Đặt ứng dụng Trang chủ mặc định tại Cài đặt → Trình khởi chạy. Để đổi lại, vào Cài đặt Android → Ứng dụng → Ứng dụng mặc định → Ứng dụng Trang chủ; tên mục tùy firmware. HOME về Trang chủ InkNest khi ứng dụng giữ vai trò này. Ứng dụng/ghim dùng được khi chưa có nguồn đọc.
 - Trong Ứng dụng, chạm để mở app hoặc nhấn giữ để quản lý ghim trên Trang chủ hay mở **Thông tin ứng dụng** trong Cài đặt Android. Các app đã ghim xuất hiện trước theo thứ tự trên Trang chủ. Tìm kiếm theo tên hoặc package trên toàn bộ ứng dụng.
 - Mục **Truy cập nhanh** trên Trang chủ hiển thị tối đa bốn ứng dụng đã ghim trong một hàng. Nút **Xem tất cả** cạnh tiêu đề mở màn Ứng dụng để xem toàn bộ ghim.
-- E-Ink dùng biểu tượng thang xám; Tiêu chuẩn giữ màu gốc. Cả hai dùng chuyển trạng thái tĩnh. Cài đặt → Giao diện điều chỉnh chế độ và các mục Trang chủ, gồm thống kê nhanh, nhịp đọc và ghim; ẩn ghim không xóa ghim. Cỡ chữ theo Android; firmware quản lý làm mới màn hình.
+- **Thang xám** dùng điều khiển trung tính và chuyển biểu tượng ứng dụng, bìa sách sang thang xám. **Màu sắc** thêm điểm nhấn xanh mực và giữ màu gốc của biểu tượng và bìa sách. Cả hai dùng chuyển trạng thái tĩnh. Cài mới mặc định dùng Thang xám. Lựa chọn E-Ink và Tiêu chuẩn đã lưu lần lượt chuyển thành Thang xám và Màu sắc. Xem trước hai chế độ khi thiết lập hoặc tại Cài đặt → Giao diện → Chế độ hiển thị. Giao diện cũng có các tùy chọn Trang chủ, gồm thống kê nhanh, nhịp đọc và ghim; ẩn ghim không xóa ghim. Cỡ chữ theo Android; firmware quản lý làm mới màn hình.
 
 ## Cập nhật ứng dụng
 

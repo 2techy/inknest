@@ -1,3 +1,3 @@
 package dev.twotechy.inknest.model
 
-enum class DisplayMode { EInk, Standard }
+enum class DisplayMode { Grayscale, Color }

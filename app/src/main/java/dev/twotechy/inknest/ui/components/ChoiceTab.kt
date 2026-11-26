@@ -1,5 +1,6 @@
 package dev.twotechy.inknest.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -32,10 +33,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
+import dev.twotechy.inknest.model.DisplayMode
 import dev.twotechy.inknest.ui.theme.InkBorder
 import dev.twotechy.inknest.ui.theme.InkChoiceTokens
 import dev.twotechy.inknest.ui.theme.InkHeaderTokens
 import dev.twotechy.inknest.ui.theme.InkRadius
+import dev.twotechy.inknest.ui.theme.LocalDisplayMode
 
 // The visible tab stays compact; its full row height remains available for touch.
 @Composable
@@ -46,6 +49,7 @@ internal fun ChoiceTab(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val colorMode = LocalDisplayMode.current == DisplayMode.Color
     Box(
         modifier.sizeIn(
             minWidth = InkHeaderTokens.touchTarget,
@@ -63,8 +67,23 @@ internal fun ChoiceTab(
         Surface(
             Modifier.fillMaxWidth().heightIn(min = InkChoiceTokens.minHeight),
             shape = RoundedCornerShape(InkRadius.medium),
-            color = if (selected) colors.onSurface else colors.surface,
-            contentColor = if (selected) colors.surface else colors.onSurface,
+            color = when {
+                !selected -> colors.surface
+                colorMode -> colors.primaryContainer
+                else -> colors.primary
+            },
+            border = if (selected &&
+                colorMode
+            ) {
+                BorderStroke(InkBorder.default, colors.primary)
+            } else {
+                null
+            },
+            contentColor = when {
+                !selected -> colors.onSurface
+                colorMode -> colors.onPrimaryContainer
+                else -> colors.onPrimary
+            },
         ) {
             Text(
                 label,

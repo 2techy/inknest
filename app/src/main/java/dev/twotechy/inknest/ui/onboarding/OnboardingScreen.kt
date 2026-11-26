@@ -113,7 +113,7 @@ private fun SetupProgress(step: Int) {
                 Box(
                     Modifier.weight(1f).height(InkOnboardingTokens.progressHeight).background(
                         if (index <= step) {
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.outlineVariant
                         },

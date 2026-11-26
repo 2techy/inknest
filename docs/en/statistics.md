@@ -17,9 +17,9 @@ Totals cover This week (Monday onward), This month, This year and All time. The 
 | Year | Current year | January–December |
 | All | First recorded year through current year | Years; one current-year column when empty |
 
-Current buckets include days through today; future slots are blank, past gaps zero. Labels/bars scroll together while the value axis stays visible. Unit/period changes use cached daily summaries without fetching sources.
+Current buckets include days through today; future slots are blank, past gaps zero. Color uses blue bars and highlights the bucket containing today in clay when it has a positive value. Labels/bars scroll together while the value axis stays visible. Unit/period changes use cached daily summaries without fetching sources.
 
-The responsive heatmap shows 16–52 Monday–Sunday week columns. Future dates are absent; unknown days have a diagonal mark. Four grayscale levels use lower 25/50/75-percentile cutoffs of known positive values in the visible window, separately for Time/Pages. Zero/unknown values do not affect thresholds; equal positive values use shade 3. Shades show relative activity, not fixed minute/page thresholds. See [design system](design-system.md) for presentation rules.
+The responsive heatmap shows 16–52 Monday–Sunday week columns. Future dates are absent; unknown days have a diagonal mark. Four activity shades use lower 25/50/75-percentile cutoffs of known positive values in the visible window, separately for Time/Pages. Zero/unknown values do not affect thresholds; equal positive values use shade 3. Shades show relative activity, not fixed minute/page thresholds. See [design system](design-system.md) for presentation rules.
 
 ## Day details
 

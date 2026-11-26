@@ -17,7 +17,7 @@ InkNest is an offline Android launcher built around reading on E-Ink devices. Br
 - **One library, multiple folders.** Browse covers or lists, search by title or author, filter and sort, then open books in KOReader.
 - **Reading statistics.** Track time, recorded pages, daily averages and streaks with charts and an activity calendar.
 - **Everyday launcher essentials.** Find and launch installed apps, pin favorites and choose InkNest as your default Home app.
-- **Designed for E-Ink.** A grayscale interface, static transitions and a choice of grayscale or original-color app icons.
+- **Designed for E-Ink.** Grayscale for black-and-white screens or ink-blue accents and original-color icons/covers for color E-Ink, both with static transitions.
 - **English and Vietnamese.** Switch languages in the app, with both available offline.
 
 ## 🖼️ Screenshots
@@ -39,7 +39,7 @@ InkNest is an offline Android launcher built around reading on E-Ink devices. Br
 
 </details>
 
-Screenshots captured on an Android 14 emulator in E-Ink mode with synthetic reading data and sample covers.
+Screenshots captured on an Android 14 emulator in grayscale with synthetic reading data and sample covers.
 
 ## 🚀 Getting started
 

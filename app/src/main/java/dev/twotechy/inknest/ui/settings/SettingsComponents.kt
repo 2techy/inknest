@@ -70,12 +70,7 @@ internal fun SettingsRow(
             horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
         ) {
             if (icon != null) {
-                Box(
-                    Modifier.size(InkSettingsTokens.leadingSize),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(painterResource(icon), null, Modifier.size(InkSettingsTokens.iconSize))
-                }
+                SettingsLeadingIcon(icon)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(InkSpacing.xs)) {
                 Text(title, style = MaterialTheme.typography.bodyLarge)
@@ -98,6 +93,16 @@ internal fun SettingsRow(
             }
         }
         SettingsDivider(startInset = dividerInset)
+    }
+}
+
+@Composable
+private fun SettingsLeadingIcon(icon: Int) {
+    Box(
+        Modifier.size(InkSettingsTokens.leadingSize),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(icon), null, Modifier.size(InkSettingsTokens.iconSize))
     }
 }
 
@@ -190,7 +195,11 @@ private fun SettingsSelectionRow(
 @Composable
 private fun SelectionMark(selected: Boolean, radio: Boolean, enabled: Boolean) {
     val colors = MaterialTheme.colorScheme
-    val ink = if (enabled) colors.onSurface else colors.outline
+    val ink = when {
+        !enabled -> colors.outline
+        selected -> colors.primary
+        else -> colors.onSurface
+    }
     val paper = MaterialTheme.colorScheme.surface
     Canvas(Modifier.size(InkSettingsTokens.selectionSize)) {
         val stroke = InkSettingsTokens.selectionStroke.toPx()

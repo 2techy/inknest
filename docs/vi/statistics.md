@@ -17,9 +17,9 @@ Tổng gồm tuần này từ thứ Hai, tháng này, năm nay và toàn bộ th
 | Năm | Năm hiện tại | Tháng 1–12 |
 | Tất cả | Năm đầu có dữ liệu đến năm hiện tại | Năm; một cột năm hiện tại khi rỗng |
 
-Cột hiện tại chỉ cộng đến hôm nay; tương lai để trống, khoảng đã qua không đọc là 0. Nhãn/cột cuộn cùng nhau, trục giá trị cố định. Đổi đơn vị/kỳ dùng tổng ngày đã lưu, không đọc nguồn.
+Cột hiện tại chỉ cộng đến hôm nay; tương lai để trống, khoảng đã qua không đọc là 0. Chế độ Màu sắc dùng cột xanh mực và tô cam đất cho cột chứa hôm nay khi giá trị dương. Nhãn/cột cuộn cùng nhau, trục giá trị cố định. Đổi đơn vị/kỳ dùng tổng ngày đã lưu, không đọc nguồn.
 
-Lịch tự điều chỉnh 16–52 cột tuần thứ Hai–Chủ nhật. Ngày tương lai ẩn; ngày chưa xác định có gạch chéo. Bốn mức xám dùng ngưỡng phân vị dưới 25/50/75 của giá trị dương đã biết trong vùng hiển thị, riêng cho Thời gian/Số trang. Giá trị 0/chưa biết không ảnh hưởng ngưỡng; các giá trị dương bằng nhau dùng mức 3. Sắc độ biểu thị hoạt động tương đối, không phải ngưỡng phút/trang cố định. Xem [hệ thống thiết kế](design-system.md) về trình bày.
+Lịch tự điều chỉnh 16–52 cột tuần thứ Hai–Chủ nhật. Ngày tương lai ẩn; ngày chưa xác định có gạch chéo. Bốn sắc độ hoạt động dùng ngưỡng phân vị dưới 25/50/75 của giá trị dương đã biết trong vùng hiển thị, riêng cho Thời gian/Số trang. Giá trị 0/chưa biết không ảnh hưởng ngưỡng; các giá trị dương bằng nhau dùng mức 3. Sắc độ biểu thị hoạt động tương đối, không phải ngưỡng phút/trang cố định. Xem [hệ thống thiết kế](design-system.md) về trình bày.
 
 ## Chi tiết ngày
 

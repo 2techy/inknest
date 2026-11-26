@@ -1,6 +1,10 @@
 package dev.twotechy.inknest.data.repository.preferences.impl
 
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.twotechy.inknest.data.repository.testPreferencesDataStore
+import dev.twotechy.inknest.model.AppPreferences
+import dev.twotechy.inknest.model.DisplayMode
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +35,51 @@ class DataStoreUserPreferencesRepositoryTest {
         return DataStoreUserPreferencesRepository(dataStore)
     }
 
+    @Test fun displayModeReadsLegacyAndStableValuesWithSafeFallback() = testScope.runTest {
+        val store = testPreferencesDataStore(
+            File(tmpFolder.newFolder(), "display.preferences_pb"),
+            testScope,
+        )
+        val repo = DataStoreUserPreferencesRepository(store)
+        val key = stringPreferencesKey("display_mode")
+        assertEquals(DisplayMode.Grayscale, repo.appPreferences.first().displayMode)
+        val cases = mapOf(
+            "EInk" to DisplayMode.Grayscale,
+            "Standard" to DisplayMode.Color,
+            "grayscale" to DisplayMode.Grayscale,
+            "color" to DisplayMode.Color,
+            "unknown" to DisplayMode.Grayscale,
+            "" to DisplayMode.Grayscale,
+        )
+        cases.forEach { (stored, expected) ->
+            store.edit { it[key] = stored }
+            assertEquals(stored, expected, repo.appPreferences.first().displayMode)
+        }
+    }
+
+    @Test fun displayModeWritesStableValuesAndPreservesOtherPreferences() = testScope.runTest {
+        val store = testPreferencesDataStore(
+            File(tmpFolder.newFolder(), "display-write.preferences_pb"),
+            testScope,
+        )
+        val repo = DataStoreUserPreferencesRepository(store)
+        repo.pin("reader/Activity")
+        repo.setShowHomeStats(false)
+        repo.setShowHomeHeatmap(false)
+        repo.setShowHomePinnedApps(false)
+        repo.completeOnboarding()
+        val original = repo.appPreferences.first()
+        listOf(
+            DisplayMode.Color to "color",
+            DisplayMode.Grayscale to "grayscale",
+        ).forEach { (mode, stored) ->
+            repo.setDisplayMode(mode)
+            assertEquals(stored, store.data.first()[stringPreferencesKey("display_mode")])
+            assertEquals(original.copy(displayMode = mode), repo.appPreferences.first())
+            assertEquals(listOf("reader/Activity"), repo.pinnedComponentIds.first())
+        }
+    }
+
     @Test fun heatmapDefaultsEnabledAndPersistsIndependently() = testScope.runTest {
         val repo = createRepository()
         assertTrue(repo.appPreferences.first().showHomeHeatmap)
@@ -52,6 +101,7 @@ class DataStoreUserPreferencesRepositoryTest {
             )
             val repository = DataStoreUserPreferencesRepository(store)
             repository.pin("reader/Activity")
+            repository.setDisplayMode(DisplayMode.Color)
             repository.setShowHomeStats(false)
             repository.setOnboardingLauncherPending(true)
             repository.setShowHomeStats(true)
@@ -68,6 +118,7 @@ class DataStoreUserPreferencesRepositoryTest {
             val repository = DataStoreUserPreferencesRepository(store)
             assertEquals(listOf("reader/Activity"), repository.pinnedComponentIds.first())
             assertEquals(false, repository.appPreferences.first().showHomeStats)
+            assertEquals(DisplayMode.Color, repository.appPreferences.first().displayMode)
             assertTrue(repository.appPreferences.first().onboardingLauncherPending)
             repository.completeOnboarding()
             val completed = repository.appPreferences.first()
@@ -121,14 +172,14 @@ class DataStoreUserPreferencesRepositoryTest {
     fun `new settings default safely and edits preserve existing pins`() = testScope.runTest {
         val repo = createRepository()
         repo.pin("reader/Activity")
-        assertEquals(dev.twotechy.inknest.model.AppPreferences(), repo.appPreferences.first())
-        repo.setDisplayMode(dev.twotechy.inknest.model.DisplayMode.Standard)
+        assertEquals(AppPreferences(), repo.appPreferences.first())
+        repo.setDisplayMode(DisplayMode.Color)
         repo.setShowHomeStats(false)
         repo.setShowHomePinnedApps(false)
         repo.completeOnboarding()
         assertEquals(
-            dev.twotechy.inknest.model.AppPreferences(
-                dev.twotechy.inknest.model.DisplayMode.Standard,
+            AppPreferences(
+                DisplayMode.Color,
                 false,
                 false,
                 true,

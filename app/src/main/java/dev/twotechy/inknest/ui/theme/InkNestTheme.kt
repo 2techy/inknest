@@ -8,13 +8,18 @@ import dev.twotechy.inknest.model.AppPreferences
 import dev.twotechy.inknest.model.DisplayMode
 
 internal val LocalAppPreferences = staticCompositionLocalOf { AppPreferences() }
-internal val LocalDisplayMode = staticCompositionLocalOf { DisplayMode.EInk }
+internal val LocalDisplayMode = staticCompositionLocalOf { DisplayMode.Grayscale }
+internal val LocalHeatmapColors = staticCompositionLocalOf { InkHeatmapPalette.grayscale }
 
 @Composable
 fun InkNestTheme(preferences: AppPreferences = AppPreferences(), content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalAppPreferences provides preferences,
         LocalDisplayMode provides preferences.displayMode,
+        LocalHeatmapColors provides when (preferences.displayMode) {
+            DisplayMode.Grayscale -> InkHeatmapPalette.grayscale
+            DisplayMode.Color -> InkHeatmapPalette.color
+        },
     ) {
         MaterialTheme(
             colorScheme = inkColorScheme(preferences.displayMode),
