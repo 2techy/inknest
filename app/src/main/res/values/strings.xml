@@ -237,8 +237,9 @@
     <string name="stats_day_empty">No reading recorded for this day.</string>
     <string name="stats_day_unavailable">Reading statistics for this day are unavailable.</string>
     <string name="stats_day_empty_page">No books on this page.</string>
-    <string name="stats_day_previous_page">Previous page</string>
-    <string name="stats_day_next_page">Next page</string>
+    <string name="reading_stats_previous_page">Previous page</string>
+    <string name="reading_stats_next_page">Next page</string>
+    <string name="stats_day_page">Page %1$d</string>
     <string name="gesture_release_refresh">Release to refresh</string>
     <string name="home_apps_refresh_error">Unable to refresh apps</string>
     <string name="home_apps_refresh_retry">Your existing apps are still available. Tap to retry.</string>
@@ -341,8 +342,6 @@
     <string name="book_details_stats_unavailable">Reading statistics are unavailable. Connect a KOReader source and refresh to load recorded reading.</string>
     <string name="book_details_stats_unlinked">No matching reading statistics found for this book.</string>
     <string name="book_details_no_history">No recorded reading days.</string>
-    <string name="book_details_previous_page">Previous history page</string>
-    <string name="book_details_next_page">Next history page</string>
     <string name="book_details_history_page">Page %1$d of %2$d</string>
     <string name="book_details_last_read_value">Last read: %1$s</string>
 </resources>

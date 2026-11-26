@@ -1,9 +1,7 @@
 package dev.twotechy.inknest.ui.library.details
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,21 +25,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.twotechy.inknest.R
 import dev.twotechy.inknest.model.BookDetails
 import dev.twotechy.inknest.model.BookReadingStatistics
 import dev.twotechy.inknest.model.BookStatisticsStatus
+import dev.twotechy.inknest.model.StatisticsAmount
 import dev.twotechy.inknest.ui.components.ActionButton
+import dev.twotechy.inknest.ui.components.ReadingStatsPager
+import dev.twotechy.inknest.ui.components.ReadingStatsRow
 import dev.twotechy.inknest.ui.components.ScreenHeader
 import dev.twotechy.inknest.ui.components.ScreenScaffold
 import dev.twotechy.inknest.ui.components.currentUiLocale
@@ -274,97 +272,36 @@ private fun BookMetric(label: Int, value: String, modifier: Modifier) {
 
 @Composable
 private fun BookDetailsHistory(statistics: BookReadingStatistics, page: (Int) -> Unit) {
-    Column(
-        Modifier.padding(top = InkSpacing.xs, bottom = InkSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(InkSpacing.sm),
-    ) {
-        val date = DateTimeFormatter.ofLocalizedDate(
-            FormatStyle.MEDIUM,
-        ).withLocale(currentUiLocale())
+    Column(Modifier.padding(bottom = InkSpacing.md)) {
+        val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(currentUiLocale())
         if (statistics.history.isEmpty()) {
             Text(
                 stringResource(statistics.status.emptyLabel()),
+                Modifier.padding(vertical = InkSpacing.xs),
                 style = InkTextStyles.bodyMedium,
             )
         }
         statistics.history.forEach { day ->
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(InkSpacing.md),
-            ) {
-                Text(date.format(day.date), Modifier.weight(1f), style = InkTextStyles.bodyMedium)
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(formatReadingTime(day.seconds), style = InkTextStyles.labelLarge)
-                    day.pages?.let {
-                        Text(
-                            stringResource(
-                                R.string.stats_pages_value,
-                                NumberFormat.getIntegerInstance(currentUiLocale()).format(it),
-                            ),
-                            style = InkTextStyles.bodySmall,
-                        )
-                    }
-                }
-            }
-            HorizontalDivider()
+            ReadingStatsRow(date.format(day.date), StatisticsAmount(day.seconds, day.pages))
         }
         if (statistics.historyPageCount > 1) BookHistoryPager(statistics, page)
     }
 }
 
 @Composable
-private fun BookHistoryPager(statistics: BookReadingStatistics, page: (Int) -> Unit) {
-    val enabled = statistics.canChangeHistoryPage
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        BookHistoryPageButton(
-            stringResource(R.string.book_details_previous_page),
-            backwards = true,
-            enabled = enabled && statistics.historyPage > 0,
-        ) { page(statistics.historyPage - 1) }
-        Text(
-            stringResource(
-                R.string.book_details_history_page,
-                statistics.historyPage + 1,
-                statistics.historyPageCount,
-            ),
-            Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            style = InkTextStyles.bodySmall,
-        )
-        BookHistoryPageButton(
-            stringResource(R.string.book_details_next_page),
-            backwards = false,
-            enabled = enabled && statistics.hasMore,
-        ) { page(statistics.historyPage + 1) }
-    }
-}
-
-@Composable
-private fun BookHistoryPageButton(
-    label: String,
-    backwards: Boolean,
-    enabled: Boolean,
-    click: () -> Unit,
-) {
-    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val colors = MaterialTheme.colorScheme
-    Box(
-        Modifier.size(InkHeaderTokens.touchTarget).clickable(
-            enabled = enabled,
-            role = Role.Button,
-            interactionSource = null,
-            indication = null,
-            onClick = click,
+private fun BookHistoryPager(statistics: BookReadingStatistics, onPage: (Int) -> Unit) {
+    val page = statistics.historyPage
+    val canPage = statistics.canChangeHistoryPage
+    ReadingStatsPager(
+        label = stringResource(
+            R.string.book_details_history_page,
+            page + 1,
+            statistics.historyPageCount,
         ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_chevron_right),
-            label,
-            Modifier.size(InkHeaderTokens.iconSize).rotate(if (backwards != rtl) 180f else 0f),
-            tint = if (enabled) colors.onSurface else colors.outline,
-        )
-    }
+        onPrevious = if (canPage && page > 0) ({ onPage(page - 1) }) else null,
+        onNext = if (canPage && statistics.hasMore) ({ onPage(page + 1) }) else null,
+    )
 }
 
 private fun BookStatisticsStatus.emptyLabel(): Int = when (this) {
